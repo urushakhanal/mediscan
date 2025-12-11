@@ -3,6 +3,8 @@ import MediScanSplash from '../components/homepage/MediScanSplash';
 import Hero from '../components/homepage/Hero';
 import HowItWorks from '../components/homepage/HowItWorks';
 import WhyChooseUs from '../components/homepage/WhyChooseUs';
+import Testimonials from '../components/homepage/Testimonials';
+import FinalCta from '../components/homepage/FinalCta'
 
 const HomePage = () => {
     return (
@@ -11,6 +13,8 @@ const HomePage = () => {
             <Hero />
             <HowItWorks />
             <WhyChooseUs />
+            <Testimonials/>
+            <FinalCta/>
         </div>
     );
 };
