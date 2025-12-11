@@ -1,0 +1,45 @@
+{
+    "name": "client",
+    "version": "1.0.0",
+    "description": "React frontend client",
+    "private": true,
+    "scripts": {
+        "dev": "react-scripts start",
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject",
+        "lint": "eslint ."
+    },
+    "dependencies": {
+        "framer-motion": "^12.23.26",
+        "lucide-react": "^0.559.0",
+        "react": "^19.2.1",
+        "react-dom": "^19.2.1",
+        "react-hot-toast": "^2.6.0",
+        "react-router-dom": "^7.10.1",
+        "react-scripts": "5.0.1",
+        "web-vitals": "^5.1.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.1",
+        "autoprefixer": "^10.4.22",
+        "eslint": "^9.39.1",
+        "eslint-plugin-react": "^7.37.5",
+        "globals": "^16.5.0",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^3.4.18"
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
+}

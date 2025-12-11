@@ -1,0 +1,36 @@
+{
+    "name": "api",
+    "version": "1.0.0",
+    "description": "Express backend API with MongoDB",
+    "main": "src/index.js",
+    "scripts": {
+        "dev": "nodemon src/index.js",
+        "start": "node src/index.js",
+        "lint": "eslint ."
+    },
+    "keywords": [
+        "express",
+        "mongodb",
+        "api"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.0.1",
+        "morgan": "^1.10.1",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.1",
+        "eslint": "^9.39.1",
+        "globals": "^16.5.0",
+        "nodemon": "^3.1.11"
+    }
+}
