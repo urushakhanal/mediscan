@@ -2,6 +2,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -32,14 +43,14 @@ const SignIn = () => {
   };
 
   return (
-    <section className="bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:py-12">
+    <section className="min-h-[calc(100vh-3rem)] bg-slate-50 px-4 py-6 dark:bg-slate-950 sm:py-8 flex items-center">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-          <div className="mb-8 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="mb-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
               Welcome back
             </p>
-            <h2 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100 sm:text-4xl">
+            <h2 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">
               Sign in to MediScan
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -53,12 +64,12 @@ const SignIn = () => {
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Email address
               </label>
-              <input
+              <Input
                 type="email"
                 id="email"
                 value={formData.email}
@@ -67,7 +78,7 @@ const SignIn = () => {
                 required
                 onInvalid={(e) => e.target.setCustomValidity("Please enter a valid email address")}
                 onInput={(e) => e.target.setCustomValidity("")}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
+                className="h-12 rounded-xl px-4 text-base"
               />
             </div>
 
@@ -76,7 +87,7 @@ const SignIn = () => {
                 Password
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={formData.password}
@@ -85,7 +96,7 @@ const SignIn = () => {
                   required
                   onInvalid={(e) => e.target.setCustomValidity("Password is required")}
                   onInput={(e) => e.target.setCustomValidity("")}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-12 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
+                  className="h-12 rounded-xl px-4 pr-12 text-base"
                 />
                 <button
                   type="button"
@@ -103,18 +114,39 @@ const SignIn = () => {
                 <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
                 Remember me
               </label>
-              <button type="button" className="text-teal-600 transition hover:text-teal-700 hover:underline dark:text-teal-300 dark:hover:text-teal-200">
-                Forgot password?
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button type="button" className="text-teal-600 transition hover:text-teal-700 hover:underline dark:text-teal-300 dark:hover:text-teal-200">
+                    Forgot password?
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Reset your password</DialogTitle>
+                    <DialogDescription>
+                      Enter your email and we will send a reset link.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <label htmlFor="resetEmail" className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Email address
+                    </label>
+                    <Input id="resetEmail" type="email" placeholder="you@example.com" />
+                  </div>
+                  <DialogFooter className="pt-2">
+                    <Button type="button">Send reset link</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-xl bg-teal-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-12 w-full rounded-xl bg-gradient-to-r from-teal-600 to-cyan-500 text-base text-white hover:from-teal-700 hover:to-cyan-600"
             >
               {isLoading ? "Signing in..." : "Sign In"}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

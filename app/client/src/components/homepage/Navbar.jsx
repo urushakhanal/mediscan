@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Stethoscope, Menu, X, Sun, Moon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -21,11 +21,11 @@ const Button = ({ children, className, variant = "default", ...props }) => {
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const dropdownRef = useRef();
 
   const navItems = ["Home", "How It Works", "Contact"];
@@ -42,10 +42,6 @@ const Navbar = () => {
       setDarkMode(true);
       document.documentElement.classList.add("dark");
     }
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
   }, []);
 
   const toggleDarkMode = () => {
@@ -55,11 +51,13 @@ const Navbar = () => {
     localStorage.setItem("theme", newMode ? "dark" : "light");
   };
 
-  const logout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate("/signin");
-    window.location.reload();
+  const logout = async () => {
+    try {
+      await signOut();
+    } finally {
+      setMobileMenuOpen(false);
+      navigate("/signin");
+    }
   };
 
   useEffect(() => {
@@ -125,29 +123,27 @@ const Navbar = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold uppercase hover:ring-2 ring-white"
+                className="flex items-center gap-2 rounded-full border border-primary/30 bg-white/80 px-3 py-1.5 dark:border-primary/40 dark:bg-gray-800/80"
               >
-                {user.name.charAt(0)}
+                <div className="bg-primary text-white w-9 h-9 rounded-full flex items-center justify-center font-semibold uppercase">
+                  {user.name?.charAt(0) || "U"}
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                  {user.name || "User"}
+                </span>
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 shadow-lg rounded-lg py-2 z-50">
-                  <span className="block px-4 py-2 text-sm text-gray-600 dark:text-white font-medium">{user.name}</span>
-                  <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                  <Link
-  to={
-    user.role === "doctor"
-      ? "/doctor-dashboard"
-      : user.role === "admin"
-      ? "/admin-dashboard"
-      : "/dashboard"
-  }
-  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
->
-  Dashboard
-</Link>
-
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">My Profile</Link>
-                  <button onClick={logout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">Logout</button>
+                <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <div className="px-3 py-2 text-sm text-gray-600 dark:text-gray-200">
+                    {user.name || "User"}
+                  </div>
+                  <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
+                  <button
+                    onClick={logout}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
@@ -199,21 +195,14 @@ const Navbar = () => {
 
           {user ? (
             <>
-              <Link
-  to={
-    user.role === "doctor"
-      ? "/doctor-dashboard"
-      : user.role === "admin"
-      ? "/admin-dashboard"
-      : "/dashboard"
-  }
-  onClick={() => setMobileMenuOpen(false)}
-  className="block text-primary dark:text-cyan-400"
->
-  Dashboard
-</Link>
-
-              <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="block text-primary dark:text-cyan-400">My Profile</Link>
+              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+                <div className="bg-primary text-white w-9 h-9 rounded-full flex items-center justify-center font-semibold uppercase">
+                  {user.name?.charAt(0) || "U"}
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                  {user.name || "User"}
+                </span>
+              </div>
               <button onClick={logout} className="block text-left text-red-600">Logout</button>
             </>
           ) : (
