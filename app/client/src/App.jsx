@@ -9,7 +9,7 @@ import SignUp from './pages/SignUp';
 function App() {
     return (
         <BrowserRouter>
-            <Toaster position="top-right" />
+            <Toaster position="top-center" />
             <MainLayout>
                 <Routes>
                     <Route path="/" element={<HomePage />} />

@@ -1,18 +1,21 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { signUp, isLoading, authError } = useAuth();
   const [role, setRole] = useState("patient");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    specialization: "",
-    licenseNumber: "",
+    phone: "",
+    nmcNumber: "",
   });
 
   const handleChange = (e) => {
@@ -20,49 +23,68 @@ const SignUp = () => {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...formData, role };
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role,
+        phone: role === "patient" ? formData.phone : undefined,
+        nmcNumber: role === "doctor" ? formData.nmcNumber : undefined,
+      };
       if (!payload.name || !payload.email || !payload.password) {
         throw new Error("Please fill in name, email, and password");
       }
-      if (payload.role === "doctor" && !payload.licenseNumber) {
-        throw new Error("License number is required for doctors");
+      if (payload.role === "patient" && !payload.phone) {
+        throw new Error("Phone number is required for patients");
+      }
+      if (payload.role === "doctor" && !payload.nmcNumber) {
+        throw new Error("NMC number is required for doctors");
       }
       setError("");
-      setMessage("Signed up (demo only — no backend connected).");
+      await signUp(payload);
+      navigate("/");
     } catch (err) {
       console.error(err);
-      setError(err.message || "Registration failed");
-      setMessage("");
+      const message = err?.data?.message || err.message || "Registration failed";
+      setError(message);
     }
   };
 
   return (
-      <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-teal-50 to-white px-4 py-16 dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-xl w-full">
-          <div className="bg-white dark:bg-gray-900 shadow-lg rounded-xl p-8 w-full">
-            <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-8">
-              Create Your MediScan Account
-            </h2>
+      <section className="bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:py-12">
+        <div className="mx-auto w-full max-w-2xl">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+            <div className="mb-8 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Get started
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100 sm:text-4xl">
+                Create your MediScan account
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Join in minutes and manage your health records securely.
+              </p>
+            </div>
 
-            {error && (
-              <div className="mb-4 text-red-600 bg-red-100 border border-red-300 rounded p-3 text-sm">
-                {error}
+            {(error || authError) && (
+              <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-200">
+                {error || authError}
               </div>
             )}
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="role" className="block text-gray-700 dark:text-gray-200 mb-2">
-                  Register As
+                <label htmlFor="role" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Register as
                 </label>
                 <select
                   id="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
                 >
                   <option value="patient">Patient</option>
                   <option value="doctor">Doctor</option>
@@ -70,8 +92,8 @@ const SignUp = () => {
               </div>
 
               <div>
-                <label htmlFor="name" className="block text-gray-700 dark:text-gray-200 mb-2">
-                  Full Name
+                <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Full name
                 </label>
                 <input
                   type="text"
@@ -79,14 +101,14 @@ const SignUp = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  placeholder="Your Name"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="Your name"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-gray-700 dark:text-gray-200 mb-2">
-                  Email Address
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Email address
                 </label>
                 <input
                   type="email"
@@ -95,12 +117,12 @@ const SignUp = () => {
                   onChange={handleChange}
                   required
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-gray-700 dark:text-gray-200 mb-2">
+                <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                   Password
                 </label>
                 <div className="relative">
@@ -111,12 +133,12 @@ const SignUp = () => {
                     onChange={handleChange}
                     required
                     placeholder="••••••••"
-                    className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-12 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 dark:text-gray-300"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-teal-600 dark:text-slate-300 dark:hover:text-teal-300"
                     aria-label="Toggle Password Visibility"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -124,33 +146,37 @@ const SignUp = () => {
                 </div>
               </div>
 
+              {role === "patient" && (
+                <div>
+                  <label htmlFor="phone" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Phone number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    placeholder="+15551234567"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
+                  />
+                </div>
+              )}
+
               {role === "doctor" && (
                 <>
                   <div>
-                    <label htmlFor="specialization" className="block text-gray-700 dark:text-gray-200 mb-2">
-                      Specialization
+                    <label htmlFor="nmcNumber" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                      NMC number
                     </label>
                     <input
                       type="text"
-                      id="specialization"
-                      value={formData.specialization}
+                      id="nmcNumber"
+                      value={formData.nmcNumber}
                       onChange={handleChange}
-                      placeholder="e.g. Dermatologist"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="licenseNumber" className="block text-gray-700 dark:text-gray-200 mb-2">
-                      License Number
-                    </label>
-                    <input
-                      type="text"
-                      id="licenseNumber"
-                      value={formData.licenseNumber}
-                      onChange={handleChange}
-                      placeholder="e.g. NMC123456"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      required
+                      placeholder="e.g. NMC-123456"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-900/40"
                     />
                   </div>
                 </>
@@ -158,14 +184,11 @@ const SignUp = () => {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-teal-600 to-cyan-500 hover:from-teal-700 hover:to-cyan-600 text-white font-semibold py-3 rounded-lg transition-all"
+                disabled={isLoading}
+                className="w-full rounded-xl bg-teal-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Sign Up
+                {isLoading ? "Creating account..." : "Sign Up"}
               </button>
-
-              {message && (
-                <p className="text-sm text-green-600 dark:text-green-400">{message}</p>
-              )}
             </form>
           </div>
         </div>
