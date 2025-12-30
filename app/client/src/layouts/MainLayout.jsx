@@ -8,9 +8,9 @@ const MainLayout = ({ children }) => {
     const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 transition-colors">
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 transition-colors">
             <Navbar />
-            <main className={isAuthPage ? 'pt-12' : 'pt-16'}>{children}</main>
+            <main className={`${isAuthPage ? 'pt-14' : 'pt-20'} flex-1`}>{children}</main>
             {!isAuthPage && <Footer />}
         </div>
     );
