@@ -18,19 +18,29 @@ const SymptomCheckerPage = () => {
                         </p>
 
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">How it works</p>
-                            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">How it works</p>
+                                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                                    3 steps
+                                </span>
+                            </div>
+                            <div className="mt-4 space-y-3">
                                 {[
                                     { title: "Select symptoms", detail: "Pick what you feel today." },
                                     { title: "Add details", detail: "Duration, severity, relief." },
                                     { title: "Review summary", detail: "Actionable guidance." },
-                                ].map((step) => (
+                                ].map((step, index) => (
                                     <div
                                         key={step.title}
-                                        className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                        className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                     >
-                                        <p className="text-slate-900 dark:text-slate-100 font-medium">{step.title}</p>
-                                        <p className="mt-1 text-xs">{step.detail}</p>
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-900 dark:text-slate-100 font-medium">{step.title}</p>
+                                            <p className="mt-1 text-xs">{step.detail}</p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
