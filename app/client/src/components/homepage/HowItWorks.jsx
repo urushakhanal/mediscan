@@ -2,85 +2,114 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Brain, Stethoscope, Search } from "lucide-react";
 
-// Motion animation configs
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.2, duration: 0.6 },
-  }),
-};
-
 const steps = [
   {
-    step: "1",
-    title: "Enter Symptoms",
-    description:
-      "Describe your symptoms or upload a skin image. Our dynamic form makes it quick and easy.",
-    icon: <Brain className="h-8 w-8 text-white" />,
-    bg: "from-teal-500 to-cyan-500",
+    step: "01",
+    title: "Describe your symptoms",
+    description: "Type your symptoms or upload a skin image. We tailor the prompts to keep it quick.",
+    icon: Brain,
+    accent: "from-primary to-cyan-400",
+    chip: "1-2 mins",
   },
   {
-    step: "2",
-    title: "Get AI Diagnosis",
-    description:
-      "Our AI model analyzes your data and suggests possible conditions along with urgency level.",
-    icon: <Stethoscope className="h-8 w-8 text-white" />,
-    bg: "from-cyan-500 to-blue-500",
+    step: "02",
+    title: "AI insight + urgency",
+    description: "MediScan ranks likely conditions and surfaces urgency so you know what to do next.",
+    icon: Stethoscope,
+    accent: "from-cyan-400 to-secondary",
+    chip: "Real-time",
   },
   {
-    step: "3",
-    title: "Book a Doctor",
-    description:
-      "Find and book qualified specialists near you based on the AI’s recommendation.",
-    icon: <Search className="h-8 w-8 text-white" />,
-    bg: "from-blue-500 to-indigo-500",
+    step: "03",
+    title: "Book the right doctor",
+    description: "Match with verified doctors, pick a slot, and share your pre-check results instantly.",
+    icon: Search,
+    accent: "from-secondary to-primary",
+    chip: "In a few taps",
   },
 ];
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
 
 const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="py-24 px-6 md:px-12 bg-gradient-to-b from-white to-teal-50 dark:from-gray-950 dark:to-gray-900"
+      className="py-20 px-6 md:px-12 bg-gradient-to-b from-white to-teal-50 dark:from-slate-950 dark:to-slate-900"
     >
-      <div className="max-w-7xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
-          <span className="bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent">
-            How It Works
-          </span>
-        </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-300 mb-16">
-          Just three simple steps to access fast, accurate, and smart healthcare.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {steps.map((step, index) => (
-            <motion.div
-              key={index}
-              custom={index}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={fadeInUp}
-              className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-md hover:shadow-xl transition-all duration-300 rounded-xl p-8 text-center group"
-            >
-              <div
-                className={`p-4 rounded-full bg-gradient-to-r ${step.bg} shadow-lg inline-flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-105`}
-              >
-                {step.icon}
-              </div>
-              <span className="text-sm font-bold text-teal-600 dark:text-teal-400 mb-2 block uppercase tracking-wide">
-                Step {step.step}
-              </span>
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
-                {step.title}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">{step.description}</p>
-            </motion.div>
-          ))}
+      <div className="max-w-6xl mx-auto space-y-10">
+        <div className="text-center space-y-3">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary">How it works</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Fast, guided care in 3 steps
+            </span>
+          </h2>
+          <p className="text-lg text-slate-600 dark:text-slate-300">
+            A streamlined flow to move from symptoms to a booked appointment.
+          </p>
         </div>
+
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-120px" }}
+          className="relative grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/10 rounded-3xl" />
+          {steps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <motion.div
+                key={step.step}
+                variants={item}
+                className="relative overflow-hidden rounded-2xl border border-white/30 dark:border-white/10 bg-white/90 dark:bg-slate-900/70 shadow-xl shadow-cyan-500/10 backdrop-blur"
+              >
+                <div className="absolute inset-0 opacity-60 bg-gradient-to-br from-white/30 via-transparent to-slate-900/10 dark:from-white/5" />
+                <div className="relative flex flex-col gap-4 p-6">
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.accent} text-white shadow-lg shadow-primary/25`}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-semibold text-primary uppercase tracking-[0.18em]">
+                      {step.step}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-semibold text-primary/80">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                      <span className="h-2 w-2 rounded-full bg-primary" />
+                      {step.chip}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );

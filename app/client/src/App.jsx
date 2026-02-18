@@ -5,15 +5,17 @@ import HomePage from './pages/HomePage';
 import HealthPage from './pages/HealthPage';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import SymptomCheckerPage from './pages/SymptomCheckerPage';
 
 function App() {
     return (
         <BrowserRouter>
-            <Toaster position="top-right" />
+            <Toaster position="top-center" />
             <MainLayout>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/health" element={<HealthPage />} />
+                    <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route
