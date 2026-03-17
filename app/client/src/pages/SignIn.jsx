@@ -1,157 +1,118 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
+import React, { useState } from 'react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SignIn = () => {
-  const navigate = useNavigate();
-  const { signIn, isLoading, authError } = useAuth();
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
+    const { signIn } = useAuth();
+    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setError(""); // Clear error on input change
-    setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-  };
+    const handleChange = (event) => {
+        setError('');
+        const { id, value } = event.target;
+        setFormData((prev) => ({ ...prev, [id]: value }));
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (!formData.email || !formData.password) {
-        throw new Error("Please enter email and password");
-      }
-      setError("");
-      await signIn(formData);
-      navigate("/");
-    } catch (err) {
-      console.error(err);
-      const message = err?.data?.message || err.message || "Invalid email or password";
-      setError(message);
-    }
-  };
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError('');
 
-  return (
-    <section className="min-h-[calc(100vh-3rem)] bg-slate-50 px-4 py-6 dark:bg-slate-950 sm:py-8 flex items-center">
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-          <div className="mb-6 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Welcome back
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">
-              Sign in to MediScan
-            </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Access your dashboard and continue your care journey.
-            </p>
-          </div>
+        if (!formData.email || !formData.password) {
+            setError('Email and password are required.');
+            return;
+        }
 
-          {(error || authError) && (
-            <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-200">
-              {error || authError}
+        try {
+            setLoading(true);
+            await signIn(formData);
+            navigate('/health');
+        } catch (err) {
+            const firstError = err.data?.errors?.[0];
+            const message = firstError || err.message || 'Unable to sign in.';
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-16">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-100/60 via-emerald-100/40 to-white dark:from-slate-900 dark:via-slate-950 dark:to-black" />
+            <div className="relative w-full max-w-lg rounded-2xl border border-white/40 bg-white/80 p-8 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">MediScan</p>
+                <h1 className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">Welcome back</h1>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Sign in to access your healthcare workspace.</p>
+
+                {error && (
+                    <div className="mt-5 rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+                        {error}
+                    </div>
+                )}
+
+                <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="you@example.com"
+                            required
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                            Password
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                id="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Enter your password"
+                                required
+                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-11 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
+                                aria-label="Toggle password visibility"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-500 px-4 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-500 hover:to-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <LogIn size={18} />
+                        {loading ? 'Signing in...' : 'Sign in'}
+                    </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
+                    New to MediScan?{' '}
+                    <Link to="/signup" className="font-semibold text-cyan-700 hover:underline dark:text-cyan-300">
+                        Create an account
+                    </Link>
+                </p>
             </div>
-          )}
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Email address
-              </label>
-              <Input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                required
-                onInvalid={(e) => e.target.setCustomValidity("Please enter a valid email address")}
-                onInput={(e) => e.target.setCustomValidity("")}
-                className="h-12 rounded-xl px-4 text-base"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  required
-                  onInvalid={(e) => e.target.setCustomValidity("Password is required")}
-                  onInput={(e) => e.target.setCustomValidity("")}
-                  className="h-12 rounded-xl px-4 pr-12 text-base"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-teal-600 dark:text-slate-300 dark:hover:text-teal-300"
-                  aria-label="Toggle Password Visibility"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
-                Remember me
-              </label>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button type="button" className="text-teal-600 transition hover:text-teal-700 hover:underline dark:text-teal-300 dark:hover:text-teal-200">
-                    Forgot password?
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Reset your password</DialogTitle>
-                    <DialogDescription>
-                      Enter your email and we will send a reset link.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-3">
-                    <label htmlFor="resetEmail" className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                      Email address
-                    </label>
-                    <Input id="resetEmail" type="email" placeholder="you@example.com" />
-                  </div>
-                  <DialogFooter className="pt-2">
-                    <Button type="button">Send reset link</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-12 w-full rounded-xl bg-gradient-to-r from-teal-600 to-cyan-500 text-base text-white hover:from-teal-700 hover:to-cyan-600"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };
 
 export default SignIn;

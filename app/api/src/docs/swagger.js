@@ -14,9 +14,9 @@ const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'App API',
-            version: '1.0.0',
-            description: 'API documentation for the App monorepo backend',
+            title: `${config.appName} API`,
+            version: config.appVersion,
+            description: 'API documentation for MediScan backend services',
             contact: {
                 name: 'API Support',
             },
@@ -35,6 +35,14 @@ const swaggerOptions = {
             {
                 name: 'Auth',
                 description: 'Authentication and account management',
+            },
+            {
+                name: 'Users',
+                description: 'Superadmin-only user management',
+            },
+            {
+                name: 'Symptoms',
+                description: 'AI-assisted symptom analysis and triage',
             },
         ],
         components: {

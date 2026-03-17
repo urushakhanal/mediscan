@@ -7,9 +7,11 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const config = require('./config/env');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./modules/auth/routes/auth.routes');
 const userRoutes = require('./modules/users/routes/user.routes');
+const symptomRoutes = require('./modules/symptoms/routes/symptom.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./docs/swagger');
 
@@ -22,7 +24,7 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: config.clientUrl,
     credentials: true,
 }));
 
@@ -60,6 +62,7 @@ app.get('/', (req, res) => {
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/symptoms', symptomRoutes);
 
 // ===========================
 // Error Handling

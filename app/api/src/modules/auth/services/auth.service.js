@@ -13,8 +13,9 @@ const createToken = (user) => {
 
 const sanitizeUser = (user) => {
     const obj = user.toObject ? user.toObject() : user;
-    const { password, __v, ...rest } = obj;
-    return rest;
+    delete obj.password;
+    delete obj.__v;
+    return obj;
 };
 
 const registerUser = async ({ name, email, password, role = 'patient', phone, nmcNumber }) => {
@@ -49,7 +50,7 @@ const registerUser = async ({ name, email, password, role = 'patient', phone, nm
 };
 
 const loginUser = async ({ email, password }) => {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
         const error = new Error('Invalid email or password.');
         error.statusCode = 401;
@@ -68,7 +69,7 @@ const loginUser = async ({ email, password }) => {
 };
 
 const changePassword = async (userId, { currentPassword, newPassword }) => {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('+password');
     if (!user) {
         const error = new Error('User not found.');
         error.statusCode = 404;

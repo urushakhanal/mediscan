@@ -4,6 +4,9 @@ const globals = require('globals');
 const reactPlugin = require('eslint-plugin-react');
 
 module.exports = [
+    {
+        ignores: ['eslint.config.js', 'postcss.config.js', 'tailwind.config.js', 'build/**'],
+    },
     js.configs.recommended,
     {
         files: ['**/*.{js,jsx}'],
@@ -18,6 +21,7 @@ module.exports = [
             globals: {
                 ...globals.browser,
                 ...globals.es2021,
+                process: 'readonly',
             },
         },
         plugins: {

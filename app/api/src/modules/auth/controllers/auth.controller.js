@@ -1,4 +1,5 @@
 const config = require('../../../config/env');
+const User = require('../../../database/models/user.model');
 const validateRegisterDto = require('../dto/register.dto');
 const validateLoginDto = require('../dto/login.dto');
 const validateChangePasswordDto = require('../dto/changePassword.dto');
@@ -14,6 +15,7 @@ const setAuthCookie = (res, token) => {
         httpOnly: true,
         sameSite: 'lax',
         secure: config.nodeEnv === 'production',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 };
@@ -23,6 +25,7 @@ const clearAuthCookie = (res) => {
         httpOnly: true,
         sameSite: 'lax',
         secure: config.nodeEnv === 'production',
+        path: '/',
         expires: new Date(0),
     });
 };
@@ -54,7 +57,15 @@ const registerSuperadmin = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Invalid setup key for superadmin creation.' });
         }
 
-        const { valid, errors, data } = validateRegisterDto({ ...req.body, role: 'superadmin' });
+        const existingSuperadmin = await User.exists({ role: 'superadmin' });
+        if (existingSuperadmin) {
+            return res.status(409).json({ success: false, message: 'Superadmin account already exists.' });
+        }
+
+        const { valid, errors, data } = validateRegisterDto(
+            { ...req.body, role: 'superadmin' },
+            { allowSuperadmin: true }
+        );
         if (!valid) {
             return res.status(400).json({ success: false, message: 'Validation failed', errors });
         }

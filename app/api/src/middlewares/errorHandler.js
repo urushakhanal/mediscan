@@ -10,19 +10,20 @@
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
     // Log error for debugging
     console.error('❌ Error occurred:');
     console.error('Message:', err.message);
     console.error('Stack:', err.stack);
 
     // Determine status code
-    const statusCode = err.statusCode || res.statusCode || 500;
+    const statusCode = err.statusCode || (res.statusCode >= 400 ? res.statusCode : 500);
+    const duplicateKeyError = err && err.code === 11000;
 
     // Prepare error response
     const errorResponse = {
         success: false,
-        message: err.message || 'Internal Server Error',
+        message: duplicateKeyError ? 'Duplicate value for a unique field.' : (err.message || 'Internal Server Error'),
         ...(process.env.NODE_ENV === 'development' && {
             // Include stack trace only in development
             stack: err.stack,

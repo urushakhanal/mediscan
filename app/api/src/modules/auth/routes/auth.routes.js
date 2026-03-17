@@ -42,7 +42,7 @@ const router = express.Router();
  *                 format: password
  *               role:
  *                 type: string
- *                 enum: [patient, doctor, superadmin]
+ *                 enum: [patient, doctor]
  *               phone:
  *                 type: string
  *                 description: Required when role is patient

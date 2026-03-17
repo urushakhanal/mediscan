@@ -2,8 +2,9 @@ const User = require('../../../database/models/user.model');
 
 const sanitizeUser = (user) => {
     const obj = user.toObject ? user.toObject() : user;
-    const { password, __v, ...rest } = obj;
-    return rest;
+    delete obj.password;
+    delete obj.__v;
+    return obj;
 };
 
 const getAllUsers = async () => {

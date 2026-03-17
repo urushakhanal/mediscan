@@ -4,7 +4,6 @@
  */
 
 const express = require('express');
-const mongoose = require('mongoose');
 const config = require('../config/env');
 const { getConnectionState, isConnected } = require('../config/db');
 
@@ -40,7 +39,7 @@ const router = express.Router();
  *                   properties:
  *                     name:
  *                       type: string
- *                       example: AppMonorepo
+ *                       example: MediScan
  *                     version:
  *                       type: string
  *                       example: 1.0.0

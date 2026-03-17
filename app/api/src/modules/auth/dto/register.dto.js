@@ -1,8 +1,11 @@
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const allowedRoles = ['patient', 'doctor', 'superadmin'];
+const defaultAllowedRoles = ['patient', 'doctor'];
 
-const validateRegisterDto = (payload = {}) => {
+const validateRegisterDto = (payload = {}, options = {}) => {
     const errors = [];
+    const allowedRoles = options.allowSuperadmin
+        ? [...defaultAllowedRoles, 'superadmin']
+        : defaultAllowedRoles;
     const name = typeof payload.name === 'string' ? payload.name.trim() : '';
     const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
     const password = typeof payload.password === 'string' ? payload.password : '';

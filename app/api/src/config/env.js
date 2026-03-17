@@ -22,12 +22,13 @@ const config = {
     // MongoDB connection URI
     mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/mediscan',
     mongoDbName: process.env.MONGO_DB_NAME || 'mediscan',
+    clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
 
     // Node environment
     nodeEnv: process.env.NODE_ENV || 'development',
 
     // Application metadata
-    appName: process.env.APP_NAME || 'AppMonorepo',
+    appName: process.env.APP_NAME || 'MediScan',
     appVersion: process.env.APP_VERSION || '1.0.0',
 
     // Auth settings
@@ -36,12 +37,17 @@ const config = {
 
     // Superadmin bootstrap key
     superadminSetupKey: process.env.SUPERADMIN_SETUP_KEY || 'change_me_superadmin',
+
+    // AI provider (OpenRouter)
+    openRouterApiKey: process.env.OPENROUTER_API_KEY || '',
+    openRouterModel: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free',
+    openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
 };
 
 // Validate required environment variables
 if (!process.env.MONGO_URI) {
     console.warn('⚠️  Warning: MONGO_URI is not set in environment variables');
-    console.warn('⚠️  Using default: mongodb://localhost:27017/app_db');
+    console.warn('⚠️  Using default: mongodb://localhost:27017/mediscan');
 }
 
 if (!process.env.JWT_SECRET) {

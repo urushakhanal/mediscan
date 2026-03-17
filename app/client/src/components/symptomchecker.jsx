@@ -1,39 +1,41 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "./ui/button";
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from './ui/button';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 const symptomsList = [
-  "Fever", "Cough", "Headache", "Sore throat", "Runny nose", "Body aches",
-  "Fatigue", "Nausea", "Dizziness", "Chest pain", "Shortness of breath",
-  "Loss of taste/smell", "Stomach pain", "Diarrhea", "Rash"
+  'Fever', 'Cough', 'Headache', 'Sore throat', 'Runny nose', 'Body aches',
+  'Fatigue', 'Nausea', 'Dizziness', 'Chest pain', 'Shortness of breath',
+  'Loss of taste/smell', 'Stomach pain', 'Diarrhea', 'Rash'
 ];
 
 const durations = [
-  { value: "1-day", label: "1 day" },
-  { value: "2-3-days", label: "2–3 days" },
-  { value: "4-7-days", label: "4–7 days" },
-  { value: "1-2-weeks", label: "1–2 weeks" },
-  { value: "more-than-2-weeks", label: "More than 2 weeks" },
+  { value: '1-day', label: '1 day' },
+  { value: '2-3-days', label: '2-3 days' },
+  { value: '4-7-days', label: '4-7 days' },
+  { value: '1-2-weeks', label: '1-2 weeks' },
+  { value: 'more-than-2-weeks', label: 'More than 2 weeks' },
 ];
 
-const severityEmojis = ["😊", "🙂", "😐", "😕", "😟", "😰", "😨", "😱", "🤒", "🤕"];
-const severityLabels = ["Minimal", "Mild", "Mild-Moderate", "Moderate", "Moderate-High", "High", "Severe", "Very Severe", "Extreme", "Critical"];
+const severityLabels = ['Minimal', 'Mild', 'Mild-Moderate', 'Moderate', 'Moderate-High', 'High', 'Severe', 'Very Severe', 'Extreme', 'Critical'];
 
 const SymptomChecker = ({ embedded = false }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [particles, setParticles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const [formData, setFormData] = useState({
     symptoms: [],
-    duration: "",
+    duration: '',
     severity: 5,
-    reliefFactors: ""
+    reliefFactors: ''
   });
 
-  const [diagnosisResult, setDiagnosisResult] = useState("");
+  const [analysis, setAnalysis] = useState(null);
 
-  /* ---------------- Particles ---------------- */
   useEffect(() => {
     const p = Array.from({ length: 20 }).map((_, i) => ({
       id: i,
@@ -58,7 +60,6 @@ const SymptomChecker = ({ embedded = false }) => {
     return () => clearInterval(interval);
   }, []);
 
-  /* ---------------- Helpers ---------------- */
   const handleCheckbox = symptom => {
     setFormData(prev => ({
       ...prev,
@@ -70,83 +71,88 @@ const SymptomChecker = ({ embedded = false }) => {
 
   const isStepValid = () => {
     if (currentStep === 1) return formData.symptoms.length > 0;
-    if (currentStep === 2) return formData.duration;
+    if (currentStep === 2) return !!formData.duration;
     return true;
   };
 
-  /* ---------------- Mock Diagnosis ---------------- */
-  const generateDiagnosis = () => {
-    const common = formData.symptoms.join(", ");
+  const handleSubmit = async () => {
+    setLoading(true);
+    setSubmitError('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/symptoms/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
 
-    return `
-1. Viral Infection (Common Cold / Flu)
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorMessage = data?.errors?.[0] || data?.message || `Request failed with status ${response.status}`;
+        throw new Error(errorMessage);
+      }
 
-2.
-- Get enough rest and stay hydrated
-- Avoid cold drinks
-- Monitor fever regularly
-
-3.
-- Paracetamol for fever
-- ORS for hydration
-- Steam inhalation
-
-4. If symptoms worsen or persist beyond 3–4 days, consult a doctor.
-
-Symptoms noted: ${common}
-`;
+      setAnalysis(data);
+      setShowModal(true);
+    } catch (error) {
+      setSubmitError(error.message || 'Unable to analyze symptoms right now.');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleSubmit = () => {
-    const result = generateDiagnosis();
-    setDiagnosisResult(result);
-    setShowModal(true);
-  };
-
-  /* ---------------- Extract Sections ---------------- */
-  const extractSectionLines = (text, start, end) => {
-    const lines = text.split("\n");
-    const s = lines.findIndex(l => l.startsWith(start));
-    const e = lines.findIndex(l => l.startsWith(end));
-    if (s === -1) return [];
-    return lines.slice(s + 1, e !== -1 ? e : undefined)
-      .filter(l => l.trim().startsWith("-"))
-      .map(l => l.replace("-", "").trim());
-  };
-
-  const diagnosisText =
-    diagnosisResult.split("\n").find(l => l.startsWith("1."))?.replace("1.", "").trim();
-
-  const healthTips = extractSectionLines(diagnosisResult, "2.", "3.");
-  const medicines = extractSectionLines(diagnosisResult, "3.", "4.");
-  const adviceText =
-    diagnosisResult.split("\n").find(l => l.startsWith("4."))?.replace("4.", "").trim();
 
   const totalSteps = 5;
   const progress = Math.round((currentStep / totalSteps) * 100);
 
-  /* ---------------- Export ---------------- */
   const handleExport = () => {
-    const content = `AI Health Report\n\nDiagnosis:\n${diagnosisText}\n\nTips:\n${healthTips.join("\n")}\n\nRemedies:\n${medicines.join("\n")}\n\nAdvice:\n${adviceText}`;
-    const blob = new Blob([content], { type: "text/plain" });
-    const link = document.createElement("a");
+    if (!analysis?.assessment) return;
+
+    const report = analysis.assessment;
+    const content = [
+      'AI Health Report',
+      '',
+      `Source: ${analysis.source}${analysis.model ? ` (${analysis.model})` : ''}`,
+      `Triage: ${report.triageLevel}`,
+      `Urgency: ${report.urgencyMessage}`,
+      '',
+      'Summary:',
+      report.summary || '',
+      '',
+      'Possible Conditions:',
+      ...(report.possibleConditions || []).map((item) => `- ${item.name} (${item.confidence}%) - ${item.reason}`),
+      '',
+      'Care Tips:',
+      ...(report.careTips || []).map((item) => `- ${item}`),
+      '',
+      'OTC Options:',
+      ...(report.otcOptions || []).map((item) => `- ${item}`),
+      '',
+      'Advice:',
+      report.advice || '',
+      '',
+      'When to seek immediate care:',
+      report.immediateCare || '',
+      '',
+      'Disclaimer:',
+      report.disclaimer || '',
+    ].join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = "health-report.txt";
+    link.download = 'symptom-assessment.txt';
     link.click();
   };
 
-  /* ---------------- UI ---------------- */
   const wrapperClass = embedded
-    ? "relative w-full"
-    : "relative min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-900 p-6 flex items-center justify-center";
+    ? 'relative w-full'
+    : 'relative min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-900 p-6 flex items-center justify-center';
   const cardClass = embedded
-    ? "w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-    : "w-full max-w-4xl bg-white dark:bg-slate-800 p-6 rounded-xl shadow";
+    ? 'w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900'
+    : 'w-full max-w-4xl bg-white dark:bg-slate-800 p-6 rounded-xl shadow';
 
   return (
     <div className={wrapperClass}>
-
-      {/* particles */}
       {!embedded && (
         <div className="absolute inset-0 -z-10 overflow-hidden hidden dark:block">
           {particles.map(p => (
@@ -167,14 +173,16 @@ Symptoms noted: ${common}
             <span>{progress}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-700">
-            <div
-              className="h-full rounded-full bg-slate-300 dark:bg-slate-500"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="h-full rounded-full bg-slate-300 dark:bg-slate-500" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
-        {/* STEP 1 */}
+        {submitError && (
+          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+            {submitError}
+          </div>
+        )}
+
         {currentStep === 1 && (
           <>
             <h3 className="font-semibold mb-3">Select Symptoms</h3>
@@ -194,7 +202,6 @@ Symptoms noted: ${common}
           </>
         )}
 
-        {/* STEP 2 */}
         {currentStep === 2 && (
           <>
             <h3 className="font-semibold mb-3">Duration</h3>
@@ -214,7 +221,6 @@ Symptoms noted: ${common}
           </>
         )}
 
-        {/* STEP 3 */}
         {currentStep === 3 && (
           <>
             <h3 className="font-semibold mb-3">Severity</h3>
@@ -224,11 +230,10 @@ Symptoms noted: ${common}
                 min="1"
                 max="10"
                 value={formData.severity}
-                onChange={e => setFormData(p => ({ ...p, severity: +e.target.value }))}
+                onChange={e => setFormData(p => ({ ...p, severity: Number(e.target.value) }))}
                 className="w-full"
               />
               <div className="text-center mt-4">
-                <span className="text-3xl">{severityEmojis[formData.severity - 1]}</span>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {severityLabels[formData.severity - 1]}
                 </p>
@@ -237,78 +242,98 @@ Symptoms noted: ${common}
           </>
         )}
 
-        {/* STEP 4 */}
         {currentStep === 4 && (
           <div className="space-y-3">
             <h3 className="font-semibold">Relief factors</h3>
             <textarea
               className="w-full min-h-[120px] rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
               placeholder="What helps or worsens the symptoms?"
+              value={formData.reliefFactors}
               onChange={e => setFormData(p => ({ ...p, reliefFactors: e.target.value }))}
             />
           </div>
         )}
 
-        {/* STEP 5 */}
         {currentStep === 5 && (
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
               <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Symptoms</p>
               <p className="mt-1 text-slate-700 dark:text-slate-200">
-                {formData.symptoms.length ? formData.symptoms.join(", ") : "None selected"}
+                {formData.symptoms.length ? formData.symptoms.join(', ') : 'None selected'}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
               <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Duration</p>
-              <p className="mt-1 text-slate-700 dark:text-slate-200">{formData.duration || "Not set"}</p>
+              <p className="mt-1 text-slate-700 dark:text-slate-200">{formData.duration || 'Not set'}</p>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 sm:col-span-2">
               <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Severity</p>
-              <p className="mt-1 text-slate-700 dark:text-slate-200">
-                {severityLabels[formData.severity - 1]}
-              </p>
+              <p className="mt-1 text-slate-700 dark:text-slate-200">{severityLabels[formData.severity - 1]}</p>
             </div>
           </div>
         )}
 
-        {/* Controls */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t border-slate-200 pt-4 dark:border-slate-700">
-          <Button
-            variant="outline"
-            disabled={currentStep === 1}
-            onClick={() => setCurrentStep(s => s - 1)}
-          >
+          <Button variant="outline" disabled={currentStep === 1 || loading} onClick={() => setCurrentStep(s => s - 1)}>
             Previous
           </Button>
           {currentStep < 5 ? (
-            <Button disabled={!isStepValid()} onClick={() => setCurrentStep(s => s + 1)}>
+            <Button disabled={!isStepValid() || loading} onClick={() => setCurrentStep(s => s + 1)}>
               Next
             </Button>
           ) : (
-            <Button onClick={handleSubmit}>Get Diagnosis</Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Analyzing...' : 'Get Diagnosis'}
+            </Button>
           )}
         </div>
       </div>
 
-      {/* MODAL */}
       <AnimatePresence>
-        {showModal && (
-          <motion.div className="fixed inset-0 bg-black/60 flex items-center justify-center px-4">
-            <motion.div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-3xl w-full">
-              <h3 className="text-xl font-bold mb-4">Diagnosis</h3>
-              <p><b>{diagnosisText}</b></p>
+        {showModal && analysis?.assessment && (
+          <motion.div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
+            <motion.div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-bold mb-2">Assessment Result</h3>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-4">
+                Source: {analysis.source}{analysis.model ? ` (${analysis.model})` : ''}
+              </p>
 
-              <h4 className="mt-4 font-semibold">Health Tips</h4>
-              <ul className="list-disc ml-5">
-                {healthTips.map((t, i) => <li key={i}>{t}</li>)}
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 mb-4">
+                <p><b>Triage:</b> {analysis.assessment.triageLevel}</p>
+                <p><b>Urgency:</b> {analysis.assessment.urgencyMessage}</p>
+              </div>
+
+              <h4 className="font-semibold">Summary</h4>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{analysis.assessment.summary}</p>
+
+              <h4 className="mt-4 font-semibold">Possible Conditions</h4>
+              <ul className="list-disc ml-5 text-sm space-y-1">
+                {(analysis.assessment.possibleConditions || []).map((item, index) => (
+                  <li key={`${item.name}-${index}`}>
+                    <b>{item.name}</b> ({item.confidence}%): {item.reason}
+                  </li>
+                ))}
               </ul>
 
-              <h4 className="mt-4 font-semibold">Remedies</h4>
-              <ul className="list-disc ml-5">
-                {medicines.map((m, i) => <li key={i}>{m}</li>)}
+              <h4 className="mt-4 font-semibold">Care Tips</h4>
+              <ul className="list-disc ml-5 text-sm space-y-1">
+                {(analysis.assessment.careTips || []).map((tip, index) => <li key={`tip-${index}`}>{tip}</li>)}
               </ul>
 
-              <p className="mt-4"><b>Advice:</b> {adviceText}</p>
+              <h4 className="mt-4 font-semibold">OTC Options</h4>
+              <ul className="list-disc ml-5 text-sm space-y-1">
+                {(analysis.assessment.otcOptions || []).map((otc, index) => <li key={`otc-${index}`}>{otc}</li>)}
+              </ul>
+
+              <h4 className="mt-4 font-semibold">Advice</h4>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{analysis.assessment.advice}</p>
+
+              <h4 className="mt-4 font-semibold">When to seek immediate care</h4>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{analysis.assessment.immediateCare}</p>
+
+              <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                {analysis.assessment.disclaimer}
+              </p>
 
               <div className="flex flex-wrap gap-3 mt-6">
                 <Button variant="outline" onClick={() => setShowModal(false)}>Close</Button>
