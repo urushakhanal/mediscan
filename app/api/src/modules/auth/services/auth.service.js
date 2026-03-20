@@ -18,7 +18,7 @@ const sanitizeUser = (user) => {
     return obj;
 };
 
-const registerUser = async ({ name, email, password, role = 'patient', phone, nmcNumber }) => {
+const registerUser = async ({ name, email, password, role = 'patient', phone, nmcNumber, specialization }) => {
     const existing = await User.findOne({ email });
     if (existing) {
         const error = new Error('User with this email already exists.');
@@ -43,6 +43,8 @@ const registerUser = async ({ name, email, password, role = 'patient', phone, nm
         role,
         phone,
         nmcNumber,
+        specialization,
+        isVerified: false,
     });
     const token = createToken(user);
 

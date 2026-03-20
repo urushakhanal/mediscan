@@ -97,11 +97,11 @@ const Hero = () => {
 
           <Button
             variant="outline"
-            onClick={() => navigate('/signup')}
+            onClick={() => navigate('/doctors')}
             className="flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-full border border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
           >
             <Search className="h-5 w-5" />
-            Join as Doctor
+            Find Doctors
             <ChevronRight className="h-4 w-4" />
           </Button>
         </motion.div>

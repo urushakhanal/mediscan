@@ -63,6 +63,8 @@ const swaggerOptions = {
                         role: { type: 'string', enum: ['patient', 'doctor', 'superadmin'] },
                         phone: { type: 'string' },
                         nmcNumber: { type: 'string' },
+                        specialization: { type: 'string', enum: ['general-medicine', 'cardiology', 'dermatology', 'neurology', 'pediatrics'] },
+                        isVerified: { type: 'boolean' },
                         createdAt: { type: 'string', format: 'date-time' },
                         updatedAt: { type: 'string', format: 'date-time' },
                     },

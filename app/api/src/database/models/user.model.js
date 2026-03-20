@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { DOCTOR_SPECIALIZATIONS } = require('../../constants/user.constants');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -38,6 +39,15 @@ const userSchema = new mongoose.Schema({
         sparse: true,
         unique: true,
         maxlength: 50,
+    },
+    specialization: {
+        type: String,
+        enum: DOCTOR_SPECIALIZATIONS,
+        trim: true,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
     },
 }, {
     timestamps: true,

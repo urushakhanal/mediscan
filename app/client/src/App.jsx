@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
@@ -6,6 +6,13 @@ import HealthPage from './pages/HealthPage';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import SymptomCheckerPage from './pages/SymptomCheckerPage';
+import InitSuperadmin from './pages/InitSuperadmin';
+import DoctorsPage from './pages/DoctorsPage';
+import DoctorDetailPage from './pages/DoctorDetailPage';
+import AdminLayout from './components/admin/AdminLayout';
+import SuperadminRoute from './components/admin/SuperadminRoute';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 function App() {
     return (
@@ -16,8 +23,23 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/health" element={<HealthPage />} />
                     <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
+                    <Route path="/doctors" element={<DoctorsPage />} />
+                    <Route path="/doctors/:id" element={<DoctorDetailPage />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
+                    <Route path="/init-superadmin" element={<InitSuperadmin />} />
+                    <Route
+                        path="/admin"
+                        element={
+                            <SuperadminRoute>
+                                <AdminLayout />
+                            </SuperadminRoute>
+                        }
+                    >
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="users" element={<AdminUsersPage />} />
+                    </Route>
                     <Route
                         path="*"
                         element={

@@ -29,7 +29,7 @@ const SignIn = () => {
         try {
             setLoading(true);
             await signIn(formData);
-            navigate('/health');
+            navigate('/');
         } catch (err) {
             const firstError = err.data?.errors?.[0];
             const message = firstError || err.message || 'Unable to sign in.';

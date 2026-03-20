@@ -2,13 +2,19 @@ const express = require('express');
 const authMiddleware = require('../../auth/middlewares/auth.middleware');
 const requireRole = require('../../auth/middlewares/requireRole.middleware');
 const {
+    listVerifiedDoctors,
+    findVerifiedDoctor,
     listUsers,
     findUser,
     modifyUser,
+    verifyDoctor,
     removeUser,
 } = require('../controllers/user.controller');
 
 const router = express.Router();
+
+router.get('/doctors', listVerifiedDoctors);
+router.get('/doctors/:id', findVerifiedDoctor);
 
 /**
  * Superadmin-protected user management
@@ -129,6 +135,8 @@ router.get('/:id', findUser);
  *         description: Not found
  */
 router.put('/:id', modifyUser);
+
+router.patch('/:id/verify-doctor', verifyDoctor);
 
 /**
  * @swagger

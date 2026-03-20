@@ -46,3 +46,13 @@ export const me = (token) => request('/api/auth/me', { token });
 
 export const changePassword = (payload) =>
     request('/api/auth/change-password', { method: 'POST', body: payload });
+
+export const getVerifiedDoctors = () => request('/api/users/doctors');
+export const getVerifiedDoctorById = (id) => request(`/api/users/doctors/${id}`);
+
+export const getUsers = () => request('/api/users');
+export const getUserById = (id) => request(`/api/users/${id}`);
+export const updateUserById = (id, payload) => request(`/api/users/${id}`, { method: 'PUT', body: payload });
+export const verifyDoctorById = (id, payload) =>
+    request(`/api/users/${id}/verify-doctor`, { method: 'PATCH', body: payload });
+export const deleteUserById = (id) => request(`/api/users/${id}`, { method: 'DELETE' });
