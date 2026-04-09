@@ -14,6 +14,11 @@ const navigationItems = [
         icon: Stethoscope,
     },
     {
+        label: 'Patients',
+        to: '/admin/patients',
+        icon: Users,
+    },
+    {
         label: 'Care Plans',
         to: '/admin/care-plans',
         icon: ClipboardList,
@@ -22,11 +27,6 @@ const navigationItems = [
         label: 'Plan Requests',
         to: '/admin/care-plan-requests',
         icon: ListChecks,
-    },
-    {
-        label: 'Patients',
-        to: '/admin/patients',
-        icon: Users,
     },
 ];
 
@@ -53,7 +53,7 @@ const AdminLayout = () => {
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Admin</p>
-                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">MediScan Dashboard</h1>
+                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Dashboard</h1>
                         </div>
                     </div>
 
