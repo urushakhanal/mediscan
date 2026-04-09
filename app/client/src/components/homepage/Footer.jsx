@@ -46,31 +46,31 @@ const Footer = () => {
   return (
     <motion.footer
       id="contact"
-      className="relative overflow-hidden bg-gradient-to-b from-slate-100 via-white to-slate-100 px-6 py-12 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white md:px-10 lg:px-12"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-100 via-white to-slate-100 px-6 py-9 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white md:px-10 lg:px-12"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
       viewport={{ once: true }}
     >
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-8 grid gap-5 md:grid-cols-[1.3fr_0.9fr_1fr]">
+        <div className="mb-6 grid gap-4 md:grid-cols-[1.3fr_0.9fr_1fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
               MediScan
             </p>
-            <h2 className="mt-4 max-w-md text-3xl font-bold tracking-tight text-teal-600 dark:text-teal-400 md:text-4xl">
+            <h2 className="mt-3 max-w-md text-2xl font-bold tracking-tight text-teal-600 dark:text-teal-400 md:text-3xl">
               Simple digital care with a calmer, more connected experience.
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-gray-600 dark:text-slate-300 md:text-base">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-600 dark:text-slate-300">
               Check symptoms, explore specialists, and take the next step with confidence through one streamlined healthcare platform.
             </p>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               {socialLinks.map(({ icon: Icon, label, href }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-primary/40 hover:bg-primary/10 hover:text-primary dark:border-white/10 dark:bg-white/6 dark:text-slate-200 dark:hover:bg-primary/15 dark:hover:text-white"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-primary/40 hover:bg-primary/10 hover:text-primary dark:border-white/10 dark:bg-white/6 dark:text-slate-200 dark:hover:bg-primary/15 dark:hover:text-white"
                 >
                   <Icon className="h-4 w-4" />
                 </a>
@@ -82,7 +82,7 @@ const Footer = () => {
             <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
               Quick Links
             </h3>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-3 space-y-2">
               {quickLinks.map((item) => (
                 <li key={item.label}>
                   <button
@@ -101,7 +101,7 @@ const Footer = () => {
             <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
               Contact
             </h3>
-            <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <ul className="mt-3 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
               <li className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 text-primary" />
                 <span>123 Health Street, Kathmandu, Nepal</span>
@@ -116,16 +116,16 @@ const Footer = () => {
               </li>
             </ul>
 
-            <div className="mt-5 rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-900/70">
+            <div className="mt-4 rounded-2xl bg-slate-50/90 p-3.5 dark:bg-slate-900/70">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
                 Start Here
               </p>
-              <div className="mt-3 space-y-2">
+              <div className="mt-2.5 space-y-1.5">
                 {resourceLinks.map((item) => (
                   <a
                     key={item.label}
                     href={item.href}
-                    className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-700 transition hover:bg-white hover:text-slate-900 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-white"
+                    className="flex items-center justify-between rounded-xl px-3 py-1.5 text-sm text-slate-700 transition hover:bg-white hover:text-slate-900 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     <span>{item.label}</span>
                     <ArrowUpRight className="h-4 w-4 text-primary" />
@@ -136,7 +136,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 pt-4 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-2.5 pt-3 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} MediScan. All rights reserved.</p>
           <div className="flex flex-wrap gap-5">
             <a href="#" className="transition hover:text-slate-900 dark:hover:text-white">
