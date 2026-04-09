@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CalendarDays, CheckCircle2, Clock3, Stethoscope } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, Stethoscope, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { useAuth } from '../../context/AuthContext';
@@ -113,10 +113,16 @@ const CarePlanBookingDialog = ({ carePlan, open, onOpenChange, onBooked }) => {
                                 </div>
 
                                 <div className="rounded-[1.4rem] border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950/40">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Assigned doctors</p>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Assigned doctors</p>
+                                        <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                            <Users size={13} />
+                                            {carePlan.assignedDoctors?.length || 0} available
+                                        </span>
+                                    </div>
                                     <div className="mt-4 space-y-3">
                                         {carePlan.assignedDoctors?.map((doctor) => (
-                                            <div key={doctor._id} className="flex items-center gap-3">
+                                            <div key={doctor._id} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3 dark:bg-slate-900">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-200">
                                                     <Stethoscope size={16} />
                                                 </div>
@@ -131,25 +137,16 @@ const CarePlanBookingDialog = ({ carePlan, open, onOpenChange, onBooked }) => {
                             </section>
 
                             <section className="rounded-[1.55rem] border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950/40">
-                                <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Book plan</p>
+                                <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Request plan</p>
                                 {canBook ? (
                                     <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
-                                        <div>
-                                            <label htmlFor="care-plan-doctor" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                                Select doctor
-                                            </label>
-                                            <select
-                                                id="care-plan-doctor"
-                                                value={bookingState.doctorId}
-                                                onChange={(event) => setBookingState((prev) => ({ ...prev, doctorId: event.target.value }))}
-                                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                            >
-                                                {carePlan.assignedDoctors?.map((doctor) => (
-                                                    <option key={doctor._id} value={doctor._id}>
-                                                        {formatUserDisplayName(doctor)}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                        <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4 dark:bg-slate-900">
+                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                Doctor assignment
+                                            </p>
+                                            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                                Your request will be matched with one of the assigned doctors listed here based on availability.
+                                            </p>
                                         </div>
 
                                         <div className="grid gap-4 sm:grid-cols-2">
@@ -189,7 +186,7 @@ const CarePlanBookingDialog = ({ carePlan, open, onOpenChange, onBooked }) => {
 
                                         <div>
                                             <label htmlFor="care-plan-notes" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                                Notes for the doctor
+                                                Notes for the care team
                                             </label>
                                             <textarea
                                                 id="care-plan-notes"

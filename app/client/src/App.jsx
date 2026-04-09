@@ -7,6 +7,7 @@ import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import SymptomCheckerPage from './pages/SymptomCheckerPage';
 import CarePlansPage from './pages/CarePlansPage';
+import CarePlanDetailPage from './pages/CarePlanDetailPage';
 import InitSuperadmin from './pages/InitSuperadmin';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorDetailPage from './pages/DoctorDetailPage';
@@ -38,6 +39,7 @@ function App() {
                     <Route path="/health" element={<HealthPage />} />
                     <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
                     <Route path="/care-plans" element={<CarePlansPage />} />
+                    <Route path="/care-plans/:id" element={<CarePlanDetailPage />} />
                     <Route path="/doctors" element={<DoctorsPage />} />
                     <Route path="/doctors/:id" element={<DoctorDetailPage />} />
                     <Route
