@@ -78,10 +78,10 @@ const ensureFutureDate = (date) => {
 };
 
 const buildDoctorAvailability = (doctor) => {
-    const maxAppointmentsPerDay = doctor?.availabilitySettings?.maxAppointmentsPerDay || DEFAULT_MAX_APPOINTMENTS_PER_DAY;
     const availableTimeSlots = doctor?.availabilitySettings?.availableTimeSlots?.length
         ? doctor.availabilitySettings.availableTimeSlots.map((slot) => normalizeSlot(slot))
         : [...DEFAULT_DOCTOR_TIME_SLOTS];
+    const maxAppointmentsPerDay = availableTimeSlots.length || DEFAULT_MAX_APPOINTMENTS_PER_DAY;
 
     return {
         maxAppointmentsPerDay,
@@ -273,13 +273,6 @@ const updateDoctorAvailabilitySettings = async (doctorId, payload = {}) => {
         throw error;
     }
 
-    const maxAppointmentsPerDay = Number(payload.maxAppointmentsPerDay);
-    if (!Number.isInteger(maxAppointmentsPerDay) || maxAppointmentsPerDay < 1) {
-        const error = new Error('Maximum appointments per day must be a positive whole number.');
-        error.statusCode = 400;
-        throw error;
-    }
-
     if (!Array.isArray(payload.availableTimeSlots) || payload.availableTimeSlots.length === 0) {
         const error = new Error('At least one available time slot is required.');
         error.statusCode = 400;
@@ -289,7 +282,7 @@ const updateDoctorAvailabilitySettings = async (doctorId, payload = {}) => {
     const availableTimeSlots = [...new Set(payload.availableTimeSlots.map(validateTimeSlot))];
 
     doctor.availabilitySettings = {
-        maxAppointmentsPerDay,
+        maxAppointmentsPerDay: availableTimeSlots.length,
         availableTimeSlots,
     };
 

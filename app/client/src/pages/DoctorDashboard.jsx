@@ -49,7 +49,7 @@ const DoctorDashboard = () => {
                 <DashboardStatCard label="Total bookings" value={loading ? '--' : appointments.length} helper="All time" icon={CalendarClock} />
                 <DashboardStatCard label="Pending requests" value={loading ? '--' : pendingAppointments.length} tone="amber" helper="Needs review" icon={Clock3} />
                 <DashboardStatCard label="Confirmed visits" value={loading ? '--' : confirmedAppointments.length} tone="emerald" helper="Approved" icon={CheckCircle2} />
-                <DashboardStatCard label="Daily capacity" value={loading ? '--' : scheduleSettings.maxAppointmentsPerDay} tone="cyan" helper="Current limit" icon={Settings} />
+                <DashboardStatCard label="Daily capacity" value={loading ? '--' : scheduleSettings.availableTimeSlots.length} tone="cyan" helper="From saved slots" icon={Settings} />
             </section>
 
             <div className="grid gap-6 xl:grid-cols-[1.2fr,0.8fr]">

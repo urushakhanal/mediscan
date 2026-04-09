@@ -12,7 +12,6 @@ const getInitialSettings = () => ({
 });
 
 const getInitialSettingsForm = () => ({
-    maxAppointmentsPerDay: '1',
     slotCount: '0',
     availableTimeSlots: [],
 });
@@ -44,7 +43,6 @@ export const useDoctorDashboard = () => {
             setAppointments(appointmentsData.appointments || []);
             setScheduleSettings(nextSettings);
             setSettingsForm({
-                maxAppointmentsPerDay: String(nextSettings.maxAppointmentsPerDay),
                 slotCount: String(nextSettings.availableTimeSlots.length),
                 availableTimeSlots: nextSettings.availableTimeSlots,
             });

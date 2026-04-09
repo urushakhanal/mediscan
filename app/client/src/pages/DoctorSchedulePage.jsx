@@ -107,12 +107,7 @@ const DoctorSchedulePage = () => {
 
         const availableTimeSlots = settingsForm.availableTimeSlots;
         const slotCount = Number(settingsForm.slotCount);
-        const maxAppointmentsPerDay = Number(settingsForm.maxAppointmentsPerDay);
 
-        if (!Number.isInteger(maxAppointmentsPerDay) || maxAppointmentsPerDay < 1) {
-            toast.error('Please enter a valid daily booking limit.');
-            return;
-        }
         if (!Number.isInteger(slotCount) || slotCount < 1) {
             toast.error('Please enter a valid number of slots.');
             return;
@@ -121,14 +116,9 @@ const DoctorSchedulePage = () => {
             toast.error(`Please add exactly ${slotCount} slot${slotCount === 1 ? '' : 's'} before saving.`);
             return;
         }
-        if (maxAppointmentsPerDay > slotCount) {
-            toast.error(`Daily booking limit cannot be more than ${slotCount}.`);
-            return;
-        }
 
         try {
             await saveScheduleSettings({
-                maxAppointmentsPerDay,
                 availableTimeSlots,
             });
             toast.success('Availability settings updated.');
@@ -144,7 +134,7 @@ const DoctorSchedulePage = () => {
             <DashboardPageIntro
                 eyebrow="Doctor Workspace"
                 title="Schedule and availability"
-                description="Set your daily appointment capacity, configure visible booking slots, and keep your patient-facing calendar under control."
+                description="Configure the time slots patients can book. Your daily capacity now follows the number of slots you save."
             />
 
             {error && (
@@ -153,8 +143,8 @@ const DoctorSchedulePage = () => {
                 </div>
             )}
 
-            <section className="grid gap-4 xl:grid-cols-4">
-                <DashboardStatCard label="Daily limit" value={scheduleSettings.maxAppointmentsPerDay} helper="Current cap" icon={Settings} />
+            <section className="grid gap-4 xl:grid-cols-2">
+                <DashboardStatCard label="Daily capacity" value={scheduleSettings.availableTimeSlots.length} helper="Derived from slots" icon={Settings} />
                 <DashboardStatCard label="Configured slots" value={scheduleSettings.availableTimeSlots.length} tone="cyan" helper="Visible times" icon={Plus} />
             </section>
 
@@ -163,13 +153,13 @@ const DoctorSchedulePage = () => {
                     <p className="text-xs uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">Overview</p>
                     <h2 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">Current availability</h2>
                     <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                        Patients only see the slots you save here. Keep your daily limit aligned with the number of time windows you actually want to offer.
+                        Patients only see the slots you save here. Each saved slot counts as one available booking for the day.
                     </p>
 
                     <div className="mt-5 space-y-3">
                         <div className="rounded-[1.3rem] bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
-                            <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Daily booking limit</p>
-                            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{scheduleSettings.maxAppointmentsPerDay}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Daily capacity</p>
+                            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{scheduleSettings.availableTimeSlots.length}</p>
                         </div>
                         <div className="rounded-[1.3rem] bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
                             <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Saved time slots</p>
@@ -200,11 +190,7 @@ const DoctorSchedulePage = () => {
                     </div>
 
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
-                        <div className="rounded-[1.25rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
-                            <label htmlFor="maxAppointmentsPerDay" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Daily booking limit</label>
-                            <input id="maxAppointmentsPerDay" type="number" min="1" value={settingsForm.maxAppointmentsPerDay} onChange={handleSettingsChange} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
-                        </div>
-                        <div className="rounded-[1.25rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
+                        <div className="rounded-[1.25rem] bg-slate-50/80 p-4 dark:bg-slate-950/40 md:col-span-2">
                             <label htmlFor="slotCount" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Number of slots</label>
                             <input id="slotCount" type="number" min="1" value={settingsForm.slotCount} onChange={handleSettingsChange} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                         </div>
