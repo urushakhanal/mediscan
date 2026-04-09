@@ -59,6 +59,21 @@ export const updateAppointmentStatus = (id, payload) =>
 export const getDoctorAvailabilitySettings = () => request('/api/appointments/doctor-settings/me');
 export const updateDoctorAvailabilitySettings = (payload) =>
     request('/api/appointments/doctor-settings/me', { method: 'PUT', body: payload });
+export const getCarePlans = () => request('/api/care-plans');
+export const getCarePlanById = (id) => request(`/api/care-plans/${id}`);
+export const createCarePlanBooking = (id, payload) =>
+    request(`/api/care-plans/${id}/book`, { method: 'POST', body: payload });
+export const getPatientCarePlanBookings = () => request('/api/care-plans/bookings/patient/me');
+export const getDoctorCarePlanBookings = () => request('/api/care-plans/bookings/doctor/me');
+export const updateDoctorCarePlanBookingStatus = (id, payload) =>
+    request(`/api/care-plans/bookings/doctor/${id}/status`, { method: 'PATCH', body: payload });
+export const getDoctorCarePlans = () => request('/api/care-plans/doctor/me');
+export const getAdminCarePlans = () => request('/api/care-plans/admin/all');
+export const createAdminCarePlan = (payload) => request('/api/care-plans/admin', { method: 'POST', body: payload });
+export const updateAdminCarePlan = (id, payload) => request(`/api/care-plans/admin/${id}`, { method: 'PUT', body: payload });
+export const updateAdminCarePlanStatus = (id, payload) =>
+    request(`/api/care-plans/admin/${id}/status`, { method: 'PATCH', body: payload });
+export const deleteAdminCarePlan = (id) => request(`/api/care-plans/admin/${id}`, { method: 'DELETE' });
 
 export const getUsers = () => request('/api/users');
 export const getUserById = (id) => request(`/api/users/${id}`);

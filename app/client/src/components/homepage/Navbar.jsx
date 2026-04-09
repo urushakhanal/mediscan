@@ -71,14 +71,15 @@ const Navbar = () => {
   const navItems = [
     { label: "Home", type: "link", to: "/" },
     { label: "Doctors", type: "link", to: "/doctors" },
+    { label: "Care Plans", type: "link", to: "/care-plans" },
     { label: "How It Works", type: "scroll" },
     { label: "Contact", type: "scroll" },
   ];
 
   const dashboardPath = user?.role === "doctor"
-    ? "/doctor/dashboard"
+    ? "/doctor/overview"
     : user?.role === "patient"
-      ? "/patient/dashboard"
+      ? "/patient/overview"
       : user?.role === "superadmin"
         ? "/admin/dashboard"
         : null;

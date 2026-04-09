@@ -5,7 +5,10 @@ import Footer from '../components/homepage/Footer';
 
 const MainLayout = ({ children }) => {
     const location = useLocation();
-    const isAdminPage = location.pathname.startsWith('/admin');
+    const isDashboardPage =
+        location.pathname.startsWith('/admin') ||
+        location.pathname.startsWith('/doctor') ||
+        location.pathname.startsWith('/patient');
     const isAuthPage =
         location.pathname === '/signin' ||
         location.pathname === '/signup' ||
@@ -13,9 +16,9 @@ const MainLayout = ({ children }) => {
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 transition-colors">
-            {!isAdminPage && <Navbar />}
-            <main className={`flex-1 ${isAdminPage ? '' : 'pt-20'}`}>{children}</main>
-            {!isAuthPage && !isAdminPage && <Footer />}
+            {!isDashboardPage && <Navbar />}
+            <main className={`flex-1 ${isDashboardPage ? '' : 'pt-20'}`}>{children}</main>
+            {!isAuthPage && !isDashboardPage && <Footer />}
         </div>
     );
 };

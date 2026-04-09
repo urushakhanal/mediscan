@@ -13,6 +13,7 @@ const authRoutes = require('./modules/auth/routes/auth.routes');
 const userRoutes = require('./modules/users/routes/user.routes');
 const symptomRoutes = require('./modules/symptoms/routes/symptom.routes');
 const appointmentRoutes = require('./modules/appointments/routes/appointment.routes');
+const carePlanRoutes = require('./modules/carePlans/routes/carePlan.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./docs/swagger');
 
@@ -65,6 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/symptoms', symptomRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/care-plans', carePlanRoutes);
 
 // ===========================
 // Error Handling

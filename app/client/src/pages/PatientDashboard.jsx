@@ -1,133 +1,90 @@
-import React, { useEffect, useState } from 'react';
-import { CalendarDays, Clock3, Stethoscope } from 'lucide-react';
-import { getPatientAppointments } from '../lib/auth';
-import {
-    formatReadableDate,
-    formatSlot,
-    formatSpecialization,
-    getStatusClasses,
-} from '../lib/appointments';
+import React, { useMemo } from 'react';
+import { CalendarDays, CheckCircle2, Clock3, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
+import DashboardStatCard from '../components/dashboard/DashboardStatCard';
+import usePatientAppointments from '../hooks/usePatientAppointments';
+import { formatReadableDate, formatSlot, formatSpecialization } from '../lib/appointments';
 import { formatUserDisplayName } from '../lib/utils';
 
 const PatientDashboard = () => {
-    const [appointments, setAppointments] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { appointments, loading, error, pendingCount, confirmedCount } = usePatientAppointments();
 
-    useEffect(() => {
-        const loadAppointments = async () => {
-            try {
-                setLoading(true);
-                setError('');
-                const data = await getPatientAppointments();
-                setAppointments(data.appointments || []);
-            } catch (requestError) {
-                setError(requestError.message || 'Unable to load appointments.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadAppointments();
-    }, []);
-
-    const pendingCount = appointments.filter((appointment) => appointment.status === 'pending').length;
-    const confirmedCount = appointments.filter((appointment) => appointment.status === 'confirmed').length;
+    const nextAppointments = useMemo(
+        () => [...appointments].sort((a, b) => `${a.date}-${a.slot}`.localeCompare(`${b.date}-${b.slot}`)).slice(0, 5),
+        [appointments]
+    );
 
     return (
-        <section className="px-4 py-10 sm:py-12">
-            <div className="mx-auto max-w-6xl space-y-6">
-                <header className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Patient dashboard</p>
-                    <h1 className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">Your appointments</h1>
-                    <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-                        Review pending requests and confirmed visits in one place.
-                    </p>
-                </header>
-
-                {error && (
-                    <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
-                        {error}
-                    </div>
+        <div className="space-y-6">
+            <DashboardPageIntro
+                eyebrow="Patient Workspace"
+                title="Care overview"
+                description="Stay on top of upcoming visits, revisit recently consulted doctors, and keep your booking history within reach."
+                actions={(
+                    <>
+                        <Link to="/patient/appointments" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white">
+                            View appointments
+                        </Link>
+                        <Link to="/patient/doctors" className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+                            Find doctors
+                        </Link>
+                    </>
                 )}
+            />
 
-                <section className="grid gap-4 md:grid-cols-3">
-                    <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Total appointments</p>
-                        <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{loading ? '--' : appointments.length}</p>
-                    </article>
-                    <article className="rounded-[1.5rem] border border-amber-200 bg-white p-5 shadow-sm dark:border-amber-900/50 dark:bg-slate-900">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Pending</p>
-                        <p className="mt-2 text-3xl font-bold text-amber-700 dark:text-amber-300">{loading ? '--' : pendingCount}</p>
-                    </article>
-                    <article className="rounded-[1.5rem] border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900/50 dark:bg-slate-900">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Confirmed</p>
-                        <p className="mt-2 text-3xl font-bold text-emerald-700 dark:text-emerald-300">{loading ? '--' : confirmedCount}</p>
-                    </article>
-                </section>
+            {error && (
+                <div className="rounded-[1.4rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                    {error}
+                </div>
+            )}
 
-                <section className="space-y-4">
-                    {loading &&
-                        Array.from({ length: 3 }).map((_, index) => (
-                            <div
-                                key={`appointment-skeleton-${index}`}
-                                className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                            >
-                                <div className="h-5 w-40 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                                <div className="mt-4 h-4 w-60 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                                <div className="mt-2 h-4 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                            </div>
-                        ))}
+            <section className="grid gap-4 xl:grid-cols-4">
+                <DashboardStatCard label="Total appointments" value={loading ? '--' : appointments.length} helper="All bookings" icon={CalendarDays} />
+                <DashboardStatCard label="Pending requests" value={loading ? '--' : pendingCount} tone="amber" helper="Awaiting response" icon={Clock3} />
+                <DashboardStatCard label="Confirmed visits" value={loading ? '--' : confirmedCount} tone="emerald" helper="Scheduled" icon={CheckCircle2} />
+                <DashboardStatCard label="Doctors visited" value={loading ? '--' : new Set(appointments.map((item) => item.doctor?._id).filter(Boolean)).size} tone="cyan" helper="Unique doctors" icon={Search} />
+            </section>
 
-                    {!loading && appointments.length === 0 && (
-                        <div className="rounded-[1.75rem] border border-slate-200 bg-white px-6 py-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">No appointments yet</h2>
-                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                Visit a doctor profile to request your first booking.
-                            </p>
-                        </div>
-                    )}
-
-                    {!loading &&
-                        appointments.map((appointment) => (
-                            <article
-                                key={appointment._id}
-                                className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                            >
-                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                                    <div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
-                                                <Stethoscope size={18} />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{formatUserDisplayName(appointment.doctor)}</h2>
-                                                <p className="text-sm text-cyan-700 dark:text-cyan-300">
-                                                    {formatSpecialization(appointment.doctor?.specialization)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-300">
-                                            <span className="inline-flex items-center gap-2">
-                                                <CalendarDays size={16} />
-                                                {formatReadableDate(appointment.date)}
-                                            </span>
-                                            <span className="inline-flex items-center gap-2">
-                                                <Clock3 size={16} />
-                                                {formatSlot(appointment.slot)}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(appointment.status)}`}>
-                                        {appointment.status}
-                                    </span>
-                                </div>
-                            </article>
-                        ))}
-                </section>
-            </div>
-        </section>
+            <section className="rounded-[1.9rem] border border-slate-200 bg-white shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Upcoming</p>
+                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Next appointments</h2>
+                    </div>
+                    <Link to="/patient/appointments" className="text-sm font-semibold text-cyan-700 transition hover:text-cyan-600 dark:text-cyan-300">
+                        Full history
+                    </Link>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-slate-500 dark:bg-slate-950/60 dark:text-slate-400">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Doctor</th>
+                                <th className="px-6 py-3 font-medium">Specialty</th>
+                                <th className="px-6 py-3 font-medium">Date</th>
+                                <th className="px-6 py-3 font-medium">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {nextAppointments.length === 0 && !loading && (
+                                <tr>
+                                    <td className="px-6 py-10 text-center text-slate-500 dark:text-slate-400" colSpan={4}>No appointments yet.</td>
+                                </tr>
+                            )}
+                            {nextAppointments.map((appointment) => (
+                                <tr key={appointment._id} className="text-slate-700 dark:text-slate-200">
+                                    <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{formatUserDisplayName(appointment.doctor)}</td>
+                                    <td className="px-6 py-4">{formatSpecialization(appointment.doctor?.specialization)}</td>
+                                    <td className="px-6 py-4">{formatReadableDate(appointment.date)}</td>
+                                    <td className="px-6 py-4">{formatSlot(appointment.slot)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
     );
 };
 

@@ -1,31 +1,7 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ClipboardList, LayoutDashboard, ShieldCheck, Stethoscope, Users } from 'lucide-react';
 
-const navigationItems = [
-    {
-        label: 'Dashboard',
-        to: '/admin/dashboard',
-        icon: LayoutDashboard,
-    },
-    {
-        label: 'Doctors',
-        to: '/admin/doctors',
-        icon: Stethoscope,
-    },
-    {
-        label: 'Care Plans',
-        to: '/admin/care-plans',
-        icon: ClipboardList,
-    },
-    {
-        label: 'Patients',
-        to: '/admin/patients',
-        icon: Users,
-    },
-];
-
-const AdminLayout = () => {
+const RoleDashboardLayout = ({ roleLabel, title, icon: Icon, navigationItems }) => {
     const location = useLocation();
     const pathSegments = location.pathname.split('/').filter(Boolean);
     const breadcrumbs = pathSegments.map((segment, index) => {
@@ -39,36 +15,34 @@ const AdminLayout = () => {
     });
 
     return (
-        <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eef6f7_100%)] text-slate-900 dark:bg-[linear-gradient(180deg,#020617_0%,#0f172a_100%)] dark:text-slate-50">
+        <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eff7f8_100%)] text-slate-900 dark:bg-[linear-gradient(180deg,#020617_0%,#0f172a_100%)] dark:text-slate-50">
             <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
+                <aside className="flex flex-col border-b border-slate-200 bg-white/92 px-5 py-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                            <ShieldCheck size={20} />
+                            <Icon size={20} />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Admin</p>
-                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">MediScan Console</h1>
+                            <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">{roleLabel}</p>
+                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h1>
                         </div>
                     </div>
 
                     <nav className="mt-8 space-y-2">
                         {navigationItems.map((item) => {
-                            const Icon = item.icon;
+                            const ItemIcon = item.icon;
                             return (
                                 <NavLink
                                     key={item.to}
                                     to={item.to}
-                                    className={({ isActive }) =>
-                                        [
-                                            'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition',
-                                            isActive
-                                                ? 'bg-gradient-to-r from-teal-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white',
-                                        ].join(' ')
-                                    }
+                                    className={({ isActive }) => [
+                                        'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition',
+                                        isActive
+                                            ? 'bg-gradient-to-r from-teal-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white',
+                                    ].join(' ')}
                                 >
-                                    <Icon size={18} />
+                                    <ItemIcon size={18} />
                                     <span>{item.label}</span>
                                 </NavLink>
                             );
@@ -113,4 +87,4 @@ const AdminLayout = () => {
     );
 };
 
-export default AdminLayout;
+export default RoleDashboardLayout;
