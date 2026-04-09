@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
-  Camera,
   Search,
   CheckCircle,
   Lock,
@@ -83,25 +82,19 @@ const Hero = () => {
           variants={fadeInUp}
           className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-10"
         >
-          <Button onClick={() => navigate('/symptom-checker')}>
-            <Brain className="h-5 w-5" />
-            Smart Symptom Checker
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          <Button variant="outline" onClick={() => navigate('/health')}>
-            <Camera className="h-5 w-5" />
-            System Health
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
           <Button
             variant="outline"
             onClick={() => navigate('/doctors')}
-            className="flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-full border border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
+            className="flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-full border border-cyan-500 text-cyan-500 hover:bg-cyan-500/10 dark:border-cyan-400 dark:text-cyan-300 dark:hover:bg-cyan-500/10"
           >
             <Search className="h-5 w-5" />
             Find Doctors
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          <Button onClick={() => navigate('/symptom-checker')}>
+            <Brain className="h-5 w-5" />
+            Smart Symptom Checker
             <ChevronRight className="h-4 w-4" />
           </Button>
         </motion.div>

@@ -5,14 +5,18 @@ import Footer from '../components/homepage/Footer';
 
 const MainLayout = ({ children }) => {
     const location = useLocation();
+    const path = location.pathname;
     const isDashboardPage =
-        location.pathname.startsWith('/admin') ||
-        location.pathname.startsWith('/doctor') ||
-        location.pathname.startsWith('/patient');
+        path === '/admin' ||
+        path.startsWith('/admin/') ||
+        path === '/doctor' ||
+        path.startsWith('/doctor/') ||
+        path === '/patient' ||
+        path.startsWith('/patient/');
     const isAuthPage =
-        location.pathname === '/signin' ||
-        location.pathname === '/signup' ||
-        location.pathname === '/init-superadmin';
+        path === '/signin' ||
+        path === '/signup' ||
+        path === '/init-superadmin';
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 transition-colors">

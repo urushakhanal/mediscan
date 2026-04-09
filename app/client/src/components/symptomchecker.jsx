@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
 import { Button } from './ui/button';
 import SymptomLibrary from './symptom-library';
 
@@ -123,40 +124,138 @@ const SymptomChecker = ({ embedded = false }) => {
     if (!analysis?.assessment) return;
 
     const report = analysis.assessment;
-    const content = [
-      'AI Health Report',
-      '',
-      `Source: ${analysis.source}${analysis.model ? ` (${analysis.model})` : ''}`,
-      `Triage: ${report.triageLevel}`,
-      `Urgency: ${report.urgencyMessage}`,
-      '',
-      'Summary:',
-      report.summary || '',
-      '',
-      'Possible Conditions:',
-      ...(report.possibleConditions || []).map((item) => `- ${item.name} (${item.confidence}%) - ${item.reason}`),
-      '',
-      'Care Tips:',
-      ...(report.careTips || []).map((item) => `- ${item}`),
-      '',
-      'OTC Options:',
-      ...(report.otcOptions || []).map((item) => `- ${item}`),
-      '',
-      'Advice:',
-      report.advice || '',
-      '',
-      'When to seek immediate care:',
-      report.immediateCare || '',
-      '',
-      'Disclaimer:',
-      report.disclaimer || '',
-    ].join('\n');
+    const generatedAt = new Date().toLocaleString();
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'pt',
+      format: 'a4',
+    });
 
-    const blob = new Blob([content], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'symptom-assessment.txt';
-    link.click();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 42;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 40;
+
+    const ensureSpace = requiredHeight => {
+      if (y + requiredHeight > pageHeight - 40) {
+        doc.addPage();
+        y = 40;
+      }
+    };
+
+    const drawWrappedText = (text, x, currentY, width, lineHeight = 16) => {
+      const lines = doc.splitTextToSize(String(text || ''), width);
+      doc.setTextColor(0, 0, 0);
+      doc.text(lines, x, currentY);
+      return currentY + lines.length * lineHeight;
+    };
+
+    const drawSectionTitle = title => {
+      ensureSpace(28);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(0, 0, 0);
+      doc.text(title, margin, y);
+      y += 16;
+    };
+
+    const drawBulletList = items => {
+      const safeItems = items && items.length ? items : ['Not available'];
+      safeItems.forEach(item => {
+        const lines = doc.splitTextToSize(String(item), contentWidth - 18);
+        ensureSpace(lines.length * 16 + 6);
+        doc.setTextColor(0, 0, 0);
+        doc.text('-', margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.text(lines, margin + 12, y);
+        y += lines.length * 16 + 4;
+      });
+    };
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Symptom Analysis Report', margin, y);
+    y += 24;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.text(`Source: ${analysis.source}${analysis.model ? ` (${analysis.model})` : ''}`, margin, y);
+    y += 16;
+    doc.text(`Generated: ${generatedAt}`, margin, y);
+    y += 16;
+    doc.text(`Triage: ${report.triageLevel}`, margin, y);
+    y += 16;
+    doc.text(`Urgency: ${report.urgencyMessage}`, margin, y);
+    y += 22;
+
+    drawSectionTitle('Submitted Symptoms');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    const summaryLines = [
+      `Symptoms: ${(report.symptomSummary?.symptoms || []).join(', ') || 'Not provided'}`,
+      `Duration: ${report.symptomSummary?.duration || 'Not provided'}`,
+      `Severity: ${report.symptomSummary?.severity || 'Not provided'}/10`,
+      `Relief factors: ${report.symptomSummary?.reliefFactors || 'Not provided'}`,
+    ];
+    summaryLines.forEach(line => {
+      ensureSpace(16);
+      doc.text(line, margin, y);
+      y += 16;
+    });
+    y += 8;
+
+    drawSectionTitle('Summary');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    y = drawWrappedText(report.summary || 'No summary available.', margin, y, contentWidth) + 8;
+
+    drawSectionTitle('Possible Conditions');
+    (report.possibleConditions || []).slice(0, 3).forEach((item, index) => {
+      const reasonLines = doc.splitTextToSize(String(item.reason || 'No reason provided.'), contentWidth - 12);
+      ensureSpace(reasonLines.length * 16 + 28);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`${index + 1}. ${item.name || 'Unspecified condition'} (${item.confidence || 0}%)`, margin, y);
+      y += 16;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      y = drawWrappedText(item.reason || 'No reason provided.', margin + 12, y, contentWidth - 12) + 8;
+    });
+
+    drawSectionTitle('Care Tips');
+    drawBulletList(report.careTips || []);
+    y += 4;
+
+    drawSectionTitle('OTC Options');
+    drawBulletList(report.otcOptions || []);
+    y += 4;
+
+    drawSectionTitle('Advice');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    y = drawWrappedText(report.advice || 'No advice available.', margin, y, contentWidth) + 10;
+
+    drawSectionTitle('When to Seek Immediate Care');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    y = drawWrappedText(report.immediateCare || 'No emergency guidance available.', margin, y, contentWidth) + 10;
+
+    drawSectionTitle('Disclaimer');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    drawWrappedText(
+      report.disclaimer || 'This report is informational only and does not replace professional medical diagnosis or emergency care.',
+      margin,
+      y,
+      contentWidth,
+      14
+    );
+
+    doc.save('mediscan-ai-analysis.pdf');
   };
 
   const wrapperClass = embedded
@@ -385,7 +484,7 @@ const SymptomChecker = ({ embedded = false }) => {
 
               <div className="flex flex-wrap gap-3 mt-6">
                 <Button variant="outline" onClick={() => setShowModal(false)}>Close</Button>
-                <Button onClick={handleExport}>Export</Button>
+                <Button onClick={handleExport}>Export PDF</Button>
               </div>
             </motion.div>
           </motion.div>
