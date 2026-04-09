@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Search, ShieldCheck, Stethoscope } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, ShieldCheck, Stethoscope } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getVerifiedDoctors } from '../lib/auth';
-
-const formatSpecialization = (value) =>
-    value
-        ? value
-            .split('-')
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ')
-        : 'General Practice';
+import { formatSpecialization } from '../lib/appointments';
+import { formatUserDisplayName } from '../lib/utils';
 
 const DoctorsPage = () => {
     const [doctors, setDoctors] = useState([]);
@@ -61,6 +55,16 @@ const DoctorsPage = () => {
                             <ShieldCheck size={14} />
                             Approved doctors
                         </div>
+                    </div>
+
+                    <div className="flex justify-start">
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                        >
+                            <ArrowLeft size={16} />
+                            Back to site
+                        </Link>
                     </div>
 
                     <div className="relative">
@@ -116,7 +120,7 @@ const DoctorsPage = () => {
                                     </span>
                                 </div>
 
-                                <h2 className="mt-4 text-xl font-semibold text-slate-900 dark:text-white">{doctor.name}</h2>
+                                <h2 className="mt-4 text-xl font-semibold text-slate-900 dark:text-white">{formatUserDisplayName(doctor)}</h2>
                                 <p className="mt-1 text-sm font-medium text-cyan-700 dark:text-cyan-300">
                                     {formatSpecialization(doctor.specialization)}
                                 </p>

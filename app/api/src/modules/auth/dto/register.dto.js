@@ -1,6 +1,6 @@
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const defaultAllowedRoles = ['patient', 'doctor'];
-const { DOCTOR_SPECIALIZATIONS } = require('../../../constants/user.constants');
+const { DOCTOR_SPECIALIZATIONS, DOCTOR_QUALIFICATIONS } = require('../../../constants/user.constants');
 
 const validateRegisterDto = (payload = {}, options = {}) => {
     const errors = [];
@@ -14,6 +14,9 @@ const validateRegisterDto = (payload = {}, options = {}) => {
     const phone = typeof payload.phone === 'string' ? payload.phone.trim() : '';
     const nmcNumber = typeof payload.nmcNumber === 'string' ? payload.nmcNumber.trim() : '';
     const specialization = typeof payload.specialization === 'string' ? payload.specialization.trim() : '';
+    const experienceYears = Number(payload.experienceYears);
+    const qualification = typeof payload.qualification === 'string' ? payload.qualification.trim() : '';
+    const currentlyWorkingAt = typeof payload.currentlyWorkingAt === 'string' ? payload.currentlyWorkingAt.trim() : '';
 
     if (!name || name.length < 2) {
         errors.push('Name is required and must be at least 2 characters.');
@@ -47,6 +50,26 @@ const validateRegisterDto = (payload = {}, options = {}) => {
         errors.push(`Specialization must be one of: ${DOCTOR_SPECIALIZATIONS.join(', ')}.`);
     }
 
+    if (role === 'doctor' && !Number.isFinite(experienceYears)) {
+        errors.push('Experience year is required for doctors.');
+    }
+
+    if (role === 'doctor' && Number.isFinite(experienceYears) && (experienceYears < 0 || experienceYears > 80)) {
+        errors.push('Experience year must be between 0 and 80.');
+    }
+
+    if (role === 'doctor' && !qualification) {
+        errors.push('Qualification is required for doctors.');
+    }
+
+    if (role === 'doctor' && qualification && !DOCTOR_QUALIFICATIONS.includes(qualification)) {
+        errors.push(`Qualification must be one of: ${DOCTOR_QUALIFICATIONS.join(', ')}.`);
+    }
+
+    if (role === 'doctor' && !currentlyWorkingAt) {
+        errors.push('Currently working at is required for doctors.');
+    }
+
     return {
         valid: errors.length === 0,
         errors,
@@ -58,6 +81,9 @@ const validateRegisterDto = (payload = {}, options = {}) => {
             phone: phone || undefined,
             nmcNumber: nmcNumber || undefined,
             specialization: specialization || undefined,
+            experienceYears: Number.isFinite(experienceYears) ? experienceYears : undefined,
+            qualification: qualification || undefined,
+            currentlyWorkingAt: currentlyWorkingAt || undefined,
         },
     };
 };

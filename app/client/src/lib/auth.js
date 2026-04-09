@@ -49,10 +49,22 @@ export const changePassword = (payload) =>
 
 export const getVerifiedDoctors = () => request('/api/users/doctors');
 export const getVerifiedDoctorById = (id) => request(`/api/users/doctors/${id}`);
+export const getDoctorAvailability = (doctorId, date) =>
+    request(`/api/appointments/doctor/${doctorId}/availability?date=${encodeURIComponent(date)}`);
+export const createAppointment = (payload) => request('/api/appointments', { method: 'POST', body: payload });
+export const getPatientAppointments = () => request('/api/appointments/patient/me');
+export const getDoctorAppointments = () => request('/api/appointments/doctor/me');
+export const updateAppointmentStatus = (id, payload) =>
+    request(`/api/appointments/${id}/status`, { method: 'PATCH', body: payload });
+export const getDoctorAvailabilitySettings = () => request('/api/appointments/doctor-settings/me');
+export const updateDoctorAvailabilitySettings = (payload) =>
+    request('/api/appointments/doctor-settings/me', { method: 'PUT', body: payload });
 
 export const getUsers = () => request('/api/users');
 export const getUserById = (id) => request(`/api/users/${id}`);
 export const updateUserById = (id, payload) => request(`/api/users/${id}`, { method: 'PUT', body: payload });
 export const verifyDoctorById = (id, payload) =>
     request(`/api/users/${id}/verify-doctor`, { method: 'PATCH', body: payload });
+export const blockUserById = (id) => request(`/api/users/${id}/block`, { method: 'PATCH' });
+export const activateUserById = (id) => request(`/api/users/${id}/activate`, { method: 'PATCH' });
 export const deleteUserById = (id) => request(`/api/users/${id}`, { method: 'DELETE' });

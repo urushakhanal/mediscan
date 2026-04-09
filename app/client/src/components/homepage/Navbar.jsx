@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { changePassword } from "../../lib/auth";
+import { formatUserDisplayName } from "../../lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,14 @@ const Navbar = () => {
     { label: "How It Works", type: "scroll" },
     { label: "Contact", type: "scroll" },
   ];
+
+  const dashboardPath = user?.role === "doctor"
+    ? "/doctor/dashboard"
+    : user?.role === "patient"
+      ? "/patient/dashboard"
+      : user?.role === "superadmin"
+        ? "/admin/dashboard"
+        : null;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -260,13 +269,13 @@ const Navbar = () => {
                   {getUserInitials(user.name)}
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                  {user.name || "User"}
+                  {formatUserDisplayName(user)}
                 </span>
               </button>
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
                   <div className="px-3 py-2 text-sm text-gray-600 dark:text-gray-200">
-                    {user.name || "User"}
+                    {formatUserDisplayName(user)}
                   </div>
                   <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
                   <button
@@ -275,9 +284,9 @@ const Navbar = () => {
                   >
                     Change password
                   </button>
-                  {user.role === "superadmin" && (
+                  {dashboardPath && (
                     <Link
-                      to="/admin/dashboard"
+                      to={dashboardPath}
                       onClick={() => setDropdownOpen(false)}
                       className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800"
                     >
@@ -346,13 +355,13 @@ const Navbar = () => {
                   {getUserInitials(user.name)}
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                  {user.name || "User"}
+                  {formatUserDisplayName(user)}
                 </span>
               </div>
               <button onClick={openChangePasswordModal} className="block text-left text-primary">Change password</button>
-              {user.role === "superadmin" && (
+              {dashboardPath && (
                 <Link
-                  to="/admin/dashboard"
+                  to={dashboardPath}
                   onClick={() => setMobileMenuOpen(false)}
                   className="block text-primary"
                 >

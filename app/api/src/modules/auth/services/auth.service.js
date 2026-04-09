@@ -2,6 +2,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../../database/models/user.model');
 const config = require('../../../config/env');
+const {
+    DEFAULT_DOCTOR_TIME_SLOTS,
+    DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+} = require('../../../constants/user.constants');
 
 const createToken = (user) => {
     return jwt.sign(
@@ -18,7 +22,18 @@ const sanitizeUser = (user) => {
     return obj;
 };
 
-const registerUser = async ({ name, email, password, role = 'patient', phone, nmcNumber, specialization }) => {
+const registerUser = async ({
+    name,
+    email,
+    password,
+    role = 'patient',
+    phone,
+    nmcNumber,
+    specialization,
+    experienceYears,
+    qualification,
+    currentlyWorkingAt,
+}) => {
     const existing = await User.findOne({ email });
     if (existing) {
         const error = new Error('User with this email already exists.');
@@ -44,7 +59,16 @@ const registerUser = async ({ name, email, password, role = 'patient', phone, nm
         phone,
         nmcNumber,
         specialization,
+        experienceYears,
+        qualification,
+        currentlyWorkingAt,
         isVerified: false,
+        availabilitySettings: role === 'doctor'
+            ? {
+                maxAppointmentsPerDay: DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+                availableTimeSlots: [...DEFAULT_DOCTOR_TIME_SLOTS],
+            }
+            : undefined,
     });
     const token = createToken(user);
 
@@ -63,6 +87,12 @@ const loginUser = async ({ email, password }) => {
     if (!isMatch) {
         const error = new Error('Invalid email or password.');
         error.statusCode = 401;
+        throw error;
+    }
+
+    if (!user.isActive) {
+        const error = new Error('Your account has been blocked. Please contact the superadmin.');
+        error.statusCode = 403;
         throw error;
     }
 
@@ -98,6 +128,13 @@ const getCurrentUser = async (userId) => {
         error.statusCode = 404;
         throw error;
     }
+
+    if (!user.isActive) {
+        const error = new Error('Your account has been blocked. Please contact the superadmin.');
+        error.statusCode = 403;
+        throw error;
+    }
+
     return sanitizeUser(user);
 };
 

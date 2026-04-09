@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import NotFoundAccess from '../auth/NotFoundAccess';
+import NotFoundAccess from './NotFoundAccess';
 
-const SuperadminRoute = ({ children }) => {
+const RoleRoute = ({ allowedRoles, children }) => {
     const { user, isLoading } = useAuth();
 
     if (isLoading) {
@@ -20,11 +20,11 @@ const SuperadminRoute = ({ children }) => {
         return <Navigate to="/signin" replace />;
     }
 
-    if (user.role !== 'superadmin') {
+    if (!allowedRoles.includes(user.role)) {
         return <NotFoundAccess />;
     }
 
     return children;
 };
 
-export default SuperadminRoute;
+export default RoleRoute;

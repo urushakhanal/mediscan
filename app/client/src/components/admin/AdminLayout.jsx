@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, Stethoscope, Users } from 'lucide-react';
 
 const navigationItems = [
     {
@@ -9,8 +9,13 @@ const navigationItems = [
         icon: LayoutDashboard,
     },
     {
-        label: 'Users',
-        to: '/admin/users',
+        label: 'Doctors',
+        to: '/admin/doctors',
+        icon: Stethoscope,
+    },
+    {
+        label: 'Patients',
+        to: '/admin/patients',
         icon: Users,
     },
 ];
@@ -31,7 +36,7 @@ const AdminLayout = () => {
     return (
         <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eef6f7_100%)] text-slate-900 dark:bg-[linear-gradient(180deg,#020617_0%,#0f172a_100%)] dark:text-slate-50">
             <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
+                <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
                             <ShieldCheck size={20} />
@@ -65,7 +70,7 @@ const AdminLayout = () => {
                         })}
                     </nav>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto pt-8 lg:pb-2">
                         <Link
                             to="/"
                             className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:border-white dark:hover:text-white"

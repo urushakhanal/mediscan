@@ -5,6 +5,7 @@ const {
     getUserById,
     updateUser,
     updateDoctorVerification,
+    updateUserActiveStatus,
     deleteUser,
 } = require('../services/user.service');
 
@@ -71,6 +72,15 @@ const verifyDoctor = async (req, res, next) => {
     }
 };
 
+const updateUserStatus = async (req, res, next) => {
+    try {
+        const user = await updateUserActiveStatus(req.params.id, req.body?.isActive, req.user.id);
+        return res.json({ success: true, user });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 module.exports = {
     listVerifiedDoctors,
     findVerifiedDoctor,
@@ -78,5 +88,6 @@ module.exports = {
     findUser,
     modifyUser,
     verifyDoctor,
+    updateUserStatus,
     removeUser,
 };

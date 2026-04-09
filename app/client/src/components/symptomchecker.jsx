@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
+import SymptomLibrary from './symptom-library';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
-
-const symptomsList = [
-  'Fever', 'Cough', 'Headache', 'Sore throat', 'Runny nose', 'Body aches',
-  'Fatigue', 'Nausea', 'Dizziness', 'Chest pain', 'Shortness of breath',
-  'Loss of taste/smell', 'Stomach pain', 'Diarrhea', 'Rash'
-];
 
 const durations = [
   { value: '1-day', label: '1 day' },
@@ -148,7 +143,7 @@ const SymptomChecker = ({ embedded = false }) => {
     ? 'relative w-full'
     : 'relative min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-900 p-6 flex items-center justify-center';
   const cardClass = embedded
-    ? 'w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900'
+    ? 'w-full rounded-[1.9rem] border border-slate-200 bg-white px-7 py-8 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-700 dark:bg-slate-900'
     : 'w-full max-w-4xl bg-white dark:bg-slate-800 p-6 rounded-xl shadow';
 
   return (
@@ -166,13 +161,13 @@ const SymptomChecker = ({ embedded = false }) => {
       )}
 
       <div className={cardClass}>
-        <h2 className="text-2xl font-bold text-center">Smart Symptom Checker</h2>
-        <div className="mt-4 mb-6 space-y-2">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Smart Symptom Checker</h2>
+        <div className="mt-7 mb-8 space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
             <span>Step {currentStep} of {totalSteps}</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-700">
+          <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-700">
             <div className="h-full rounded-full bg-slate-300 dark:bg-slate-500" style={{ width: `${progress}%` }} />
           </div>
         </div>
@@ -184,30 +179,25 @@ const SymptomChecker = ({ embedded = false }) => {
         )}
 
         {currentStep === 1 && (
-          <>
-            <h3 className="font-semibold mb-3">Select Symptoms</h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {symptomsList.map(s => (
-                <label key={s} className="flex items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    className="mt-1 h-4 w-4"
-                    checked={formData.symptoms.includes(s)}
-                    onChange={() => handleCheckbox(s)}
-                  />
-                  <span>{s}</span>
-                </label>
-              ))}
-            </div>
-          </>
+          <div>
+            <h3 className="mb-2 font-semibold">Select Symptoms</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+              Choose the symptoms you are feeling right now.
+            </p>
+            <SymptomLibrary
+              selectedSymptoms={formData.symptoms}
+              onToggleSymptom={handleCheckbox}
+              compact
+            />
+          </div>
         )}
 
         {currentStep === 2 && (
           <>
-            <h3 className="font-semibold mb-3">Duration</h3>
+            <h3 className="mb-4 text-xl font-semibold text-slate-950 dark:text-white">Duration</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {durations.map(d => (
-                <label key={d.value} className="flex items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:text-slate-200">
+                <label key={d.value} className="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:text-slate-200">
                   <input
                     type="radio"
                     className="mt-1 h-4 w-4"
@@ -273,16 +263,16 @@ const SymptomChecker = ({ embedded = false }) => {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t border-slate-200 pt-4 dark:border-slate-700">
-          <Button variant="outline" disabled={currentStep === 1 || loading} onClick={() => setCurrentStep(s => s - 1)}>
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700 sm:flex-row">
+          <Button variant="outline" disabled={currentStep === 1 || loading} onClick={() => setCurrentStep(s => s - 1)} className="rounded-2xl border-slate-200 px-5 py-3 text-slate-900 dark:border-slate-700 dark:text-slate-100">
             Previous
           </Button>
           {currentStep < 5 ? (
-            <Button disabled={!isStepValid() || loading} onClick={() => setCurrentStep(s => s + 1)}>
+            <Button disabled={!isStepValid() || loading} onClick={() => setCurrentStep(s => s + 1)} className="rounded-2xl bg-sky-300 px-5 py-3 text-white hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-500">
               Next
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={loading}>
+            <Button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-sky-300 px-5 py-3 text-white hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-500">
               {loading ? 'Analyzing...' : 'Get Diagnosis'}
             </Button>
           )}

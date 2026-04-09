@@ -49,6 +49,18 @@ const router = express.Router();
  *               nmcNumber:
  *                 type: string
  *                 description: Required when role is doctor
+ *               experienceYears:
+ *                 type: number
+ *                 description: Required when role is doctor
+ *               specialization:
+ *                 type: string
+ *                 description: Required when role is doctor
+ *               qualification:
+ *                 type: string
+ *                 description: Required when role is doctor
+ *               currentlyWorkingAt:
+ *                 type: string
+ *                 description: Required when role is doctor
  *           examples:
  *             patient:
  *               summary: Register patient
@@ -61,11 +73,16 @@ const router = express.Router();
  *             doctor:
  *               summary: Register doctor
  *               value:
- *                 name: Dr. John Smith
+ *                 name: John Smith
  *                 email: dr.john@example.com
  *                 password: StrongPass123
  *                 role: doctor
+ *                 phone: "+15551234568"
  *                 nmcNumber: NMC-123456
+ *                 experienceYears: 8
+ *                 specialization: gynecology
+ *                 qualification: md
+ *                 currentlyWorkingAt: City Hospital
  *     responses:
  *       201:
  *         description: User registered

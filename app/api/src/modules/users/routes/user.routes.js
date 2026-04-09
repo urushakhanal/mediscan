@@ -8,6 +8,7 @@ const {
     findUser,
     modifyUser,
     verifyDoctor,
+    updateUserStatus,
     removeUser,
 } = require('../controllers/user.controller');
 
@@ -113,10 +114,22 @@ router.get('/:id', findUser);
  *                 type: string
  *               nmcNumber:
  *                 type: string
+ *               experienceYears:
+ *                 type: number
+ *               specialization:
+ *                 type: string
+ *               qualification:
+ *                 type: string
+ *               currentlyWorkingAt:
+ *                 type: string
  *           example:
  *             name: Updated User
  *             role: doctor
  *             nmcNumber: NMC-789123
+ *             experienceYears: 10
+ *             specialization: gynecology
+ *             qualification: md
+ *             currentlyWorkingAt: National Women Hospital
  *     responses:
  *       200:
  *         description: Updated user
@@ -137,6 +150,14 @@ router.get('/:id', findUser);
 router.put('/:id', modifyUser);
 
 router.patch('/:id/verify-doctor', verifyDoctor);
+router.patch('/:id/block', (req, res, next) => {
+    req.body = { ...(req.body || {}), isActive: false };
+    return updateUserStatus(req, res, next);
+});
+router.patch('/:id/activate', (req, res, next) => {
+    req.body = { ...(req.body || {}), isActive: true };
+    return updateUserStatus(req, res, next);
+});
 
 /**
  * @swagger

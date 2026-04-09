@@ -11,8 +11,12 @@ import DoctorsPage from './pages/DoctorsPage';
 import DoctorDetailPage from './pages/DoctorDetailPage';
 import AdminLayout from './components/admin/AdminLayout';
 import SuperadminRoute from './components/admin/SuperadminRoute';
+import RoleRoute from './components/auth/RoleRoute';
 import AdminDashboard from './pages/AdminDashboard';
-import AdminUsersPage from './pages/AdminUsersPage';
+import AdminDoctorsPage from './pages/AdminDoctorsPage';
+import AdminPatientsPage from './pages/AdminPatientsPage';
+import PatientDashboard from './pages/PatientDashboard';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 function App() {
     return (
@@ -25,6 +29,22 @@ function App() {
                     <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
                     <Route path="/doctors" element={<DoctorsPage />} />
                     <Route path="/doctors/:id" element={<DoctorDetailPage />} />
+                    <Route
+                        path="/patient/dashboard"
+                        element={(
+                            <RoleRoute allowedRoles={['patient']}>
+                                <PatientDashboard />
+                            </RoleRoute>
+                        )}
+                    />
+                    <Route
+                        path="/doctor/dashboard"
+                        element={(
+                            <RoleRoute allowedRoles={['doctor']}>
+                                <DoctorDashboard />
+                            </RoleRoute>
+                        )}
+                    />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/init-superadmin" element={<InitSuperadmin />} />
@@ -38,7 +58,9 @@ function App() {
                     >
                         <Route index element={<Navigate to="/admin/dashboard" replace />} />
                         <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="users" element={<AdminUsersPage />} />
+                        <Route path="users" element={<Navigate to="/admin/doctors" replace />} />
+                        <Route path="doctors" element={<AdminDoctorsPage />} />
+                        <Route path="patients" element={<AdminPatientsPage />} />
                     </Route>
                     <Route
                         path="*"
