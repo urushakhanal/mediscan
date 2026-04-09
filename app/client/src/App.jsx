@@ -27,6 +27,7 @@ import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import PatientDoctorsPage from './pages/PatientDoctorsPage';
 import PatientCarePlansPage from './pages/PatientCarePlansPage';
 import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
+import DoctorCarePlanRequestsPage from './pages/DoctorCarePlanRequestsPage';
 import AdminCarePlansPage from './pages/AdminCarePlansPage';
 import AdminCarePlanRequestsPage from './pages/AdminCarePlanRequestsPage';
 
@@ -71,6 +72,7 @@ function App() {
                         <Route path="overview" element={<DoctorDashboard />} />
                         <Route path="appointments" element={<DoctorAppointmentsPage />} />
                         <Route path="care-plans" element={<DoctorCarePlansPage />} />
+                        <Route path="care-plan-requests" element={<DoctorCarePlanRequestsPage />} />
                         <Route path="schedule" element={<DoctorSchedulePage />} />
                     </Route>
                     <Route path="/signin" element={<SignIn />} />

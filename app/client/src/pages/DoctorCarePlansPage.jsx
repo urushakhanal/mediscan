@@ -1,19 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import { CheckCircle2, ClipboardCheck, FileStack, HeartHandshake, Users2, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ClipboardCheck, FileStack, HeartHandshake, Users2 } from 'lucide-react';
 import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
-import { getDoctorCarePlanBookings, getDoctorCarePlans, updateDoctorCarePlanBookingStatus } from '../lib/auth';
-import { formatReadableDate } from '../lib/appointments';
-import { formatUserDisplayName } from '../lib/utils';
-import { formatCarePlanDuration, getCarePlanBookingStatusClasses, getCarePlanIcon } from '../lib/carePlans';
+import { getDoctorCarePlanBookings, getDoctorCarePlans } from '../lib/auth';
+import { formatCarePlanDuration, getCarePlanIcon } from '../lib/carePlans';
 
 const DoctorCarePlansPage = () => {
     const [carePlans, setCarePlans] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [actionLoadingId, setActionLoadingId] = useState('');
 
     const loadData = useCallback(async () => {
         try {
@@ -36,26 +32,22 @@ const DoctorCarePlansPage = () => {
         loadData();
     }, [loadData]);
 
-    const handleStatusChange = async (bookingId, status) => {
-        try {
-            setActionLoadingId(bookingId);
-            await updateDoctorCarePlanBookingStatus(bookingId, { status });
-            toast.success(status === 'confirmed' ? 'Care plan request approved.' : 'Care plan request declined.');
-            await loadData();
-        } catch (requestError) {
-            setError(requestError.message || 'Unable to update care plan request.');
-            toast.error(requestError.message || 'Unable to update care plan request.');
-        } finally {
-            setActionLoadingId('');
-        }
-    };
+    const pendingBookingsCount = useMemo(
+        () => bookings.filter((booking) => booking.status === 'pending').length,
+        [bookings]
+    );
+
+    const completedBookingsCount = useMemo(
+        () => bookings.filter((booking) => booking.status === 'completed').length,
+        [bookings]
+    );
 
     return (
         <div className="space-y-6">
             <DashboardPageIntro
                 eyebrow="Doctor Workspace"
                 title="Assigned care plans"
-                description="Review the care plans you are attached to and keep track of new patient requests coming through those plans."
+                description="Review only the care plans assigned to you and keep a quick eye on request volume without mixing in the full booking queue here."
             />
 
             {error && (
@@ -67,11 +59,16 @@ const DoctorCarePlansPage = () => {
             <section className="grid gap-4 xl:grid-cols-4">
                 <DashboardStatCard label="Assigned plans" value={loading ? '--' : carePlans.length} helper="Active plans" icon={HeartHandshake} />
                 <DashboardStatCard label="Plan requests" value={loading ? '--' : bookings.length} tone="amber" helper="All submissions" icon={ClipboardCheck} />
-                <DashboardStatCard label="Pending requests" value={loading ? '--' : bookings.filter((booking) => booking.status === 'pending').length} tone="cyan" helper="Needs review" icon={Users2} />
-                <DashboardStatCard label="Completed plans" value={loading ? '--' : bookings.filter((booking) => booking.status === 'completed').length} tone="emerald" helper="Finished journeys" icon={FileStack} />
+                <DashboardStatCard label="Pending requests" value={loading ? '--' : pendingBookingsCount} tone="cyan" helper="Needs review" icon={Users2} />
+                <DashboardStatCard label="Completed plans" value={loading ? '--' : completedBookingsCount} tone="emerald" helper="Finished journeys" icon={FileStack} />
             </section>
 
             <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {!loading && carePlans.length === 0 && (
+                    <article className="rounded-[1.85rem] border border-dashed border-slate-300 bg-white/80 p-6 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                        No care plans are assigned to you yet.
+                    </article>
+                )}
                 {!loading && carePlans.map((carePlan) => {
                     const Icon = getCarePlanIcon(carePlan.iconKey);
 
@@ -93,77 +90,6 @@ const DoctorCarePlansPage = () => {
                         </article>
                     );
                 })}
-            </section>
-
-            <section className="rounded-[1.9rem] border border-slate-200 bg-white shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
-                    <div>
-                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Requests</p>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Incoming care plan bookings</h2>
-                    </div>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 dark:bg-slate-950/60 dark:text-slate-400">
-                            <tr>
-                                <th className="px-6 py-3 font-medium">Patient</th>
-                                <th className="px-6 py-3 font-medium">Plan</th>
-                                <th className="px-6 py-3 font-medium">Preferred date</th>
-                                <th className="px-6 py-3 font-medium">Preferred time</th>
-                                <th className="px-6 py-3 font-medium">Status</th>
-                                <th className="px-6 py-3 font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {!loading && bookings.length === 0 && (
-                                <tr>
-                                    <td className="px-6 py-10 text-center text-slate-500 dark:text-slate-400" colSpan={6}>
-                                        No care plan requests yet.
-                                    </td>
-                                </tr>
-                            )}
-                            {bookings.map((booking) => (
-                                <tr key={booking._id} className="text-slate-700 dark:text-slate-200">
-                                    <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{formatUserDisplayName(booking.patient)}</td>
-                                    <td className="px-6 py-4">{booking.carePlan?.name}</td>
-                                    <td className="px-6 py-4">{formatReadableDate(booking.preferredDate)}</td>
-                                    <td className="px-6 py-4">{booking.preferredTime}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getCarePlanBookingStatusClasses(booking.status)}`}>
-                                            {booking.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {booking.status === 'pending' ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleStatusChange(booking._id, 'confirmed')}
-                                                    disabled={actionLoadingId === booking._id}
-                                                    className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-                                                    <CheckCircle2 size={14} />
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleStatusChange(booking._id, 'cancelled')}
-                                                    disabled={actionLoadingId === booking._id}
-                                                    className="inline-flex items-center gap-2 rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300"
-                                                >
-                                                    <XCircle size={14} />
-                                                    Decline
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs text-slate-400 dark:text-slate-500">No actions</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
             </section>
         </div>
     );

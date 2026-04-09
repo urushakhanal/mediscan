@@ -368,21 +368,13 @@ const listDoctorCarePlans = async (doctorId) => {
 };
 
 const updateBookingStatus = async ({ bookingId, doctorId, status }) => {
-    if (!['confirmed', 'cancelled', 'completed'].includes(status)) {
-        throw createHttpError('Care plan booking status can only be changed to confirmed, cancelled, or completed.', 400);
+    if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+        throw createHttpError('Care plan booking status must be pending, confirmed, cancelled, or completed.', 400);
     }
 
     const booking = await CarePlanBooking.findOne({ _id: bookingId, doctor: doctorId });
     if (!booking) {
         throw createHttpError('Care plan booking not found.', 404);
-    }
-
-    if (status === 'completed' && booking.status !== 'confirmed') {
-        throw createHttpError('Only confirmed care plan bookings can be marked as completed.', 400);
-    }
-
-    if (['cancelled', 'confirmed'].includes(status) && booking.status !== 'pending') {
-        throw createHttpError('Only pending care plan bookings can be approved or declined.', 400);
     }
 
     booking.status = status;

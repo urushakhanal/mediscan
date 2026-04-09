@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { PencilLine, Plus, Settings, Trash2 } from 'lucide-react';
 import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
+import DashboardStatCard from '../components/dashboard/DashboardStatCard';
 import useDoctorDashboard from '../hooks/useDoctorDashboard';
 import { formatSlot } from '../lib/appointments';
 
@@ -152,16 +153,39 @@ const DoctorSchedulePage = () => {
                 </div>
             )}
 
-            <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-                <section className="space-y-4">
-                    <article className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Current daily limit</p>
-                        <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{scheduleSettings.maxAppointmentsPerDay}</p>
-                    </article>
-                    <article className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Configured slots</p>
-                        <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{scheduleSettings.availableTimeSlots.length}</p>
-                    </article>
+            <section className="grid gap-4 xl:grid-cols-4">
+                <DashboardStatCard label="Daily limit" value={scheduleSettings.maxAppointmentsPerDay} helper="Current cap" icon={Settings} />
+                <DashboardStatCard label="Configured slots" value={scheduleSettings.availableTimeSlots.length} tone="cyan" helper="Visible times" icon={Plus} />
+            </section>
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]">
+                <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">
+                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">Overview</p>
+                    <h2 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">Current availability</h2>
+                    <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                        Patients only see the slots you save here. Keep your daily limit aligned with the number of time windows you actually want to offer.
+                    </p>
+
+                    <div className="mt-5 space-y-3">
+                        <div className="rounded-[1.3rem] bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                            <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Daily booking limit</p>
+                            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{scheduleSettings.maxAppointmentsPerDay}</p>
+                        </div>
+                        <div className="rounded-[1.3rem] bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                            <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Saved time slots</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {scheduleSettings.availableTimeSlots.length > 0 ? (
+                                    scheduleSettings.availableTimeSlots.map((slot) => (
+                                        <span key={slot} className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                                            {formatSlot(slot)}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No saved slots yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <form className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900" onSubmit={handleSaveSettings}>
@@ -171,28 +195,30 @@ const DoctorSchedulePage = () => {
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Configuration</p>
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Booking windows</h2>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Booking setup</h2>
                         </div>
                     </div>
 
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
-                        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                        <div className="rounded-[1.25rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
                             <label htmlFor="maxAppointmentsPerDay" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Daily booking limit</label>
                             <input id="maxAppointmentsPerDay" type="number" min="1" value={settingsForm.maxAppointmentsPerDay} onChange={handleSettingsChange} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                         </div>
-                        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                        <div className="rounded-[1.25rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
                             <label htmlFor="slotCount" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Number of slots</label>
                             <input id="slotCount" type="number" min="1" value={settingsForm.slotCount} onChange={handleSettingsChange} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                         </div>
                     </div>
 
-                    <div className="mt-6 rounded-[1.3rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                    <div className="mt-6 rounded-[1.35rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Time slot builder</p>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Added {settingsForm.availableTimeSlots.length} of {settingsForm.slotCount || 0} slots</p>
                             </div>
-                            <span className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:border-slate-700 dark:text-slate-200">{editingSlotIndex >= 0 ? 'Editing slot' : 'Add new slot'}</span>
+                            <span className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                                {editingSlotIndex >= 0 ? 'Editing slot' : 'Add new slot'}
+                            </span>
                         </div>
 
                         <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
@@ -209,6 +235,15 @@ const DoctorSchedulePage = () => {
                                     <Plus size={16} />
                                     {editingSlotIndex >= 0 ? 'Update' : 'Add'}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 rounded-[1.35rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">Draft slots</p>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Review, edit, or remove time windows before saving.</p>
                             </div>
                         </div>
 
