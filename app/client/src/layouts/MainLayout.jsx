@@ -17,11 +17,12 @@ const MainLayout = ({ children }) => {
         path === '/signin' ||
         path === '/signup' ||
         path === '/init-superadmin';
+    const isHomePage = path === '/';
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 transition-colors">
             {!isDashboardPage && <Navbar />}
-            <main className={`flex-1 ${isDashboardPage ? '' : 'pt-20'}`}>{children}</main>
+            <main className={`flex-1 ${isDashboardPage || isHomePage ? '' : 'pt-20'}`}>{children}</main>
             {!isAuthPage && !isDashboardPage && <Footer />}
         </div>
     );

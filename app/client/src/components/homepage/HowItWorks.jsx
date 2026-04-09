@@ -46,7 +46,7 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="py-20 px-6 md:px-12 bg-gradient-to-b from-white to-teal-50 dark:from-slate-950 dark:to-slate-900"
+      className="pt-8 pb-20 px-6 md:px-12 md:pt-10 bg-gradient-to-b from-white to-teal-50 dark:from-slate-950 dark:to-slate-900"
     >
       <div className="max-w-6xl mx-auto space-y-10">
         <div className="text-center space-y-3">
