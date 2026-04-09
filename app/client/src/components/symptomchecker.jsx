@@ -280,7 +280,7 @@ const SymptomChecker = ({ embedded = false }) => {
       )}
 
       <div className={cardClass}>
-        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Smart Symptom Checker</h2>
+        <h2 className="text-center text-3xl font-bold tracking-tight text-teal-600 dark:text-teal-400">Smart Symptom Checker</h2>
         <div className="mt-7 mb-8 space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
             <span>Step {currentStep} of {totalSteps}</span>
