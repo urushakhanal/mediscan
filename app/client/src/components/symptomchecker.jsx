@@ -15,12 +15,19 @@ const durations = [
 
 const severityLabels = ['Minimal', 'Mild', 'Mild-Moderate', 'Moderate', 'Moderate-High', 'High', 'Severe', 'Very Severe', 'Extreme', 'Critical'];
 
+const analyzingMessages = [
+  'Reviewing symptom patterns',
+  'Checking urgency signals',
+  'Preparing care guidance',
+];
+
 const SymptomChecker = ({ embedded = false }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [particles, setParticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [analyzingMessageIndex, setAnalyzingMessageIndex] = useState(0);
 
   const [formData, setFormData] = useState({
     symptoms: [],
@@ -54,6 +61,19 @@ const SymptomChecker = ({ embedded = false }) => {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnalyzingMessageIndex(0);
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setAnalyzingMessageIndex(prev => (prev + 1) % analyzingMessages.length);
+    }, 1400);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleCheckbox = symptom => {
     setFormData(prev => ({
@@ -178,6 +198,39 @@ const SymptomChecker = ({ embedded = false }) => {
           </div>
         )}
 
+        {loading && (
+          <div className="mb-5 overflow-hidden rounded-2xl border border-cyan-200 bg-cyan-50/80 px-4 py-4 dark:border-cyan-900/60 dark:bg-cyan-950/20">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                <span className="absolute h-10 w-10 rounded-full border-2 border-cyan-200 dark:border-cyan-900/60" />
+                <span className="absolute h-10 w-10 animate-spin rounded-full border-2 border-transparent border-t-cyan-600 border-r-cyan-400 dark:border-t-cyan-300 dark:border-r-cyan-500" />
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-600 dark:bg-cyan-300" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Analyzing your symptoms</p>
+                <p className="mt-1 text-sm text-cyan-800 dark:text-cyan-200">
+                  {analyzingMessages[analyzingMessageIndex]}...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              {[0, 1, 2].map((item) => (
+                <span
+                  key={item}
+                  className="h-1.5 flex-1 overflow-hidden rounded-full bg-cyan-100 dark:bg-cyan-950/50"
+                >
+                  <span
+                    className="block h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500"
+                    style={{
+                      width: item < analyzingMessageIndex ? '100%' : item === analyzingMessageIndex ? '65%' : '18%',
+                    }}
+                  />
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {currentStep === 1 && (
           <div>
             <h3 className="mb-2 font-semibold">Select Symptoms</h3>
@@ -273,7 +326,12 @@ const SymptomChecker = ({ embedded = false }) => {
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={loading} className="rounded-2xl bg-sky-300 px-5 py-3 text-white hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-500">
-              {loading ? 'Analyzing...' : 'Get Diagnosis'}
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Analyzing...
+                </span>
+              ) : 'Get Diagnosis'}
             </Button>
           )}
         </div>

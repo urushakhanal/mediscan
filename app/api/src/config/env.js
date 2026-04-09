@@ -40,7 +40,7 @@ const config = {
 
     // AI provider (OpenRouter)
     openRouterApiKey: process.env.OPENROUTER_API_KEY || '',
-    openRouterModel: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free',
+    openRouterModel: process.env.OPENROUTER_MODEL || 'openrouter/free',
     openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
 };
 
