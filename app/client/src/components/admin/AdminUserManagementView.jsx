@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BadgeCheck, Ban, ShieldAlert, Trash2 } from 'lucide-react';
+import { BadgeCheck, Ban, Eye, ShieldAlert, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { activateUserById, blockUserById, deleteUserById, getUsers, verifyDoctorById } from '../../lib/auth';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -17,6 +17,7 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [verifyTarget, setVerifyTarget] = useState(null);
     const [statusTarget, setStatusTarget] = useState(null);
+    const [detailTarget, setDetailTarget] = useState(null);
 
     const visibleUsers = useMemo(
         () => users.filter((user) => user.role === userRole),
@@ -121,14 +122,9 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                             <tr>
                                 <th className="px-6 py-3 font-medium">Name</th>
                                 <th className="px-6 py-3 font-medium">Email</th>
-                                <th className="px-6 py-3 font-medium">Phone</th>
                                 <th className="px-6 py-3 font-medium">Status</th>
                                 {userRole === 'doctor' && <th className="px-6 py-3 font-medium">Verified</th>}
                                 {userRole === 'doctor' && <th className="px-6 py-3 font-medium">Specialization</th>}
-                                {userRole === 'doctor' && <th className="px-6 py-3 font-medium">Experience</th>}
-                                {userRole === 'doctor' && <th className="px-6 py-3 font-medium">Qualification</th>}
-                                {userRole === 'doctor' && <th className="px-6 py-3 font-medium">Currently Working At</th>}
-                                {userRole === 'doctor' && <th className="px-6 py-3 font-medium">NMC</th>}
                                 <th className="px-6 py-3 font-medium">Actions</th>
                             </tr>
                         </thead>
@@ -137,7 +133,6 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                                 <tr key={user._id} className="text-slate-700 dark:text-slate-200">
                                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{formatUserDisplayName(user)}</td>
                                     <td className="px-6 py-4">{user.email}</td>
-                                    <td className="px-6 py-4">{user.phone || '-'}</td>
                                     <td className="px-6 py-4">
                                         <span
                                             className={[
@@ -165,12 +160,19 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                                         </td>
                                     )}
                                     {userRole === 'doctor' && <td className="px-6 py-4">{formatSpecialization(user.specialization)}</td>}
-                                    {userRole === 'doctor' && <td className="px-6 py-4">{formatExperienceYears(user.experienceYears)}</td>}
-                                    {userRole === 'doctor' && <td className="px-6 py-4">{user.qualification || '-'}</td>}
-                                    {userRole === 'doctor' && <td className="px-6 py-4">{user.currentlyWorkingAt || '-'}</td>}
-                                    {userRole === 'doctor' && <td className="px-6 py-4">{user.nmcNumber || '-'}</td>}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
+                                            {userRole === 'doctor' && (
+                                                <button
+                                                    onClick={() => setDetailTarget(user)}
+                                                    disabled={deleteLoading || verifyLoading || statusLoading}
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                                    title="View doctor details"
+                                                    aria-label={`View details for ${formatUserDisplayName(user)}`}
+                                                >
+                                                    <Eye size={15} />
+                                                </button>
+                                            )}
                                             {userRole === 'doctor' && (
                                                 <button
                                                     onClick={() => setVerifyTarget(user)}
@@ -216,7 +218,7 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                             ))}
                             {!loading && visibleUsers.length === 0 && (
                                 <tr>
-                                    <td className="px-6 py-6 text-slate-500 dark:text-slate-400" colSpan={userRole === 'doctor' ? 11 : 5}>
+                                    <td className="px-6 py-6 text-slate-500 dark:text-slate-400" colSpan={userRole === 'doctor' ? 6 : 4}>
                                         No {userRole}s found.
                                     </td>
                                 </tr>
@@ -263,6 +265,69 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                             </button>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={Boolean(detailTarget)} onOpenChange={(open) => (!open ? setDetailTarget(null) : null)}>
+                <DialogContent className="max-w-2xl rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
+                    {detailTarget && (
+                        <div className="p-6">
+                            <DialogHeader>
+                                <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Doctor Details</p>
+                                <DialogTitle className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                                    {formatUserDisplayName(detailTarget)}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Review the doctor profile before taking verification or account actions.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Email</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.email}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Phone</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.phone || '-'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Specialization</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatSpecialization(detailTarget.specialization)}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Experience</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatExperienceYears(detailTarget.experienceYears)}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Qualification</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.qualification || '-'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Currently Working At</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.currentlyWorkingAt || '-'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">NMC Number</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.nmcNumber || '-'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Verification</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.isVerified ? 'Verified' : 'Pending'}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDetailTarget(null)}
+                                    className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

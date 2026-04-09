@@ -9,6 +9,7 @@ const {
     createBooking,
     listPatientBookings,
     listDoctorBookings,
+    listAdminBookings,
     listDoctorCarePlans,
     updateBookingStatus,
 } = require('../services/carePlan.service');
@@ -130,6 +131,15 @@ const getMyDoctorBookings = async (req, res, next) => {
     }
 };
 
+const getAdminBookings = async (req, res, next) => {
+    try {
+        const bookings = await listAdminBookings();
+        return res.json({ success: true, bookings });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 const getMyDoctorCarePlans = async (req, res, next) => {
     try {
         const carePlans = await listDoctorCarePlans(req.user.id);
@@ -168,6 +178,7 @@ module.exports = {
     bookCarePlan,
     getMyPatientBookings,
     getMyDoctorBookings,
+    getAdminBookings,
     getMyDoctorCarePlans,
     changeMyDoctorBookingStatus,
 };

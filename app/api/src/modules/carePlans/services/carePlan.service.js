@@ -351,6 +351,14 @@ const listDoctorBookings = async (doctorId) => {
     return bookings.map(sanitizeBooking);
 };
 
+const listAdminBookings = async () => {
+    const bookings = await CarePlanBooking.find()
+        .populate(BOOKING_POPULATE)
+        .sort({ createdAt: -1 });
+
+    return bookings.map(sanitizeBooking);
+};
+
 const listDoctorCarePlans = async (doctorId) => {
     const carePlans = await CarePlan.find({ assignedDoctors: doctorId, isActive: true })
         .populate('assignedDoctors', DOCTOR_SELECT)
@@ -395,6 +403,7 @@ module.exports = {
     createBooking,
     listPatientBookings,
     listDoctorBookings,
+    listAdminBookings,
     listDoctorCarePlans,
     updateBookingStatus,
 };

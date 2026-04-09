@@ -12,6 +12,7 @@ const {
     bookCarePlan,
     getMyPatientBookings,
     getMyDoctorBookings,
+    getAdminBookings,
     getMyDoctorCarePlans,
     changeMyDoctorBookingStatus,
 } = require('../controllers/carePlan.controller');
@@ -25,6 +26,7 @@ router.put('/admin/:id', authMiddleware, requireRole('superadmin'), putCarePlan)
 router.patch('/admin/:id/status', authMiddleware, requireRole('superadmin'), patchCarePlanStatus);
 router.delete('/admin/:id', authMiddleware, requireRole('superadmin'), removeCarePlan);
 router.get('/doctor/me', authMiddleware, requireRole('doctor'), getMyDoctorCarePlans);
+router.get('/bookings/admin/all', authMiddleware, requireRole('superadmin'), getAdminBookings);
 router.get('/bookings/patient/me', authMiddleware, requireRole('patient'), getMyPatientBookings);
 router.get('/bookings/doctor/me', authMiddleware, requireRole('doctor'), getMyDoctorBookings);
 router.patch('/bookings/doctor/:id/status', authMiddleware, requireRole('doctor'), changeMyDoctorBookingStatus);

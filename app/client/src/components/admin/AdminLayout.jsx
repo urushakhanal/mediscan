@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ClipboardList, LayoutDashboard, ShieldCheck, Stethoscope, Users } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, ListChecks, ShieldCheck, Stethoscope, Users } from 'lucide-react';
 
 const navigationItems = [
     {
@@ -17,6 +17,11 @@ const navigationItems = [
         label: 'Care Plans',
         to: '/admin/care-plans',
         icon: ClipboardList,
+    },
+    {
+        label: 'Plan Requests',
+        to: '/admin/care-plan-requests',
+        icon: ListChecks,
     },
     {
         label: 'Patients',
@@ -43,12 +48,12 @@ const AdminLayout = () => {
             <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
                 <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/20">
                             <ShieldCheck size={20} />
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Admin</p>
-                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">MediScan Console</h1>
+                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">MediScan Dashboard</h1>
                         </div>
                     </div>
 

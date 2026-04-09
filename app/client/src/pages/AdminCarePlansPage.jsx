@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { BadgePlus, Ban, ClipboardList, Pencil, Trash2 } from 'lucide-react';
+import { BadgePlus, Ban, ClipboardList, Eye, Pencil, Trash2 } from 'lucide-react';
 import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
 import CarePlanFormDialog from '../components/care-plans/CarePlanFormDialog';
 import DeleteConfirmationDialog from '../components/admin/DeleteConfirmationDialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
     createAdminCarePlan,
     deleteAdminCarePlan,
@@ -24,6 +25,7 @@ const AdminCarePlansPage = () => {
     const [saving, setSaving] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
+    const [detailTarget, setDetailTarget] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [statusLoadingId, setStatusLoadingId] = useState('');
@@ -156,7 +158,6 @@ const AdminCarePlansPage = () => {
                                 <th className="px-6 py-3 font-medium">Specialty</th>
                                 <th className="px-6 py-3 font-medium">Duration</th>
                                 <th className="px-6 py-3 font-medium">Price</th>
-                                <th className="px-6 py-3 font-medium">Doctors</th>
                                 <th className="px-6 py-3 font-medium">Status</th>
                                 <th className="px-6 py-3 font-medium">Actions</th>
                             </tr>
@@ -164,7 +165,7 @@ const AdminCarePlansPage = () => {
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {!loading && carePlans.length === 0 && (
                                 <tr>
-                                    <td className="px-6 py-10 text-center text-slate-500 dark:text-slate-400" colSpan={7}>
+                                    <td className="px-6 py-10 text-center text-slate-500 dark:text-slate-400" colSpan={6}>
                                         No care plans created yet.
                                     </td>
                                 </tr>
@@ -178,7 +179,6 @@ const AdminCarePlansPage = () => {
                                     <td className="px-6 py-4">{formatSpecialization(carePlan.specialty)}</td>
                                     <td className="px-6 py-4">{formatCarePlanDuration(carePlan.durationWeeks)}</td>
                                     <td className="px-6 py-4">{formatCarePlanPrice(carePlan.price)}</td>
-                                    <td className="px-6 py-4">{carePlan.assignedDoctors?.length || 0}</td>
                                     <td className="px-6 py-4">
                                         <span className={[
                                             'inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]',
@@ -191,6 +191,14 @@ const AdminCarePlansPage = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDetailTarget(carePlan)}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                                aria-label={`View ${carePlan.name}`}
+                                            >
+                                                <Eye size={15} />
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -250,6 +258,98 @@ const AdminCarePlansPage = () => {
                 title={deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete care plan?'}
                 description="This care plan will be permanently removed if it has no bookings. If it already has requests, deactivate it instead."
             />
+
+            <Dialog open={Boolean(detailTarget)} onOpenChange={(open) => !open && setDetailTarget(null)}>
+                <DialogContent className="max-w-2xl rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
+                    {detailTarget && (
+                        <div className="max-h-[82vh] overflow-hidden">
+                            <div className="border-b border-slate-100 px-6 py-6 dark:border-slate-800">
+                            <DialogHeader>
+                                <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Care Plan Details</p>
+                                <DialogTitle className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                                    {detailTarget.name}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Review the full care plan details without crowding the management table.
+                                </DialogDescription>
+                            </DialogHeader>
+                            </div>
+
+                            <div className="max-h-[calc(82vh-8.5rem)] overflow-y-auto px-6 py-5">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Specialty</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatSpecialization(detailTarget.specialty)}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Status</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.isActive ? 'Active' : 'Inactive'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Duration</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatCarePlanDuration(detailTarget.durationWeeks)}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Price</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatCarePlanPrice(detailTarget.price)}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Summary</p>
+                                <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{detailTarget.summary}</p>
+                            </div>
+
+                            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Description</p>
+                                <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{detailTarget.description}</p>
+                            </div>
+
+                            {detailTarget.whoItsFor && (
+                                <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Who it is for</p>
+                                    <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{detailTarget.whoItsFor}</p>
+                                </div>
+                            )}
+
+                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Included in plan</p>
+                                    <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                        {(detailTarget.includes || []).map((item) => (
+                                            <p key={item}>{item}</p>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Assigned doctors</p>
+                                    <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                        {(detailTarget.assignedDoctors || []).length > 0 ? (
+                                            detailTarget.assignedDoctors.map((doctor) => (
+                                                <p key={doctor._id}>{doctor.name}</p>
+                                            ))
+                                        ) : (
+                                            <p>No doctors assigned.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDetailTarget(null)}
+                                    className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -65,6 +65,7 @@ export const createCarePlanBooking = (id, payload) =>
     request(`/api/care-plans/${id}/book`, { method: 'POST', body: payload });
 export const getPatientCarePlanBookings = () => request('/api/care-plans/bookings/patient/me');
 export const getDoctorCarePlanBookings = () => request('/api/care-plans/bookings/doctor/me');
+export const getAdminCarePlanBookings = () => request('/api/care-plans/bookings/admin/all');
 export const updateDoctorCarePlanBookingStatus = (id, payload) =>
     request(`/api/care-plans/bookings/doctor/${id}/status`, { method: 'PATCH', body: payload });
 export const getDoctorCarePlans = () => request('/api/care-plans/doctor/me');

@@ -28,6 +28,7 @@ import PatientDoctorsPage from './pages/PatientDoctorsPage';
 import PatientCarePlansPage from './pages/PatientCarePlansPage';
 import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
 import AdminCarePlansPage from './pages/AdminCarePlansPage';
+import AdminCarePlanRequestsPage from './pages/AdminCarePlanRequestsPage';
 
 function App() {
     return (
@@ -88,6 +89,7 @@ function App() {
                         <Route path="users" element={<Navigate to="/admin/doctors" replace />} />
                         <Route path="doctors" element={<AdminDoctorsPage />} />
                         <Route path="care-plans" element={<AdminCarePlansPage />} />
+                        <Route path="care-plan-requests" element={<AdminCarePlanRequestsPage />} />
                         <Route path="patients" element={<AdminPatientsPage />} />
                     </Route>
                     <Route
