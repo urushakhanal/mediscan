@@ -252,7 +252,7 @@ const createAppointment = async ({
                 recipientId: doctor._id,
                 type: 'appointment-request',
                 title: 'New appointment request',
-                message: `${patient.name} requested an appointment on ${date} at ${slot}.`,
+                message: `${patient.name} requested an appointment.`,
                 link: `/doctor/appointments/${appointment._id}`,
                 createdByRole: 'patient',
                 metadata: {
@@ -293,8 +293,8 @@ const createDoctorFollowUpAppointment = async ({ doctorId, patientId, date, slot
             notifySafely({
                 recipientId: patientId,
                 type: 'follow-up',
-                title: 'Follow-up appointment scheduled',
-                message: `Dr. ${doctor.name || 'your doctor'} scheduled a follow-up appointment for ${date} at ${slot}.`,
+                title: 'Follow-up scheduled',
+                message: `Dr. ${doctor.name || 'your doctor'} scheduled a follow-up appointment.`,
                 link: '/patient/appointments',
                 createdByRole: 'doctor',
                 metadata: {
@@ -410,8 +410,8 @@ const updateAppointmentStatus = async ({ appointmentId, doctorId, status }) => {
         type: status === 'confirmed' ? 'appointment-confirmed' : 'appointment-rejected',
         title: status === 'confirmed' ? 'Appointment confirmed' : 'Appointment rejected',
         message: status === 'confirmed'
-            ? `Your appointment on ${populatedAppointment.date} at ${populatedAppointment.slot} has been confirmed.`
-            : `Your appointment on ${populatedAppointment.date} at ${populatedAppointment.slot} has been rejected.`,
+            ? 'Your appointment has been confirmed.'
+            : 'Your appointment has been rejected.',
         link: '/patient/appointments',
         createdByRole: 'doctor',
         metadata: {
@@ -556,8 +556,8 @@ const updateDoctorAppointmentConsultation = async ({ appointmentId, doctorId, pa
         notifySafely({
             recipientId: appointment.patient,
             type: 'scan-request',
-            title: 'Your doctor requested a scan',
-            message: 'Your doctor has requested a scan or report for this appointment.',
+            title: 'Scan requested',
+            message: 'Your doctor requested a scan or report.',
             link: '/patient/appointments',
             createdByRole: 'doctor',
             metadata: {
@@ -645,10 +645,10 @@ const uploadAppointmentDocument = async ({ appointmentId, userId, userRole, payl
         notifySafely({
             recipientId: targetRecipientId,
             type: userRole === 'patient' ? 'report-uploaded' : 'document-uploaded',
-            title: userRole === 'patient' ? 'Patient uploaded a report' : 'Doctor uploaded a document',
+            title: userRole === 'patient' ? 'Report uploaded' : 'Document uploaded',
             message: userRole === 'patient'
-                ? `${uploaderName || 'The patient'} uploaded a report for this appointment.`
-                : `${uploaderName || 'The doctor'} uploaded a document for this appointment.`,
+                ? `${uploaderName || 'The patient'} uploaded a report.`
+                : `${uploaderName || 'The doctor'} uploaded a document.`,
             link: userRole === 'patient' ? `/doctor/appointments/${appointment._id}` : '/patient/appointments',
             createdByRole: userRole,
             metadata: {

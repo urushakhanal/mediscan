@@ -297,35 +297,35 @@ const DoctorDetailPage = () => {
             </div>
 
             <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
-                <DialogContent className="max-h-[90vh] max-w-2xl overflow-hidden rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex max-h-[90vh] flex-col">
-                        <DialogHeader>
-                            <div className="border-b border-slate-200 px-6 pb-5 pt-6 dark:border-slate-800">
-                                <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Appointment request</p>
-                                <DialogTitle className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+            <DialogContent className="max-h-[90vh] max-w-xl overflow-hidden rounded-[1.5rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex max-h-[90vh] flex-col">
+                    <DialogHeader>
+                            <div className="border-b border-slate-200 px-5 pb-4 pt-5 dark:border-slate-800">
+                                <p className="text-[11px] uppercase tracking-[0.26em] text-cyan-700 dark:text-cyan-300">Appointment request</p>
+                                <DialogTitle className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">
                                     Book with {formatUserDisplayName(doctor)}
                                 </DialogTitle>
-                                <DialogDescription>
+                                <DialogDescription className="text-sm leading-6">
                                     Choose a future date and one of the currently available time slots.
                                 </DialogDescription>
                             </div>
                         </DialogHeader>
 
                         <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleBookAppointment}>
-                            <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
+                                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                                     <span className={bookingStep === 1 ? 'text-cyan-700 dark:text-cyan-300' : ''}>Step 1: Schedule</span>
                                     <span>/</span>
                                     <span className={bookingStep === 2 ? 'text-cyan-700 dark:text-cyan-300' : ''}>Step 2: Notes</span>
                                 </div>
                             </div>
 
-                            <div className="min-h-[320px] flex-1 overflow-y-auto px-6 py-5">
-                                <div className="space-y-5">
+                            <div className="min-h-[280px] flex-1 overflow-y-auto px-5 py-4">
+                                <div className="space-y-4">
                                     {bookingStep === 1 && (
                                         <>
                                             <div>
-                                                <label htmlFor="appointment-date" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                <label htmlFor="appointment-date" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
                                                     Appointment date
                                                 </label>
                                                 <input
@@ -334,35 +334,35 @@ const DoctorDetailPage = () => {
                                                     min={getTomorrowDateString()}
                                                     value={bookingDate}
                                                     onChange={(event) => setBookingDate(event.target.value)}
-                                                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                     required
                                                 />
                                             </div>
 
-                                            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
                                                         Choose a slot for {formatReadableDate(bookingDate)}
                                                     </p>
-                                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                                         Only available slots can be selected. Booked slots stay disabled.
                                                     </p>
                                                 </div>
 
                                                 {availabilityError && (
-                                                    <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                                    <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
                                                         {availabilityError}
                                                     </div>
                                                 )}
 
-                                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                                <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                                                     {availabilityLoading &&
                                                         Array.from({ length: 4 }).map((_, index) => (
-                                                            <div key={`slot-skeleton-${index}`} className="h-11 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                                                            <div key={`slot-skeleton-${index}`} className="h-10 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
                                                         ))}
 
                                                     {!availabilityLoading && configuredSlots.length === 0 && !availabilityError && (
-                                                        <div className="col-span-full rounded-xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                                        <div className="col-span-full rounded-xl border border-dashed border-slate-300 px-3.5 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
                                                             No appointment slots are available on this date.
                                                         </div>
                                                     )}
@@ -374,12 +374,12 @@ const DoctorDetailPage = () => {
 
                                                             return (
                                                                 <button
-                                                                    key={slot}
-                                                                    type="button"
-                                                                    disabled={isDisabled}
-                                                                    onClick={() => setSelectedSlot(slot)}
-                                                                    className={[
-                                                                        'inline-flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed',
+                                                                key={slot}
+                                                                type="button"
+                                                                disabled={isDisabled}
+                                                                onClick={() => setSelectedSlot(slot)}
+                                                                className={[
+                                                                        'inline-flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition disabled:cursor-not-allowed',
                                                                         selectedSlot === slot
                                                                             ? 'border-cyan-600 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/30 dark:text-cyan-200'
                                                                             : isDisabled
@@ -404,9 +404,9 @@ const DoctorDetailPage = () => {
 
                                     {bookingStep === 2 && (
                                         <>
-                                            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Selected appointment</p>
-                                                <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-300">
+                                                <div className="mt-2.5 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-300">
                                                     <span className="inline-flex items-center gap-2">
                                                         <CalendarDays size={16} />
                                                         {formatReadableDate(bookingDate)}
@@ -419,7 +419,7 @@ const DoctorDetailPage = () => {
                                             </div>
 
                                             <div>
-                                                <label htmlFor="previousMedicalCondition" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                <label htmlFor="previousMedicalCondition" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
                                                     Previous medical condition
                                                 </label>
                                                 <textarea
@@ -431,12 +431,12 @@ const DoctorDetailPage = () => {
                                                         previousMedicalCondition: event.target.value,
                                                     }))}
                                                     placeholder="Optional"
-                                                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label htmlFor="symptoms" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                <label htmlFor="symptoms" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
                                                     Symptoms if any
                                                 </label>
                                                 <textarea
@@ -448,7 +448,7 @@ const DoctorDetailPage = () => {
                                                         symptoms: event.target.value,
                                                     }))}
                                                     placeholder="Optional"
-                                                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                 />
                                             </div>
                                         </>
@@ -456,14 +456,14 @@ const DoctorDetailPage = () => {
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-200 px-6 py-4 shadow-[0_-8px_20px_-14px_rgba(15,23,42,0.22)] dark:border-slate-800">
+                            <div className="border-t border-slate-200 px-5 py-3.5 shadow-[0_-8px_20px_-14px_rgba(15,23,42,0.22)] dark:border-slate-800">
                                 <div className="flex flex-wrap items-center gap-3">
                                 {bookingStep === 1 ? (
                                     <button
                                         type="button"
                                         onClick={goToNotesStep}
                                         disabled={!selectedSlot}
-                                        className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                                        className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                     >
                                         Continue
                                     </button>
@@ -473,14 +473,14 @@ const DoctorDetailPage = () => {
                                             type="button"
                                             onClick={() => setBookingStep(1)}
                                             disabled={bookingLoading}
-                                            className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                            className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
                                         >
                                             Back
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={bookingLoading || !selectedSlot}
-                                            className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                                            className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                         >
                                             {bookingLoading ? 'Submitting...' : 'Confirm booking request'}
                                         </button>
@@ -490,7 +490,7 @@ const DoctorDetailPage = () => {
                                     type="button"
                                     onClick={() => setBookingOpen(false)}
                                     disabled={bookingLoading}
-                                    className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                    className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
                                 >
                                     Cancel
                                 </button>

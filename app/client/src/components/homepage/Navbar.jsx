@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Stethoscope, Menu, X, Sun, Moon, Eye, EyeOff, Bell, CheckCheck, Dot } from "lucide-react";
+import {
+  Stethoscope,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  Eye,
+  EyeOff,
+  Bell,
+  CheckCheck,
+  Dot,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
@@ -383,19 +394,21 @@ const Navbar = () => {
             </button>
 
             {notificationsOpen && (
-              <div className="absolute right-0 top-full z-50 mt-3 w-[22rem] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_80px_-35px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900">
-                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+              <div className="absolute right-0 top-full z-50 mt-3 w-[20.5rem] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_80px_-35px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-200 px-3.5 py-2.5 dark:border-slate-800">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
-                    </p>
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white">Notifications</p>
+                    {unreadCount > 0 && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {unreadCount} unread
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"
                     onClick={handleMarkAllNotificationsRead}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-                  >
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1.25 text-[11px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+                >
                     <CheckCheck className="h-4 w-4" />
                     Mark all read
                   </button>
@@ -403,15 +416,15 @@ const Navbar = () => {
 
                 <div className="max-h-[28rem] overflow-y-auto">
                   {notificationsLoading ? (
-                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="px-3.5 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
                       Loading notifications...
                     </div>
                   ) : notificationsError ? (
-                    <div className="px-4 py-10 text-center text-sm text-rose-600 dark:text-rose-300">
+                    <div className="px-3.5 py-8 text-center text-xs text-rose-600 dark:text-rose-300">
                       {notificationsError}
                     </div>
                   ) : notifications.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="px-3.5 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
                       No notifications yet.
                     </div>
                   ) : (
@@ -422,7 +435,7 @@ const Navbar = () => {
                           type="button"
                           onClick={() => handleNotificationClick(notification)}
                           className={[
-                            "block w-full px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/70",
+                            "block w-full px-3.5 py-3.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/70",
                             notification.isRead ? "bg-white dark:bg-slate-900" : "bg-cyan-50/60 dark:bg-cyan-950/20",
                           ].join(" ")}
                         >
@@ -432,14 +445,14 @@ const Navbar = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-3">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                <p className="text-xs font-semibold text-slate-900 dark:text-white">
                                   {notification.title}
                                 </p>
-                                <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                                <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
                                   {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : ""}
                                 </span>
                               </div>
-                              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                              <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
                                 {notification.message}
                               </p>
                             </div>
