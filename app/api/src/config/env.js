@@ -38,10 +38,10 @@ const config = {
     // Superadmin bootstrap key
     superadminSetupKey: process.env.SUPERADMIN_SETUP_KEY || 'change_me_superadmin',
 
-    // AI provider (OpenRouter)
-    openRouterApiKey: process.env.OPENROUTER_API_KEY || '',
-    openRouterModel: process.env.OPENROUTER_MODEL || 'openrouter/free',
-    openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    // AI provider (Mistral)
+    mistralApiKey: process.env.MISTRAL_API_KEY || process.env.OPENROUTER_API_KEY || '',
+    mistralModel: process.env.MISTRAL_MODEL || 'mistral-small-latest',
+    mistralBaseUrl: process.env.MISTRAL_BASE_URL || 'https://api.mistral.ai/v1',
 
     // SMTP / email
     smtp: {

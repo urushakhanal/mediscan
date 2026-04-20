@@ -114,8 +114,8 @@ const normalizeAssessment = (parsed, payload) => {
     };
 };
 
-const requestAiAssessment = async (payload) => {
-    if (!config.openRouterApiKey) {
+const requestMistralAssessment = async (payload) => {
+    if (!config.mistralApiKey) {
         throw createHttpError('AI provider is not configured.', 503);
     }
 
@@ -123,16 +123,14 @@ const requestAiAssessment = async (payload) => {
     const timeout = setTimeout(() => controller.abort(), 50000);
 
     try {
-        const response = await fetch(`${config.openRouterBaseUrl}/chat/completions`, {
+        const response = await fetch(`${config.mistralBaseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${config.openRouterApiKey}`,
-                'HTTP-Referer': config.clientUrl,
-                'X-Title': config.appName,
+                Authorization: `Bearer ${config.mistralApiKey}`,
             },
             body: JSON.stringify({
-                model: config.openRouterModel,
+                model: config.mistralModel,
                 messages: [
                     {
                         role: 'system',
@@ -151,45 +149,45 @@ const requestAiAssessment = async (payload) => {
         if (!response.ok) {
             const errorBody = await response.text().catch(() => '');
             const providerMessage = errorBody.trim() || `Provider returned status ${response.status}.`;
-            throw createHttpError(`AI symptom checker request failed: ${providerMessage}`, 502);
+            throw createHttpError(`Mistral symptom checker request failed: ${providerMessage}`, 502);
         }
 
         const data = await response.json();
         const content = data?.choices?.[0]?.message?.content;
 
         if (!content) {
-            throw createHttpError('AI symptom checker returned an empty response.', 502);
+            throw createHttpError('Mistral symptom checker returned an empty response.', 502);
         }
 
         let parsed;
         try {
             parsed = JSON.parse(stripCodeFence(content));
         } catch {
-            throw createHttpError('AI symptom checker returned an invalid response format.', 502);
+            throw createHttpError('Mistral symptom checker returned an invalid response format.', 502);
         }
 
         return normalizeAssessment(parsed, payload);
     } catch (error) {
         if (error?.name === 'AbortError') {
-            throw createHttpError('AI symptom checker timed out. Please try again.', 504);
+            throw createHttpError('Mistral symptom checker timed out. Please try again.', 504);
         }
 
         if (error?.statusCode) {
             throw error;
         }
 
-        throw createHttpError('AI symptom checker is unavailable right now.', 502);
+        throw createHttpError('Mistral symptom checker is unavailable right now.', 502);
     } finally {
         clearTimeout(timeout);
     }
 };
 
 const analyzeSymptoms = async (payload) => {
-    const assessment = await requestAiAssessment(payload);
+    const assessment = await requestMistralAssessment(payload);
 
     return {
-        source: 'ai',
-        model: config.openRouterModel,
+        source: 'mistral',
+        model: config.mistralModel,
         assessment,
     };
 };
