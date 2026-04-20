@@ -382,7 +382,7 @@ const Navbar = () => {
           <div ref={notificationsRef} className="relative">
             <button
               onClick={notificationsOpen ? closeNotifications : openNotifications}
-              className="relative rounded-full border border-primary/20 bg-white/80 p-2 text-primary transition hover:border-primary/40 hover:bg-white dark:border-primary/30 dark:bg-gray-800/80 dark:text-secondary"
+              className="relative p-2 text-primary transition hover:text-primary-dark dark:text-primary dark:hover:text-primary-light"
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />
@@ -466,7 +466,7 @@ const Navbar = () => {
             )}
           </div>
 
-          <button onClick={toggleDarkMode} className="text-primary dark:text-secondary hover:text-secondary p-2">
+          <button onClick={toggleDarkMode} className="p-2 text-primary transition hover:text-primary-dark dark:text-primary dark:hover:text-primary-light">
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
 
@@ -523,7 +523,7 @@ const Navbar = () => {
 
         {/* Mobile: Dark Mode + Hamburger */}
         <div className="md:hidden flex items-center gap-2 ml-auto">
-          <button onClick={toggleDarkMode} className="text-primary dark:text-secondary p-2" title="Toggle Dark Mode">
+          <button onClick={toggleDarkMode} className="p-2 text-primary transition hover:text-primary-dark dark:text-primary dark:hover:text-primary-light" title="Toggle Dark Mode">
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <Button variant="ghost" className="p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
