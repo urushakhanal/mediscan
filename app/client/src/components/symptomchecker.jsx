@@ -22,12 +22,36 @@ const analyzingMessages = [
   'Preparing care guidance',
 ];
 
+const getFriendlySymptomErrorMessage = message => {
+  const normalized = String(message || '').toLowerCase();
+
+  if (
+    normalized.includes('free-models-per-day') ||
+    normalized.includes('rate limit exceeded') ||
+    normalized.includes('openrouter')
+  ) {
+    return 'Your free OpenRouter limit has been reached. Please try again later or use another configured model.';
+  }
+
+  if (normalized.includes('timed out')) {
+    return 'The symptom checker took too long to respond. Please try again in a moment.';
+  }
+
+  return message || 'Unable to analyze symptoms right now.';
+};
+
+const isOpenRouterLimitError = message => {
+  const normalized = String(message || '').toLowerCase();
+  return normalized.includes('free-models-per-day') || normalized.includes('rate limit exceeded');
+};
+
 const SymptomChecker = ({ embedded = false }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [particles, setParticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [analyzingMessageIndex, setAnalyzingMessageIndex] = useState(0);
 
   const [formData, setFormData] = useState({
@@ -111,7 +135,9 @@ const SymptomChecker = ({ embedded = false }) => {
       setAnalysis(data);
       setShowModal(true);
     } catch (error) {
-      setSubmitError(error.message || 'Unable to analyze symptoms right now.');
+      const friendlyMessage = getFriendlySymptomErrorMessage(error.message);
+      setSubmitError(friendlyMessage);
+      setShowErrorModal(isOpenRouterLimitError(error.message));
     } finally {
       setLoading(false);
     }
@@ -437,6 +463,23 @@ const SymptomChecker = ({ embedded = false }) => {
       </div>
 
       <AnimatePresence>
+        {showErrorModal && submitError && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <motion.div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-slate-800">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">OpenRouter Limit Reached</h3>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{submitError}</p>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  onClick={() => setShowErrorModal(false)}
+                  className="rounded-2xl bg-sky-300 px-5 py-3 text-white hover:bg-sky-400"
+                >
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showModal && analysis?.assessment && (
           <motion.div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
             <motion.div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">

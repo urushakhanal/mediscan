@@ -7,6 +7,9 @@ const {
     logout,
     me,
     updatePassword,
+    startGoogleSignIn,
+    handleGoogleSignInCallback,
+    completeGoogleDoctorProfileHandler,
 } = require('../controllers/auth.controller');
 
 const router = express.Router();
@@ -164,6 +167,9 @@ router.post('/register-superadmin', registerSuperadmin);
  *         description: Invalid credentials
  */
 router.post('/login', login);
+router.get('/google', startGoogleSignIn);
+router.get('/google/callback', handleGoogleSignInCallback);
+router.patch('/google/doctor-profile', authMiddleware, completeGoogleDoctorProfileHandler);
 
 /**
  * @swagger

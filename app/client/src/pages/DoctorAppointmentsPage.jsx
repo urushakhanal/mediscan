@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CalendarClock, CheckCircle2, Clock3, FileText, UserRound } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Clock3, FileText, FileUp, UserRound } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
 import useDoctorDashboard from '../hooks/useDoctorDashboard';
@@ -22,6 +23,15 @@ const DoctorAppointmentsPage = () => {
         [appointments]
     );
 
+    const appointmentCounts = useMemo(
+        () => ({
+            pending: sortedAppointments.filter((appointment) => appointment.status === 'pending').length,
+            confirmed: sortedAppointments.filter((appointment) => appointment.status === 'confirmed').length,
+            completed: sortedAppointments.filter((appointment) => appointment.status === 'completed').length,
+        }),
+        [sortedAppointments]
+    );
+
     const handleAppointmentAction = async (appointmentId, status) => {
         try {
             await changeAppointmentStatus(appointmentId, status);
@@ -34,6 +44,8 @@ const DoctorAppointmentsPage = () => {
 
     const hasNotes = (appointment) =>
         Boolean(appointment.previousMedicalCondition?.trim() || appointment.symptoms?.trim());
+
+    const hasUploadedReports = (appointment) => (appointment?.medicalDocuments || []).length > 0;
 
     return (
         <div className="space-y-6">
@@ -58,6 +70,21 @@ const DoctorAppointmentsPage = () => {
                         <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Appointments</p>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">All booking requests</h2>
                     </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 border-b border-slate-100 px-6 py-4 text-sm dark:border-slate-800">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <span className="h-2 w-2 rounded-full bg-amber-500" />
+                        Pending {appointmentCounts.pending}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                        Confirmed {appointmentCounts.confirmed}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        Completed {appointmentCounts.completed}
+                    </span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -91,7 +118,18 @@ const DoctorAppointmentsPage = () => {
                             )}
 
                             {!loading && sortedAppointments.map((appointment) => (
-                                <tr key={appointment._id} className="text-slate-700 dark:text-slate-200">
+                                <tr
+                                    key={appointment._id}
+                                    className={`text-slate-700 dark:text-slate-200 ${
+                                        appointment.status === 'pending'
+                                            ? 'bg-amber-50/30 dark:bg-amber-950/10'
+                                            : appointment.status === 'confirmed'
+                                                ? 'bg-cyan-50/20 dark:bg-cyan-950/10'
+                                                : appointment.status === 'completed'
+                                                    ? 'bg-emerald-50/20 dark:bg-emerald-950/10'
+                                                    : ''
+                                    }`}
+                                >
                                     <td className="px-6 py-4">
                                         <div className="flex items-start gap-3">
                                             <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -100,6 +138,12 @@ const DoctorAppointmentsPage = () => {
                                             <div>
                                                 <p className="font-semibold text-slate-900 dark:text-white">{appointment.patient?.name || 'Patient'}</p>
                                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{appointment.patient?.email || 'No email'}</p>
+                                                {hasUploadedReports(appointment) && (
+                                                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                                        <FileUp size={12} />
+                                                        Reports uploaded
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -112,11 +156,17 @@ const DoctorAppointmentsPage = () => {
                                                 <FileText size={14} />
                                                 View notes
                                             </button>
-                                        ) : <span className="text-xs text-slate-400 dark:text-slate-500">No notes</span>}
+                                        ) : <span className="text-xs text-slate-400 dark:text-slate-500">No notes yet</span>}
                                     </td>
                                     <td className="px-6 py-4">
                                         {appointment.status === 'pending' ? (
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Link
+                                                    to={`/doctor/appointments/${appointment._id}`}
+                                                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                                >
+                                                    Open
+                                                </Link>
                                                 <button type="button" disabled={updatingAppointmentId === appointment._id} onClick={() => handleAppointmentAction(appointment._id, 'confirmed')} className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60">
                                                     <CheckCircle2 size={14} />
                                                     Approve
@@ -125,7 +175,17 @@ const DoctorAppointmentsPage = () => {
                                                     Reject
                                                 </button>
                                             </div>
-                                        ) : <span className="text-xs text-slate-400 dark:text-slate-500">No actions</span>}
+                                        ) : (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Link
+                                                    to={`/doctor/appointments/${appointment._id}`}
+                                                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                                >
+                                                    Open
+                                                </Link>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500">Review only</span>
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

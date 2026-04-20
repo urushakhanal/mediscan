@@ -47,15 +47,37 @@ export const me = (token) => request('/api/auth/me', { token });
 export const changePassword = (payload) =>
     request('/api/auth/change-password', { method: 'POST', body: payload });
 
+export const startGoogleSignIn = (role = 'patient') => {
+    const normalizedRole = role === 'doctor' ? 'doctor' : 'patient';
+    return `${API_BASE_URL}/api/auth/google?role=${encodeURIComponent(normalizedRole)}`;
+};
+
+export const completeGoogleDoctorProfile = (payload) =>
+    request('/api/auth/google/doctor-profile', { method: 'PATCH', body: payload });
+
 export const getVerifiedDoctors = () => request('/api/users/doctors');
 export const getVerifiedDoctorById = (id) => request(`/api/users/doctors/${id}`);
 export const getDoctorAvailability = (doctorId, date) =>
     request(`/api/appointments/doctor/${doctorId}/availability?date=${encodeURIComponent(date)}`);
 export const createAppointment = (payload) => request('/api/appointments', { method: 'POST', body: payload });
 export const getPatientAppointments = () => request('/api/appointments/patient/me');
+export const markPatientAppointmentSummaryViewed = (id) =>
+    request(`/api/appointments/patient/me/${id}/summary-viewed`, { method: 'PATCH' });
 export const getDoctorAppointments = () => request('/api/appointments/doctor/me');
+export const getDoctorPatients = () => request('/api/appointments/doctor/me/patients');
+export const getDoctorAppointmentById = (id) => request(`/api/appointments/doctor/me/${id}`);
+export const getDoctorPatientRecord = (patientId) =>
+    request(`/api/appointments/doctor/me/patients/${patientId}/record`);
+export const createDoctorFollowUpAppointment = (patientId, payload) =>
+    request(`/api/appointments/doctor/me/patients/${patientId}/follow-up`, { method: 'POST', body: payload });
 export const updateAppointmentStatus = (id, payload) =>
     request(`/api/appointments/${id}/status`, { method: 'PATCH', body: payload });
+export const updateDoctorAppointmentConsultation = (id, payload) =>
+    request(`/api/appointments/doctor/me/${id}/consultation`, { method: 'PATCH', body: payload });
+export const uploadDoctorAppointmentDocument = (id, payload) =>
+    request(`/api/appointments/doctor/me/${id}/documents`, { method: 'POST', body: payload });
+export const uploadPatientAppointmentDocument = (id, payload) =>
+    request(`/api/appointments/patient/me/${id}/documents`, { method: 'POST', body: payload });
 export const getDoctorAvailabilitySettings = () => request('/api/appointments/doctor-settings/me');
 export const updateDoctorAvailabilitySettings = (payload) =>
     request('/api/appointments/doctor-settings/me', { method: 'PUT', body: payload });

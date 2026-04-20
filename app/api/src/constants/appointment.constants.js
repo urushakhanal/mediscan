@@ -1,4 +1,4 @@
-const APPOINTMENT_STATUSES = ['pending', 'confirmed', 'rejected'];
+const APPOINTMENT_STATUSES = ['pending', 'confirmed', 'rejected', 'completed'];
 const ACTIVE_APPOINTMENT_STATUSES = ['pending', 'confirmed'];
 
 module.exports = {

@@ -120,7 +120,7 @@ const requestAiAssessment = async (payload) => {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 50000);
 
     try {
         const response = await fetch(`${config.openRouterBaseUrl}/chat/completions`, {

@@ -68,9 +68,31 @@ export const getStatusClasses = (status) => {
     switch (status) {
     case 'confirmed':
         return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200';
+    case 'completed':
+        return 'border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200';
     case 'rejected':
         return 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200';
     default:
         return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200';
     }
+};
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
+export const resolveUploadUrl = (value) => {
+    const url = String(value || '').trim();
+
+    if (!url) {
+        return '';
+    }
+
+    if (/^https?:\/\//i.test(url)) {
+        return url;
+    }
+
+    if (url.startsWith('/')) {
+        return `${API_BASE_URL}${url}`;
+    }
+
+    return `${API_BASE_URL}/${url.replace(/^\/+/, '')}`;
 };

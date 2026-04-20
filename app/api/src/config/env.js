@@ -42,6 +42,26 @@ const config = {
     openRouterApiKey: process.env.OPENROUTER_API_KEY || '',
     openRouterModel: process.env.OPENROUTER_MODEL || 'openrouter/free',
     openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+
+    // SMTP / email
+    smtp: {
+        enabled: Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS),
+        host: process.env.SMTP_HOST || '',
+        port: parseInt(process.env.SMTP_PORT, 10) || 587,
+        secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
+        from: process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@mediscan.local',
+        fromName: process.env.SMTP_FROM_NAME || process.env.APP_NAME || 'MediScan',
+    },
+
+    // Google OAuth
+    google: {
+        enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL),
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        callbackUrl: process.env.GOOGLE_CALLBACK_URL || '',
+    },
 };
 
 // Validate required environment variables
@@ -56,6 +76,10 @@ if (!process.env.JWT_SECRET) {
 
 if (!process.env.SUPERADMIN_SETUP_KEY) {
     console.warn('⚠️  Warning: SUPERADMIN_SETUP_KEY is not set. Using a default bootstrap key is not secure for production.');
+}
+
+if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_SECRET) {
+    console.warn('⚠️  Warning: GOOGLE_CLIENT_ID is set but GOOGLE_CLIENT_SECRET is missing.');
 }
 
 module.exports = config;

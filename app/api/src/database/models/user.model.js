@@ -39,6 +39,18 @@ const userSchema = new mongoose.Schema({
         required: true,
         select: false,
     },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local',
+    },
+    googleId: {
+        type: String,
+        trim: true,
+        sparse: true,
+        unique: true,
+        maxlength: 100,
+    },
     role: {
         type: String,
         enum: ['patient', 'doctor', 'superadmin'],

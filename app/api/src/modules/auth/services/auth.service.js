@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../../database/models/user.model');
 const config = require('../../../config/env');
+const { updateUser } = require('../../users/services/user.service');
 const {
     DEFAULT_DOCTOR_TIME_SLOTS,
     DEFAULT_MAX_APPOINTMENTS_PER_DAY,
@@ -138,9 +139,36 @@ const getCurrentUser = async (userId) => {
     return sanitizeUser(user);
 };
 
+const completeGoogleDoctorProfile = async (userId, payload = {}) => {
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+        const error = new Error('User not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (currentUser.authProvider !== 'google') {
+        const error = new Error('Google sign-in is required before completing this profile.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    await updateUser(userId, {
+        ...payload,
+        role: 'doctor',
+    });
+
+    const refreshedUser = await User.findById(userId);
+    return {
+        user: sanitizeUser(refreshedUser),
+        token: createToken(refreshedUser),
+    };
+};
+
 module.exports = {
     registerUser,
     loginUser,
     changePassword,
     getCurrentUser,
+    completeGoogleDoctorProfile,
 };

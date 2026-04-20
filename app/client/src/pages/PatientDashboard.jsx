@@ -8,7 +8,7 @@ import { formatReadableDate, formatSlot, formatSpecialization } from '../lib/app
 import { formatUserDisplayName } from '../lib/utils';
 
 const PatientDashboard = () => {
-    const { appointments, loading, error, pendingCount, confirmedCount } = usePatientAppointments();
+    const { appointments, loading, error, pendingCount, confirmedCount, newSummariesCount } = usePatientAppointments();
 
     const nextAppointments = useMemo(
         () => [...appointments].sort((a, b) => `${a.date}-${a.slot}`.localeCompare(`${b.date}-${b.slot}`)).slice(0, 5),
@@ -22,14 +22,9 @@ const PatientDashboard = () => {
                 title="Care overview"
                 description="Stay on top of upcoming visits, revisit recently consulted doctors, and keep your booking history within reach."
                 actions={(
-                    <>
-                        <Link to="/patient/appointments" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white">
-                            View appointments
-                        </Link>
-                        <Link to="/patient/doctors" className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
-                            Find doctors
-                        </Link>
-                    </>
+                    <Link to="/patient/appointments" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white">
+                        View appointments
+                    </Link>
                 )}
             />
 
@@ -43,7 +38,7 @@ const PatientDashboard = () => {
                 <DashboardStatCard label="Total appointments" value={loading ? '--' : appointments.length} helper="All bookings" icon={CalendarDays} />
                 <DashboardStatCard label="Pending requests" value={loading ? '--' : pendingCount} tone="amber" helper="Awaiting response" icon={Clock3} />
                 <DashboardStatCard label="Confirmed visits" value={loading ? '--' : confirmedCount} tone="emerald" helper="Scheduled" icon={CheckCircle2} />
-                <DashboardStatCard label="Doctors visited" value={loading ? '--' : new Set(appointments.map((item) => item.doctor?._id).filter(Boolean)).size} tone="cyan" helper="Unique doctors" icon={Search} />
+                <DashboardStatCard label="New summaries" value={loading ? '--' : newSummariesCount} tone="cyan" helper="Ready to view" icon={Search} />
             </section>
 
             <section className="rounded-[1.9rem] border border-slate-200 bg-white shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">

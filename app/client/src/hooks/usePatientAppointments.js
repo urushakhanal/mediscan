@@ -33,12 +33,18 @@ export const usePatientAppointments = () => {
         [appointments]
     );
 
+    const newSummariesCount = useMemo(
+        () => appointments.filter((appointment) => appointment.status === 'completed' && !appointment.patientSummaryViewedAt).length,
+        [appointments]
+    );
+
     return {
         appointments,
         loading,
         error,
         pendingCount,
         confirmedCount,
+        newSummariesCount,
         loadAppointments,
     };
 };

@@ -297,8 +297,8 @@ const DoctorDetailPage = () => {
             </div>
 
             <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
-                <DialogContent className="max-h-[85vh] max-w-2xl overflow-hidden rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex max-h-[85vh] flex-col">
+                <DialogContent className="max-h-[90vh] max-w-2xl overflow-hidden rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex max-h-[90vh] flex-col">
                         <DialogHeader>
                             <div className="border-b border-slate-200 px-6 pb-5 pt-6 dark:border-slate-800">
                                 <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Appointment request</p>
@@ -320,7 +320,7 @@ const DoctorDetailPage = () => {
                                 </div>
                             </div>
 
-                            <div className="min-h-[380px] flex-1 overflow-y-auto px-6 py-5">
+                            <div className="min-h-[320px] flex-1 overflow-y-auto px-6 py-5">
                                 <div className="space-y-5">
                                     {bookingStep === 1 && (
                                         <>
@@ -456,8 +456,8 @@ const DoctorDetailPage = () => {
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-200 px-6 py-4 dark:border-slate-800">
-                                <div className="flex flex-wrap gap-3">
+                            <div className="border-t border-slate-200 px-6 py-4 shadow-[0_-8px_20px_-14px_rgba(15,23,42,0.22)] dark:border-slate-800">
+                                <div className="flex flex-wrap items-center gap-3">
                                 {bookingStep === 1 ? (
                                     <button
                                         type="button"

@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Stethoscope, Menu, X, Sun, Moon, Eye, EyeOff } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Stethoscope, Menu, X, Sun, Moon, Eye, EyeOff, Bell, CheckCheck, Dot } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { changePassword } from "../../lib/auth";
+import {
+  getMyNotifications,
+  getUnreadNotificationCount,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from "../../lib/notifications";
 import { formatUserDisplayName } from "../../lib/utils";
 import {
   Dialog,
@@ -51,8 +57,13 @@ const Navbar = () => {
   const [navVisible, setNavVisible] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState("");
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -66,6 +77,7 @@ const Navbar = () => {
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const dropdownRef = useRef();
+  const notificationsRef = useRef();
   const lastScrollY = useRef(0);
 
   const navItems = [
@@ -119,6 +131,87 @@ const Navbar = () => {
     setDarkMode(newMode);
     document.documentElement.classList.toggle("dark", newMode);
     localStorage.setItem("theme", newMode ? "dark" : "light");
+  };
+
+  const loadNotifications = useCallback(
+    async ({ withSpinner = false } = {}) => {
+      if (!user) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        if (withSpinner) {
+          setNotificationsLoading(true);
+        }
+
+        setNotificationsError("");
+        const [notificationData, countData] = await Promise.all([
+          getMyNotifications(6),
+          getUnreadNotificationCount(),
+        ]);
+
+        setNotifications(notificationData.notifications || []);
+        setUnreadCount(countData.unreadCount || 0);
+      } catch (error) {
+        setNotificationsError(error.message || "Unable to load notifications.");
+      } finally {
+        if (withSpinner) {
+          setNotificationsLoading(false);
+        }
+      }
+    },
+    [user]
+  );
+
+  const openNotifications = async () => {
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+    setNotificationsOpen(true);
+    await loadNotifications({ withSpinner: true });
+  };
+
+  const closeNotifications = () => {
+    setNotificationsOpen(false);
+  };
+
+  const handleNotificationClick = async (notification) => {
+    let markedAsRead = false;
+    try {
+      if (!notification?.isRead) {
+        await markNotificationAsRead(notification._id);
+        markedAsRead = true;
+      }
+    } catch (error) {
+      toast.error(error.message || "Unable to open notification.");
+    } finally {
+      setNotifications((current) =>
+        current.map((item) =>
+          item._id === notification._id
+            ? { ...item, isRead: true, readAt: item.readAt || new Date().toISOString() }
+          : item
+        )
+      );
+      if (markedAsRead) {
+        setUnreadCount((current) => Math.max(current - 1, 0));
+      }
+      setNotificationsOpen(false);
+      if (notification?.link) {
+        navigate(notification.link);
+      }
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications((current) => current.map((item) => ({ ...item, isRead: true, readAt: item.readAt || new Date().toISOString() })));
+      setUnreadCount(0);
+      toast.success("All notifications marked as read.");
+    } catch (error) {
+      toast.error(error.message || "Unable to update notifications.");
+    }
   };
 
   const logout = async () => {
@@ -204,10 +297,29 @@ const Navbar = () => {
         setDropdownOpen(false);
         setMobileMenuOpen(false);
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    loadNotifications({ withSpinner: true });
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      loadNotifications();
+    }, 60000);
+
+    return () => window.clearInterval(interval);
+  }, [loadNotifications, user]);
 
   return (
     <header className={cn(
@@ -256,6 +368,91 @@ const Navbar = () => {
 
         {/* Desktop Right Actions */}
         <div className="hidden md:flex items-center gap-4 relative">
+          <div ref={notificationsRef} className="relative">
+            <button
+              onClick={notificationsOpen ? closeNotifications : openNotifications}
+              className="relative rounded-full border border-primary/20 bg-white/80 p-2 text-primary transition hover:border-primary/40 hover:bg-white dark:border-primary/30 dark:bg-gray-800/80 dark:text-secondary"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notificationsOpen && (
+              <div className="absolute right-0 top-full z-50 mt-3 w-[22rem] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_80px_-35px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMarkAllNotificationsRead}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                    Mark all read
+                  </button>
+                </div>
+
+                <div className="max-h-[28rem] overflow-y-auto">
+                  {notificationsLoading ? (
+                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      Loading notifications...
+                    </div>
+                  ) : notificationsError ? (
+                    <div className="px-4 py-10 text-center text-sm text-rose-600 dark:text-rose-300">
+                      {notificationsError}
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      No notifications yet.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {notifications.map((notification) => (
+                        <button
+                          key={notification._id}
+                          type="button"
+                          onClick={() => handleNotificationClick(notification)}
+                          className={[
+                            "block w-full px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/70",
+                            notification.isRead ? "bg-white dark:bg-slate-900" : "bg-cyan-50/60 dark:bg-cyan-950/20",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 text-cyan-600 dark:text-cyan-300">
+                              <Dot className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                  {notification.title}
+                                </p>
+                                <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                                  {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : ""}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                {notification.message}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button onClick={toggleDarkMode} className="text-primary dark:text-secondary hover:text-secondary p-2">
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>

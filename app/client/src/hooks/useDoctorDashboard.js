@@ -67,6 +67,16 @@ export const useDoctorDashboard = () => {
         [appointments]
     );
 
+    const completedAppointments = useMemo(
+        () => appointments.filter((appointment) => appointment.status === 'completed'),
+        [appointments]
+    );
+
+    const activeAppointments = useMemo(
+        () => appointments.filter((appointment) => !['completed', 'rejected'].includes(appointment.status)),
+        [appointments]
+    );
+
     const saveScheduleSettings = async (payload) => {
         setSavingSettings(true);
         try {
@@ -100,6 +110,8 @@ export const useDoctorDashboard = () => {
         loadDashboard,
         pendingAppointments,
         confirmedAppointments,
+        completedAppointments,
+        activeAppointments,
         saveScheduleSettings,
         changeAppointmentStatus,
     };

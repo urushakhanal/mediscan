@@ -50,6 +50,108 @@ const appointmentSchema = new mongoose.Schema({
         maxlength: 1000,
         default: '',
     },
+    consultationNotes: {
+        type: String,
+        trim: true,
+        maxlength: 2000,
+        default: '',
+    },
+    diagnosis: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
+    prescription: {
+        type: String,
+        trim: true,
+        maxlength: 2000,
+        default: '',
+    },
+    doctorAdvice: {
+        type: String,
+        trim: true,
+        maxlength: 2000,
+        default: '',
+    },
+    recommendedTests: {
+        type: String,
+        trim: true,
+        maxlength: 1200,
+        default: '',
+    },
+    visitOutcome: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
+    scanRequestNote: {
+        type: String,
+        trim: true,
+        maxlength: 1500,
+        default: '',
+    },
+    scanRequestedAt: {
+        type: Date,
+        default: null,
+    },
+    followUpRequired: {
+        type: Boolean,
+        default: false,
+    },
+    followUpDate: {
+        type: String,
+        trim: true,
+        match: /^(\d{4}-\d{2}-\d{2})?$/,
+        default: '',
+    },
+    completedAt: {
+        type: Date,
+        default: null,
+    },
+    patientSummaryViewedAt: {
+        type: Date,
+        default: null,
+    },
+    medicalDocuments: [{
+        title: {
+            type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        fileName: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        fileUrl: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        mimeType: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        reviewNote: {
+            type: String,
+            trim: true,
+            maxlength: 1000,
+            default: '',
+        },
+        uploadedByRole: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        uploadedAt: {
+            type: Date,
+            default: null,
+        },
+    }],
 }, {
     timestamps: true,
 });

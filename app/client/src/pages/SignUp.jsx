@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { startGoogleSignIn } from '../lib/auth';
 
 const initialState = {
     name: '',
@@ -111,6 +112,10 @@ const SignUp = () => {
         }));
     };
 
+    const handleGoogleSignIn = () => {
+        window.location.href = startGoogleSignIn(role);
+    };
+
     const handleChange = (event) => {
         setError('');
         const { id, value } = event.target;
@@ -218,6 +223,24 @@ const SignUp = () => {
                                             {option.label}
                                         </button>
                                     ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-white/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/30">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Prefer Google sign-in?</p>
+                                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                            Use your Google account and we will finish the rest of the setup after sign-in.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleGoogleSignIn}
+                                        className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:border-slate-500 dark:hover:bg-slate-700"
+                                    >
+                                        Continue with Google
+                                    </button>
                                 </div>
                             </div>
 

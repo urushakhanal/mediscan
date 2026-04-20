@@ -17,7 +17,7 @@ const DoctorSchedulePage = () => {
         saveScheduleSettings,
     } = useDoctorDashboard();
     const [slotDraft, setSlotDraft] = useState({ start: '', end: '' });
-    const [editingSlotIndex, setEditingSlotIndex] = useState(-1);
+    const [editingSlotValue, setEditingSlotValue] = useState('');
 
     const handleSettingsChange = (event) => {
         const { id, value } = event.target;
@@ -46,8 +46,8 @@ const DoctorSchedulePage = () => {
         if (!normalizedSlot) return;
 
         const declaredSlotCount = Number(settingsForm.slotCount);
-        const existingIndex = settingsForm.availableTimeSlots.findIndex((slot, index) => (
-            slot === normalizedSlot && index !== editingSlotIndex
+        const existingIndex = settingsForm.availableTimeSlots.findIndex((slot) => (
+            slot === normalizedSlot && slot !== editingSlotValue
         ));
 
         if (existingIndex !== -1) {
@@ -56,7 +56,7 @@ const DoctorSchedulePage = () => {
         }
 
         if (
-            editingSlotIndex < 0 &&
+            !editingSlotValue &&
             Number.isInteger(declaredSlotCount) &&
             declaredSlotCount > 0 &&
             settingsForm.availableTimeSlots.length >= declaredSlotCount
@@ -66,10 +66,13 @@ const DoctorSchedulePage = () => {
         }
 
         setSettingsForm((prev) => {
-            const nextSlots = [...prev.availableTimeSlots];
-            if (editingSlotIndex >= 0) {
-                nextSlots[editingSlotIndex] = normalizedSlot;
+            let nextSlots;
+            if (editingSlotValue) {
+                nextSlots = prev.availableTimeSlots.map((slot) => (
+                    slot === editingSlotValue ? normalizedSlot : slot
+                ));
             } else {
+                nextSlots = [...prev.availableTimeSlots];
                 nextSlots.push(normalizedSlot);
             }
 
@@ -80,24 +83,30 @@ const DoctorSchedulePage = () => {
         });
 
         setSlotDraft({ start: '', end: '' });
-        setEditingSlotIndex(-1);
+        setEditingSlotValue('');
     };
 
     const handleEditSlot = (index) => {
         const slot = settingsForm.availableTimeSlots[index];
         const [start, end] = String(slot || '').split('-');
         setSlotDraft({ start: start || '', end: end || '' });
-        setEditingSlotIndex(index);
+        setEditingSlotValue(slot || '');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSlotValue('');
+        setSlotDraft({ start: '', end: '' });
     };
 
     const handleRemoveSlot = (index) => {
+        const slotToRemove = settingsForm.availableTimeSlots[index];
         setSettingsForm((prev) => ({
             ...prev,
             availableTimeSlots: prev.availableTimeSlots.filter((_, slotIndex) => slotIndex !== index),
         }));
 
-        if (editingSlotIndex === index) {
-            setEditingSlotIndex(-1);
+        if (editingSlotValue === slotToRemove) {
+            setEditingSlotValue('');
             setSlotDraft({ start: '', end: '' });
         }
     };
@@ -203,7 +212,7 @@ const DoctorSchedulePage = () => {
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Added {settingsForm.availableTimeSlots.length} of {settingsForm.slotCount || 0} slots</p>
                             </div>
                             <span className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                                {editingSlotIndex >= 0 ? 'Editing slot' : 'Add new slot'}
+                                {editingSlotValue ? 'Editing slot' : 'Add new slot'}
                             </span>
                         </div>
 
@@ -219,10 +228,21 @@ const DoctorSchedulePage = () => {
                             <div className="flex items-end">
                                 <button type="button" onClick={handleAddOrUpdateSlot} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
                                     <Plus size={16} />
-                                    {editingSlotIndex >= 0 ? 'Update' : 'Add'}
+                                    {editingSlotValue ? 'Update' : 'Add'}
                                 </button>
                             </div>
                         </div>
+                        {editingSlotValue && (
+                            <div className="mt-3 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelEdit}
+                                    className="inline-flex rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                >
+                                    Cancel edit
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-6 rounded-[1.35rem] bg-slate-50/80 p-4 dark:bg-slate-950/40">

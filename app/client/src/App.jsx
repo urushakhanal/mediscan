@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import HealthPage from './pages/HealthPage';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import GoogleDoctorOnboardingPage from './pages/GoogleDoctorOnboardingPage';
 import SymptomCheckerPage from './pages/SymptomCheckerPage';
 import CarePlansPage from './pages/CarePlansPage';
 import CarePlanDetailPage from './pages/CarePlanDetailPage';
@@ -22,9 +23,11 @@ import AdminPatientsPage from './pages/AdminPatientsPage';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorAppointmentsPage from './pages/DoctorAppointmentsPage';
+import DoctorAppointmentDetailPage from './pages/DoctorAppointmentDetailPage';
+import DoctorPatientsPage from './pages/DoctorPatientsPage';
+import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage';
 import DoctorSchedulePage from './pages/DoctorSchedulePage';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
-import PatientDoctorsPage from './pages/PatientDoctorsPage';
 import PatientCarePlansPage from './pages/PatientCarePlansPage';
 import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
 import DoctorCarePlanRequestsPage from './pages/DoctorCarePlanRequestsPage';
@@ -57,7 +60,6 @@ function App() {
                         <Route path="overview" element={<PatientDashboard />} />
                         <Route path="appointments" element={<PatientAppointmentsPage />} />
                         <Route path="care-plans" element={<PatientCarePlansPage />} />
-                        <Route path="doctors" element={<PatientDoctorsPage />} />
                     </Route>
                     <Route
                         path="/doctor"
@@ -71,12 +73,16 @@ function App() {
                         <Route path="dashboard" element={<Navigate to="/doctor/overview" replace />} />
                         <Route path="overview" element={<DoctorDashboard />} />
                         <Route path="appointments" element={<DoctorAppointmentsPage />} />
+                        <Route path="appointments/:id" element={<DoctorAppointmentDetailPage />} />
+                        <Route path="patients" element={<DoctorPatientsPage />} />
+                        <Route path="patients/:patientId/record" element={<DoctorPatientRecordPage />} />
                         <Route path="care-plans" element={<DoctorCarePlansPage />} />
                         <Route path="care-plan-requests" element={<DoctorCarePlanRequestsPage />} />
                         <Route path="schedule" element={<DoctorSchedulePage />} />
                     </Route>
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
+                    <Route path="/google/doctor-onboarding" element={<GoogleDoctorOnboardingPage />} />
                     <Route path="/init-superadmin" element={<InitSuperadmin />} />
                     <Route
                         path="/admin"

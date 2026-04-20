@@ -23,6 +23,7 @@ const CarePlanDetailPage = () => {
   const [error, setError] = useState('');
   const [bookingState, setBookingState] = useState(defaultBookingState);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
 
   useEffect(() => {
     const loadCarePlan = async () => {
@@ -38,6 +39,7 @@ const CarePlanDetailPage = () => {
           preferredTime: '10:00 AM',
           notes: '',
         });
+        setBookingSubmitted(false);
       } catch (requestError) {
         setError(requestError.message || 'Unable to load care plan.');
       } finally {
@@ -67,6 +69,7 @@ const CarePlanDetailPage = () => {
     try {
       setBookingLoading(true);
       await createCarePlanBooking(carePlan._id, bookingState);
+      setBookingSubmitted(true);
       toast.success('Care plan request submitted successfully.');
     } catch (requestError) {
       toast.error(requestError.message || 'Unable to submit care plan request.');
@@ -196,66 +199,92 @@ const CarePlanDetailPage = () => {
             <section className="rounded-[1.55rem] bg-white p-5 shadow-sm dark:bg-slate-900">
               <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Request plan</p>
             {canBook ? (
-              <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="care-plan-date" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                      Preferred date
-                    </label>
-                    <div className="relative">
-                      <CalendarDays size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="care-plan-date"
-                        type="date"
-                        min={getTodayDateString()}
-                        value={bookingState.preferredDate}
-                        onChange={(event) => setBookingState((prev) => ({ ...prev, preferredDate: event.target.value }))}
-                        className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      />
-                    </div>
+              bookingSubmitted ? (
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50 px-4 py-4 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Request submitted</p>
+                    <p className="mt-2 text-sm leading-7 text-emerald-700 dark:text-emerald-300">
+                      Your care plan request has been sent successfully. You can track its status from your patient care plans page.
+                    </p>
                   </div>
-                  <div>
-                    <label htmlFor="care-plan-time" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                      Preferred time
-                    </label>
-                    <div className="relative">
-                      <Clock3 size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="care-plan-time"
-                        type="text"
-                        value={bookingState.preferredTime}
-                        onChange={(event) => setBookingState((prev) => ({ ...prev, preferredTime: event.target.value }))}
-                        placeholder="10:00 AM"
-                        className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      />
-                    </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      to="/patient/care-plans"
+                      className="inline-flex rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700"
+                    >
+                      View my care plans
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setBookingSubmitted(false)}
+                      className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                    >
+                      Submit another request
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="care-plan-date" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                        Preferred date
+                      </label>
+                      <div className="relative">
+                        <CalendarDays size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="care-plan-date"
+                          type="date"
+                          min={getTodayDateString()}
+                          value={bookingState.preferredDate}
+                          onChange={(event) => setBookingState((prev) => ({ ...prev, preferredDate: event.target.value }))}
+                          className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="care-plan-time" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                        Preferred time
+                      </label>
+                      <div className="relative">
+                        <Clock3 size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="care-plan-time"
+                          type="text"
+                          value={bookingState.preferredTime}
+                          onChange={(event) => setBookingState((prev) => ({ ...prev, preferredTime: event.target.value }))}
+                          placeholder="10:00 AM"
+                          className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <label htmlFor="care-plan-notes" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Notes for the care team
-                  </label>
-                  <textarea
-                    id="care-plan-notes"
-                    rows="5"
-                    value={bookingState.notes}
-                    onChange={(event) => setBookingState((prev) => ({ ...prev, notes: event.target.value }))}
-                    placeholder={`Share your current concerns before ${formatReadableDate(bookingState.preferredDate)}.`}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="care-plan-notes" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Notes for the care team
+                    </label>
+                    <textarea
+                      id="care-plan-notes"
+                      rows="5"
+                      value={bookingState.notes}
+                      onChange={(event) => setBookingState((prev) => ({ ...prev, notes: event.target.value }))}
+                      placeholder={`Share your current concerns before ${formatReadableDate(bookingState.preferredDate)}.`}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                  </div>
 
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button
-                    type="submit"
-                    disabled={bookingLoading}
-                    className="inline-flex rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {bookingLoading ? 'Submitting...' : 'Request care plan'}
-                  </button>
-                </div>
-              </form>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={bookingLoading}
+                      className="inline-flex rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {bookingLoading ? 'Submitting...' : 'Request care plan'}
+                    </button>
+                  </div>
+                </form>
+              )
             ) : (
               <div className="mt-4 rounded-[1.25rem] bg-slate-50 p-5 dark:bg-slate-950">
                 <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">

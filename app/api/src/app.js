@@ -7,10 +7,12 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const config = require('./config/env');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./modules/auth/routes/auth.routes');
 const userRoutes = require('./modules/users/routes/user.routes');
+const notificationRoutes = require('./modules/notifications/routes/notification.routes');
 const symptomRoutes = require('./modules/symptoms/routes/symptom.routes');
 const appointmentRoutes = require('./modules/appointments/routes/appointment.routes');
 const carePlanRoutes = require('./modules/carePlans/routes/carePlan.routes');
@@ -36,9 +38,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // ===========================
 // API Documentation (Swagger)
@@ -64,6 +67,7 @@ app.get('/', (req, res) => {
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/symptoms', symptomRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/care-plans', carePlanRoutes);
