@@ -8,6 +8,8 @@ const {
     getDoctorAppointments,
     getDoctorPatients,
     changeAppointmentStatus,
+    rescheduleMyAppointment,
+    cancelMyAppointment,
     getDoctorAppointment,
     getDoctorPatient,
     createFollowUpAppointment,
@@ -31,6 +33,8 @@ router.get('/doctor/me/patients/:patientId/record', authMiddleware, requireRole(
 router.post('/doctor/me/patients/:patientId/follow-up', authMiddleware, requireRole('doctor'), createFollowUpAppointment);
 router.get('/doctor/me/:id', authMiddleware, requireRole('doctor'), getDoctorAppointment);
 router.patch('/:id/status', authMiddleware, requireRole('doctor'), changeAppointmentStatus);
+router.patch('/:id/reschedule', authMiddleware, rescheduleMyAppointment);
+router.patch('/:id/cancel', authMiddleware, cancelMyAppointment);
 router.patch('/doctor/me/:id/consultation', authMiddleware, requireRole('doctor'), updateDoctorAppointment);
 router.post('/doctor/me/:id/documents', authMiddleware, requireRole('doctor'), uploadDoctorAppointmentDocumentHandler);
 router.post('/patient/me/:id/documents', authMiddleware, requireRole('patient'), uploadPatientAppointmentDocumentHandler);

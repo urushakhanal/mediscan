@@ -1,4 +1,6 @@
 const Notification = require('../../../database/models/notification.model');
+const User = require('../../../database/models/user.model');
+const { sendNotificationEmail } = require('../../../services/mailer.service');
 
 const sanitizeNotification = (notification) => {
     const obj = notification.toObject ? notification.toObject() : { ...notification };
@@ -28,6 +30,26 @@ const createNotification = async ({
         metadata,
         createdByRole,
     });
+
+    void (async () => {
+        try {
+            const recipient = await User.findById(recipientId).select('name email role isActive');
+            if (!recipient || !recipient.isActive) {
+                return;
+            }
+
+            await sendNotificationEmail(recipient, {
+                title,
+                message,
+                link,
+                type,
+                metadata,
+                createdByRole,
+            });
+        } catch (error) {
+            console.error('Failed to send notification email:', error.message);
+        }
+    })();
 
     return sanitizeNotification(notification);
 };

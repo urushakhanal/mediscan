@@ -101,6 +101,39 @@ const userSchema = new mongoose.Schema({
         type: availabilitySettingsSchema,
         default: undefined,
     },
+    googleCalendarConnected: {
+        type: Boolean,
+        default: false,
+    },
+    googleCalendarEmail: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    googleCalendarRefreshToken: {
+        type: String,
+        trim: true,
+        select: false,
+        default: '',
+    },
+    googleCalendarAccessToken: {
+        type: String,
+        trim: true,
+        select: false,
+        default: '',
+    },
+    googleCalendarTokenExpiresAt: {
+        type: Date,
+        default: null,
+    },
+    googleCalendarConnectedAt: {
+        type: Date,
+        default: null,
+    },
+    googleCalendarLastSyncedAt: {
+        type: Date,
+        default: null,
+    },
 }, {
     timestamps: true,
 });

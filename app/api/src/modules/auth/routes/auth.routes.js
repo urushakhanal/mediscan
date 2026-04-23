@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middlewares/auth.middleware');
+const requireRole = require('../middlewares/requireRole.middleware');
 const {
     register,
     registerSuperadmin,
@@ -10,6 +11,9 @@ const {
     startGoogleSignIn,
     handleGoogleSignInCallback,
     completeGoogleDoctorProfileHandler,
+    startGoogleCalendarConnect,
+    handleGoogleCalendarConnectCallback,
+    disconnectGoogleCalendar,
 } = require('../controllers/auth.controller');
 
 const router = express.Router();
@@ -170,6 +174,9 @@ router.post('/login', login);
 router.get('/google', startGoogleSignIn);
 router.get('/google/callback', handleGoogleSignInCallback);
 router.patch('/google/doctor-profile', authMiddleware, completeGoogleDoctorProfileHandler);
+router.get('/google/calendar', authMiddleware, requireRole('doctor'), startGoogleCalendarConnect);
+router.get('/google/calendar/callback', authMiddleware, requireRole('doctor'), handleGoogleCalendarConnectCallback);
+router.delete('/google/calendar', authMiddleware, requireRole('doctor'), disconnectGoogleCalendar);
 
 /**
  * @swagger

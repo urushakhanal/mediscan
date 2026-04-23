@@ -387,7 +387,7 @@ const Navbar = () => {
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                <span className="absolute right-0 top-0 inline-flex min-w-5 -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white dark:border-slate-900">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}

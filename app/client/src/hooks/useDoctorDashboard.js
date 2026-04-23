@@ -73,7 +73,7 @@ export const useDoctorDashboard = () => {
     );
 
     const activeAppointments = useMemo(
-        () => appointments.filter((appointment) => !['completed', 'rejected'].includes(appointment.status)),
+        () => appointments.filter((appointment) => !['completed', 'rejected', 'cancelled'].includes(appointment.status)),
         [appointments]
     );
 

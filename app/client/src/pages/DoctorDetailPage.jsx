@@ -13,6 +13,14 @@ import {
 } from '../lib/appointments';
 import { formatExperienceYears, formatQualification, formatUserDisplayName } from '../lib/utils';
 
+const readFileAsDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Unable to read the selected file.'));
+        reader.readAsDataURL(file);
+    });
+
 const DoctorDetailPage = () => {
     const { id } = useParams();
     const { user } = useAuth();
@@ -31,6 +39,10 @@ const DoctorDetailPage = () => {
         previousMedicalCondition: '',
         symptoms: '',
     });
+    const [reportTitle, setReportTitle] = useState('');
+    const [reportReviewNote, setReportReviewNote] = useState('');
+    const [reportFile, setReportFile] = useState(null);
+    const [reportInputKey, setReportInputKey] = useState(0);
 
     useEffect(() => {
         const loadDoctor = async () => {
@@ -73,6 +85,14 @@ const DoctorDetailPage = () => {
         if (bookingOpen) {
             setBookingStep(1);
             setSelectedSlot('');
+            setBookingDetails({
+                previousMedicalCondition: '',
+                symptoms: '',
+            });
+            setReportTitle('');
+            setReportReviewNote('');
+            setReportFile(null);
+            setReportInputKey((current) => current + 1);
             loadAvailability();
         }
     }, [bookingOpen, bookingDate, id]);
@@ -104,18 +124,33 @@ const DoctorDetailPage = () => {
 
         try {
             setBookingLoading(true);
+            if (reportFile && !reportTitle.trim()) {
+                toast.error('Please add a title for the report.');
+                return;
+            }
+
+            const reportFileData = reportFile ? await readFileAsDataUrl(reportFile) : '';
+
             await createAppointment({
                 doctorId: id,
                 date: bookingDate,
                 slot: selectedSlot,
                 previousMedicalCondition: bookingDetails.previousMedicalCondition,
                 symptoms: bookingDetails.symptoms,
+                reportTitle: reportFile ? reportTitle.trim() : '',
+                reportFileName: reportFile?.name || '',
+                reportFileData,
+                reportReviewNote: reportFile ? reportReviewNote : '',
             });
             toast.success('Appointment request submitted with pending status.');
             setBookingDetails({
                 previousMedicalCondition: '',
                 symptoms: '',
             });
+            setReportTitle('');
+            setReportReviewNote('');
+            setReportFile(null);
+            setReportInputKey((current) => current + 1);
             setBookingOpen(false);
         } catch (requestError) {
             toast.error(requestError.message || 'Unable to create appointment.');
@@ -207,9 +242,11 @@ const DoctorDetailPage = () => {
                                     <div className="mt-0.5 text-cyan-700 dark:text-cyan-300">
                                         <Mail size={18} />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-sm text-slate-500 dark:text-slate-400">Email</p>
-                                        <p className="font-medium text-slate-900 dark:text-white">{doctor.email}</p>
+                                        <p className="truncate text-[13px] font-medium leading-5 text-slate-900 dark:text-white">
+                                            {doctor.email}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -450,6 +487,63 @@ const DoctorDetailPage = () => {
                                                     placeholder="Optional"
                                                     className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                 />
+                                            </div>
+
+                                            <div className="rounded-[1.25rem] border border-dashed border-cyan-200 bg-cyan-50/50 p-4 dark:border-cyan-900/40 dark:bg-cyan-950/20">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Attach a report</p>
+                                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                        Optional. Upload a PDF or image now so the doctor can review it with your booking.
+                                                    </p>
+                                                </div>
+
+                                                <div className="mt-4 space-y-4">
+                                                    <div>
+                                                        <label htmlFor="reportTitle" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
+                                                            Report title
+                                                        </label>
+                                                        <input
+                                                            id="reportTitle"
+                                                            type="text"
+                                                            value={reportTitle}
+                                                            onChange={(event) => setReportTitle(event.target.value)}
+                                                            placeholder="Example: Blood test report"
+                                                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
+                                                            Report file
+                                                        </label>
+                                                        <input
+                                                            key={reportInputKey}
+                                                            type="file"
+                                                            accept=".pdf,image/*"
+                                                            onChange={(event) => setReportFile(event.target.files?.[0] || null)}
+                                                            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:file:bg-white dark:file:text-slate-900"
+                                                        />
+                                                        {reportFile && (
+                                                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                                                Selected: {reportFile.name}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label htmlFor="reportReviewNote" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
+                                                            Note for doctor
+                                                        </label>
+                                                        <textarea
+                                                            id="reportReviewNote"
+                                                            rows="3"
+                                                            value={reportReviewNote}
+                                                            onChange={(event) => setReportReviewNote(event.target.value)}
+                                                            placeholder="Optional note about this report"
+                                                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </>
                                     )}

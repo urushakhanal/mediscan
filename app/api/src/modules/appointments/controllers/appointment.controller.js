@@ -14,6 +14,8 @@ const {
     getDoctorAvailabilitySettings,
     updateDoctorAvailabilitySettings,
     createDoctorFollowUpAppointment,
+    rescheduleAppointment,
+    cancelAppointment,
 } = require('../services/appointment.service');
 
 const findDoctorAvailability = async (req, res, next) => {
@@ -34,6 +36,10 @@ const bookAppointment = async (req, res, next) => {
             slot: req.body?.slot,
             previousMedicalCondition: req.body?.previousMedicalCondition,
             symptoms: req.body?.symptoms,
+            reportTitle: req.body?.reportTitle,
+            reportFileName: req.body?.reportFileName,
+            reportFileData: req.body?.reportFileData,
+            reportReviewNote: req.body?.reportReviewNote,
         });
 
         return res.status(201).json({
@@ -84,6 +90,50 @@ const changeAppointmentStatus = async (req, res, next) => {
         return res.json({
             success: true,
             message: `Appointment ${appointment.status}.`,
+            appointment,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const rescheduleMyAppointment = async (req, res, next) => {
+    try {
+        const appointment = await rescheduleAppointment({
+            appointmentId: req.params.id,
+            actorId: req.user.id,
+            actorRole: req.user.role,
+            date: req.body?.date,
+            slot: req.body?.slot,
+            reason: req.body?.reason,
+        });
+
+        return res.json({
+            success: true,
+            message: appointment.rescheduleRequestedDate
+                ? 'Reschedule request submitted successfully.'
+                : 'Appointment rescheduled successfully.',
+            appointment,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const cancelMyAppointment = async (req, res, next) => {
+    try {
+        const appointment = await cancelAppointment({
+            appointmentId: req.params.id,
+            actorId: req.user.id,
+            actorRole: req.user.role,
+            reason: req.body?.reason,
+        });
+
+        return res.json({
+            success: true,
+            message: appointment.status === 'cancelled'
+                ? 'Appointment cancelled successfully.'
+                : 'Cancellation request submitted successfully.',
             appointment,
         });
     } catch (error) {
@@ -228,6 +278,8 @@ module.exports = {
     getDoctorAppointments,
     getDoctorPatients,
     changeAppointmentStatus,
+    rescheduleMyAppointment,
+    cancelMyAppointment,
     getDoctorAppointment,
     getDoctorPatient,
     createFollowUpAppointment,

@@ -2,6 +2,7 @@ const CarePlan = require('../../../database/models/carePlan.model');
 const { CarePlanBooking } = require('../../../database/models/carePlanBooking.model');
 const User = require('../../../database/models/user.model');
 const { DOCTOR_SPECIALIZATIONS } = require('../../../constants/user.constants');
+const { createNotification } = require('../../notifications/services/notification.service');
 
 const DOCTOR_SELECT = 'name email phone specialization qualification experienceYears currentlyWorkingAt isVerified isActive role';
 const BOOKING_POPULATE = [
@@ -41,6 +42,12 @@ const sanitizeBooking = (booking) => {
         obj.carePlan = sanitizeCarePlan(obj.carePlan);
     }
     return obj;
+};
+
+const notifySafely = (payload) => {
+    void createNotification(payload).catch((error) => {
+        console.error('Failed to create care plan notification:', error.message);
+    });
 };
 
 const toSlug = (value) => String(value || '')
@@ -332,6 +339,20 @@ const createBooking = async ({ carePlanId, patientId, doctorId, preferredDate, p
     });
 
     const populatedBooking = await CarePlanBooking.findById(booking._id).populate(BOOKING_POPULATE);
+    notifySafely({
+        recipientId: selectedDoctor._id,
+        type: 'care-plan-booking-request',
+        title: 'New care plan request',
+        message: `${patient.name} requested the ${carePlan.name} care plan.`,
+        link: '/doctor/care-plan-requests',
+        createdByRole: 'patient',
+        metadata: {
+            bookingId: booking._id.toString(),
+            carePlanId: carePlan._id.toString(),
+            doctorId: selectedDoctor._id.toString(),
+            patientId: patient._id.toString(),
+        },
+    });
     return sanitizeBooking(populatedBooking);
 };
 
@@ -377,10 +398,28 @@ const updateBookingStatus = async ({ bookingId, doctorId, status }) => {
         throw createHttpError('Care plan booking not found.', 404);
     }
 
+    const previousStatus = booking.status;
     booking.status = status;
     await booking.save();
 
     const populatedBooking = await CarePlanBooking.findById(booking._id).populate(BOOKING_POPULATE);
+    if (previousStatus !== status) {
+        notifySafely({
+            recipientId: booking.patient,
+            type: `care-plan-booking-${status}`,
+            title: `Care plan booking ${status}`,
+            message: `Your care plan booking for ${populatedBooking.carePlan?.name || 'the care plan'} has been ${status}.`,
+            link: '/patient/care-plans',
+            createdByRole: 'doctor',
+            metadata: {
+                bookingId: booking._id.toString(),
+                carePlanId: booking.carePlan.toString(),
+                doctorId: booking.doctor.toString(),
+                patientId: booking.patient.toString(),
+                status,
+            },
+        });
+    }
     return sanitizeBooking(populatedBooking);
 };
 

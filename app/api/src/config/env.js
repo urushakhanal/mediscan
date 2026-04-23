@@ -61,7 +61,10 @@ const config = {
         clientId: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
         callbackUrl: process.env.GOOGLE_CALLBACK_URL || '',
+        calendarCallbackUrl: process.env.GOOGLE_CALENDAR_CALLBACK_URL || process.env.GOOGLE_CALENDAR_REDIRECT_URL || process.env.GOOGLE_CALLBACK_URL || '',
     },
+
+    appTimeZone: process.env.APP_TIMEZONE || 'Asia/Katmandu',
 };
 
 // Validate required environment variables

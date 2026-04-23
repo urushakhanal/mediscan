@@ -72,6 +72,10 @@ export const createDoctorFollowUpAppointment = (patientId, payload) =>
     request(`/api/appointments/doctor/me/patients/${patientId}/follow-up`, { method: 'POST', body: payload });
 export const updateAppointmentStatus = (id, payload) =>
     request(`/api/appointments/${id}/status`, { method: 'PATCH', body: payload });
+export const rescheduleAppointment = (id, payload) =>
+    request(`/api/appointments/${id}/reschedule`, { method: 'PATCH', body: payload });
+export const cancelAppointment = (id, payload) =>
+    request(`/api/appointments/${id}/cancel`, { method: 'PATCH', body: payload });
 export const updateDoctorAppointmentConsultation = (id, payload) =>
     request(`/api/appointments/doctor/me/${id}/consultation`, { method: 'PATCH', body: payload });
 export const uploadDoctorAppointmentDocument = (id, payload) =>

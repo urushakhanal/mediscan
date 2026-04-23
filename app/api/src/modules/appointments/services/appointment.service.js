@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Appointment = require('../../../database/models/appointment.model');
 const User = require('../../../database/models/user.model');
 const { ACTIVE_APPOINTMENT_STATUSES } = require('../../../constants/appointment.constants');
@@ -182,10 +183,99 @@ const parseUploadData = (value) => {
     };
 };
 
+const buildMedicalDocumentEntry = async ({
+    appointmentId,
+    title,
+    fileName,
+    fileData,
+    reviewNote = '',
+    uploadedByRole = 'patient',
+}) => {
+    const parsedUpload = parseUploadData(fileData);
+    const safeBaseName = sanitizeFileName(fileName.replace(/\.[^.]+$/, ''));
+    const extension = path.extname(fileName) || getExtensionFromMimeType(parsedUpload.mimeType) || '';
+    const storedFileName = `${appointmentId}-${Date.now()}-${safeBaseName}${extension}`;
+    const relativeFilePath = path.posix.join('uploads', storedFileName);
+    const absoluteFilePath = path.join(UPLOADS_DIR, storedFileName);
+
+    await ensureUploadsDir();
+    await fs.writeFile(absoluteFilePath, parsedUpload.buffer);
+
+    return {
+        title,
+        fileName: storedFileName,
+        fileUrl: `/${relativeFilePath.replace(/\\/g, '/')}`,
+        mimeType: parsedUpload.mimeType,
+        reviewNote,
+        uploadedByRole,
+        uploadedAt: new Date(),
+    };
+};
+
 const populateDoctorAppointment = (query) =>
     query
         .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
         .populate('patient', 'name email phone role');
+
+const clearAppointmentChangeRequests = (appointment) => {
+    appointment.rescheduleRequestedDate = '';
+    appointment.rescheduleRequestedSlot = '';
+    appointment.rescheduleRequestedReason = '';
+    appointment.rescheduleRequestedByRole = '';
+    appointment.rescheduleRequestedAt = null;
+    appointment.cancellationRequestedReason = '';
+    appointment.cancellationRequestedByRole = '';
+    appointment.cancellationRequestedAt = null;
+};
+
+const ensureAppointmentSlotAvailability = async ({ appointmentId, doctorId, date, slot }) => {
+    ensureFutureDate(date);
+    const normalizedSlot = validateTimeSlot(slot);
+    const doctor = await getDoctorForAppointments(doctorId);
+    const settings = buildDoctorAvailability(doctor);
+
+    if (!settings.availableTimeSlots.includes(normalizedSlot)) {
+        const error = new Error('Selected time slot is not part of the doctor availability settings.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+        const error = new Error('Appointment not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const activeAppointmentsCount = await Appointment.countDocuments({
+        doctor: doctorId,
+        date,
+        status: { $in: ACTIVE_APPOINTMENT_STATUSES },
+        _id: { $ne: appointmentId },
+    });
+
+    if (activeAppointmentsCount >= settings.maxAppointmentsPerDay) {
+        const error = new Error('Doctor has reached the maximum number of appointments for that day.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    const conflictingAppointment = await Appointment.findOne({
+        _id: { $ne: appointmentId },
+        doctor: doctorId,
+        date,
+        slot: normalizedSlot,
+        status: { $in: ACTIVE_APPOINTMENT_STATUSES },
+    });
+
+    if (conflictingAppointment) {
+        const error = new Error('That time slot has already been booked.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    return { normalizedSlot };
+};
 
 const createAppointment = async ({
     doctorId,
@@ -194,6 +284,10 @@ const createAppointment = async ({
     slot,
     previousMedicalCondition,
     symptoms,
+    reportTitle,
+    reportFileName,
+    reportFileData,
+    reportReviewNote,
     status = 'pending',
     createdByRole = 'patient',
 }) => {
@@ -235,7 +329,40 @@ const createAppointment = async ({
     }
 
     try {
+        const appointmentId = new mongoose.Types.ObjectId();
+        const medicalDocuments = [];
+
+        if (reportTitle || reportFileName || reportFileData) {
+            if (!reportTitle) {
+                const error = new Error('Report title is required when attaching a report.');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (!reportFileName) {
+                const error = new Error('A report file is required when attaching a report.');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (!reportFileData) {
+                const error = new Error('A report file is required when attaching a report.');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            medicalDocuments.push(await buildMedicalDocumentEntry({
+                appointmentId,
+                title: reportTitle,
+                fileName: reportFileName,
+                fileData: reportFileData,
+                reviewNote: normalizeOptionalText(reportReviewNote),
+                uploadedByRole: 'patient',
+            }));
+        }
+
         const appointment = await Appointment.create({
+            _id: appointmentId,
             doctor: doctorId,
             patient: patientId,
             date,
@@ -244,6 +371,7 @@ const createAppointment = async ({
             activeSlotKey: `${doctorId}:${date}:${normalizedSlot}`,
             previousMedicalCondition: normalizeOptionalText(previousMedicalCondition),
             symptoms: normalizeOptionalText(symptoms),
+            medicalDocuments,
         });
 
         const populatedAppointment = await populateDoctorAppointment(Appointment.findById(appointment._id));
@@ -252,7 +380,7 @@ const createAppointment = async ({
                 recipientId: doctor._id,
                 type: 'appointment-request',
                 title: 'New appointment request',
-                message: `${patient.name} requested an appointment.`,
+                message: `${patient.name} requested an appointment.${medicalDocuments.length ? ' They attached a report.' : ''}`,
                 link: `/doctor/appointments/${appointment._id}`,
                 createdByRole: 'patient',
                 metadata: {
@@ -275,6 +403,211 @@ const createAppointment = async ({
 
         throw error;
     }
+};
+
+const rescheduleAppointment = async ({
+    appointmentId,
+    actorId,
+    actorRole,
+    date,
+    slot,
+    reason = '',
+}) => {
+    const query = actorRole === 'doctor'
+        ? { _id: appointmentId, doctor: actorId }
+        : { _id: appointmentId, patient: actorId };
+
+    const appointment = await Appointment.findOne(query)
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('patient', 'name email phone role');
+
+    if (!appointment) {
+        const error = new Error('Appointment not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (['completed', 'cancelled', 'rejected'].includes(appointment.status)) {
+        const error = new Error('This appointment can no longer be rescheduled.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const normalizedReason = normalizeOptionalText(reason);
+
+    const requestedDate = normalizeOptionalText(date) || appointment.rescheduleRequestedDate || '';
+    const requestedSlot = normalizeOptionalText(slot) || appointment.rescheduleRequestedSlot || '';
+
+    if (actorRole === 'patient' && appointment.status === 'confirmed') {
+        if (!requestedDate || !requestedSlot) {
+            const error = new Error('Please choose a new date and time slot to request a reschedule.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        appointment.rescheduleRequestedDate = requestedDate;
+        appointment.rescheduleRequestedSlot = requestedSlot;
+        appointment.rescheduleRequestedReason = normalizedReason;
+        appointment.rescheduleRequestedByRole = 'patient';
+        appointment.rescheduleRequestedAt = new Date();
+        appointment.cancellationRequestedReason = '';
+        appointment.cancellationRequestedByRole = '';
+        appointment.cancellationRequestedAt = null;
+        await appointment.save();
+
+        notifySafely({
+            recipientId: appointment.doctor?._id,
+            type: 'appointment-reschedule-request',
+            title: 'Reschedule requested',
+            message: `${appointment.patient?.name || 'A patient'} requested to reschedule the appointment.`,
+            link: `/doctor/appointments/${appointment._id}`,
+            createdByRole: 'patient',
+            metadata: {
+                appointmentId: appointment._id.toString(),
+                doctorId: appointment.doctor?._id?.toString(),
+                patientId: appointment.patient?._id?.toString(),
+                requestedDate,
+                requestedSlot,
+            },
+        });
+
+        return sanitizeAppointment(await populateDoctorAppointment(Appointment.findById(appointment._id)));
+    }
+
+    if (!requestedDate || !requestedSlot) {
+        const error = new Error('A new date and time slot are required to reschedule this appointment.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const { normalizedSlot } = await ensureAppointmentSlotAvailability({
+        appointmentId: appointment._id,
+        doctorId: appointment.doctor._id,
+        date: requestedDate,
+        slot: requestedSlot,
+    });
+
+    appointment.date = requestedDate;
+    appointment.slot = normalizedSlot;
+    appointment.activeSlotKey = `${appointment.doctor._id.toString()}:${requestedDate}:${normalizedSlot}`;
+    clearAppointmentChangeRequests(appointment);
+    appointment.status = appointment.status === 'pending' ? 'pending' : appointment.status;
+
+    await appointment.save();
+
+    const populatedAppointment = await populateDoctorAppointment(Appointment.findById(appointment._id));
+    notifySafely({
+        recipientId: actorRole === 'doctor' ? appointment.patient?._id : appointment.doctor?._id,
+        type: actorRole === 'doctor' ? 'appointment-rescheduled' : 'appointment-reschedule-approved',
+        title: 'Appointment rescheduled',
+        message: `Your appointment has been rescheduled to ${requestedDate}.`,
+        link: actorRole === 'doctor' ? '/patient/appointments' : `/doctor/appointments/${appointment._id}`,
+        createdByRole: actorRole,
+        metadata: {
+            appointmentId: appointment._id.toString(),
+            doctorId: appointment.doctor?._id?.toString(),
+            patientId: appointment.patient?._id?.toString(),
+            date: requestedDate,
+            slot: normalizedSlot,
+        },
+    });
+
+    return sanitizeAppointment(populatedAppointment);
+};
+
+const cancelAppointment = async ({
+    appointmentId,
+    actorId,
+    actorRole,
+    reason = '',
+}) => {
+    const query = actorRole === 'doctor'
+        ? { _id: appointmentId, doctor: actorId }
+        : { _id: appointmentId, patient: actorId };
+
+    const appointment = await Appointment.findOne(query)
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('patient', 'name email phone role');
+
+    if (!appointment) {
+        const error = new Error('Appointment not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (['completed', 'cancelled', 'rejected'].includes(appointment.status)) {
+        const error = new Error('This appointment can no longer be cancelled.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const normalizedReason = normalizeOptionalText(reason);
+
+    if (actorRole === 'patient' && appointment.status === 'confirmed') {
+        if (!normalizedReason) {
+            const error = new Error('Please add a cancellation reason.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        appointment.cancellationRequestedReason = normalizedReason;
+        appointment.cancellationRequestedByRole = 'patient';
+        appointment.cancellationRequestedAt = new Date();
+        appointment.rescheduleRequestedDate = '';
+        appointment.rescheduleRequestedSlot = '';
+        appointment.rescheduleRequestedReason = '';
+        appointment.rescheduleRequestedByRole = '';
+        appointment.rescheduleRequestedAt = null;
+        await appointment.save();
+
+        notifySafely({
+            recipientId: appointment.doctor?._id,
+            type: 'appointment-cancel-request',
+            title: 'Cancellation requested',
+            message: `${appointment.patient?.name || 'A patient'} requested to cancel the appointment.`,
+            link: `/doctor/appointments/${appointment._id}`,
+            createdByRole: 'patient',
+            metadata: {
+                appointmentId: appointment._id.toString(),
+                doctorId: appointment.doctor?._id?.toString(),
+                patientId: appointment.patient?._id?.toString(),
+            },
+        });
+
+        return sanitizeAppointment(await populateDoctorAppointment(Appointment.findById(appointment._id)));
+    }
+
+    const finalCancellationReason = normalizedReason || appointment.cancellationRequestedReason || '';
+    if (!finalCancellationReason) {
+        const error = new Error('Please add a cancellation reason.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    appointment.status = 'cancelled';
+    appointment.cancelledAt = new Date();
+    appointment.cancelledByRole = actorRole;
+    appointment.cancellationReason = finalCancellationReason;
+    appointment.activeSlotKey = undefined;
+    clearAppointmentChangeRequests(appointment);
+    await appointment.save();
+
+    const populatedAppointment = await populateDoctorAppointment(Appointment.findById(appointment._id));
+    notifySafely({
+        recipientId: actorRole === 'doctor' ? appointment.patient?._id : appointment.doctor?._id,
+        type: actorRole === 'doctor' ? 'appointment-cancelled' : 'appointment-cancelled',
+        title: 'Appointment cancelled',
+        message: `Your appointment scheduled for ${appointment.date} has been cancelled.`,
+        link: actorRole === 'doctor' ? '/patient/appointments' : `/doctor/appointments/${appointment._id}`,
+        createdByRole: actorRole,
+        metadata: {
+            appointmentId: appointment._id.toString(),
+            doctorId: appointment.doctor?._id?.toString(),
+            patientId: appointment.patient?._id?.toString(),
+        },
+    });
+
+    return sanitizeAppointment(populatedAppointment);
 };
 
 const createDoctorFollowUpAppointment = async ({ doctorId, patientId, date, slot }) =>
@@ -401,6 +734,7 @@ const updateAppointmentStatus = async ({ appointmentId, doctorId, status }) => {
     if (status === 'rejected') {
         appointment.activeSlotKey = undefined;
     }
+    clearAppointmentChangeRequests(appointment);
 
     await appointment.save();
 
@@ -481,8 +815,8 @@ const updateDoctorAppointmentConsultation = async ({ appointmentId, doctorId, pa
         throw error;
     }
 
-    if (appointment.status === 'rejected') {
-        const error = new Error('Rejected appointments cannot be updated.');
+    if (['rejected', 'cancelled'].includes(appointment.status)) {
+        const error = new Error('Cancelled or rejected appointments cannot be updated.');
         error.statusCode = 400;
         throw error;
     }
@@ -584,8 +918,8 @@ const uploadAppointmentDocument = async ({ appointmentId, userId, userRole, payl
         throw error;
     }
 
-    if (appointment.status === 'rejected') {
-        const error = new Error('Rejected appointments cannot receive documents.');
+    if (['rejected', 'cancelled'].includes(appointment.status)) {
+        const error = new Error('Cancelled or rejected appointments cannot receive documents.');
         error.statusCode = 400;
         throw error;
     }
@@ -615,27 +949,18 @@ const uploadAppointmentDocument = async ({ appointmentId, userId, userRole, payl
         throw error;
     }
 
-    const parsedUpload = parseUploadData(fileData);
-    const safeBaseName = sanitizeFileName(fileName.replace(/\.[^.]+$/, ''));
-    const extension = path.extname(fileName) || getExtensionFromMimeType(parsedUpload.mimeType) || '';
-    const storedFileName = `${appointment._id}-${Date.now()}-${safeBaseName}${extension}`;
-    const relativeFilePath = path.posix.join('uploads', storedFileName);
-    const absoluteFilePath = path.join(UPLOADS_DIR, storedFileName);
-
-    await ensureUploadsDir();
-    await fs.writeFile(absoluteFilePath, parsedUpload.buffer);
+    const medicalDocument = await buildMedicalDocumentEntry({
+        appointmentId: appointment._id,
+        title,
+        fileName,
+        fileData,
+        reviewNote,
+        uploadedByRole: userRole,
+    });
 
     appointment.medicalDocuments = [
         ...(Array.isArray(appointment.medicalDocuments) ? appointment.medicalDocuments : []),
-        {
-            title,
-            fileName: storedFileName,
-        fileUrl: `/${relativeFilePath.replace(/\\/g, '/')}`,
-            mimeType: parsedUpload.mimeType,
-            reviewNote,
-            uploadedByRole: userRole,
-            uploadedAt: new Date(),
-        },
+        medicalDocument,
     ];
 
     await appointment.save();
@@ -656,7 +981,7 @@ const uploadAppointmentDocument = async ({ appointmentId, userId, userRole, payl
                 doctorId: appointment.doctor?._id?.toString(),
                 patientId: appointment.patient?._id?.toString(),
                 title,
-                fileName: storedFileName,
+                fileName: medicalDocument.fileName,
             },
         });
     }
@@ -744,6 +1069,8 @@ module.exports = {
     listDoctorAppointments,
     listDoctorPatients,
     updateAppointmentStatus,
+    rescheduleAppointment,
+    cancelAppointment,
     getDoctorAppointmentById,
     getDoctorPatientRecord,
     updateDoctorAppointmentConsultation,

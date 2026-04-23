@@ -16,6 +16,12 @@ const {
     buildGoogleAuthUrl,
     signInWithGoogle,
 } = require('../services/googleOAuth.service');
+const {
+    buildAuthUrl: buildGoogleCalendarAuthUrl,
+    connectDoctorGoogleCalendar,
+    disconnectDoctorGoogleCalendar,
+    syncDoctorUpcomingAppointments,
+} = require('../services/googleCalendar.service');
 
 const setAuthCookie = (res, token) => {
     res.cookie('auth_token', token, {
@@ -69,6 +75,26 @@ const clearGoogleRoleCookie = (res) => {
 
 const clearGoogleStateCookie = (res) => {
     res.cookie('google_oauth_state', '', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: config.nodeEnv === 'production',
+        path: '/',
+        expires: new Date(0),
+    });
+};
+
+const setGoogleCalendarStateCookie = (res, state) => {
+    res.cookie('google_calendar_oauth_state', state, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: config.nodeEnv === 'production',
+        path: '/',
+        maxAge: 10 * 60 * 1000,
+    });
+};
+
+const clearGoogleCalendarStateCookie = (res) => {
+    res.cookie('google_calendar_oauth_state', '', {
         httpOnly: true,
         sameSite: 'lax',
         secure: config.nodeEnv === 'production',
@@ -265,6 +291,97 @@ const handleGoogleSignInCallback = async (req, res) => {
     }
 };
 
+const redirectToDoctorSchedule = (res, searchParams = {}) => {
+    const baseUrl = `${config.clientUrl.replace(/\/$/, '')}/doctor/schedule`;
+    const query = new URLSearchParams(searchParams);
+    const redirectUrl = query.toString() ? `${baseUrl}?${query.toString()}` : baseUrl;
+    return res.redirect(redirectUrl);
+};
+
+const startGoogleCalendarConnect = async (req, res) => {
+    if (req.user.role !== 'doctor') {
+        return res.status(403).json({
+            success: false,
+            message: 'Only doctors can connect Google Calendar.',
+        });
+    }
+
+    if (!config.google.enabled) {
+        return res.status(503).json({
+            success: false,
+            message: 'Google Calendar is not configured.',
+        });
+    }
+
+    const state = crypto.randomBytes(24).toString('hex');
+    console.log('[google-calendar:start]', {
+        doctorId: req.user.id,
+        callbackUrl: config.google.calendarCallbackUrl,
+        state,
+    });
+    setGoogleCalendarStateCookie(res, state);
+
+    return res.redirect(buildGoogleCalendarAuthUrl(state));
+};
+
+const handleGoogleCalendarConnectCallback = async (req, res) => {
+    const { code, state, error } = req.query;
+    const expectedState = req.cookies.google_calendar_oauth_state;
+
+    console.log('[google-calendar:callback]', {
+        doctorId: req.user?.id,
+        callbackUrl: config.google.calendarCallbackUrl,
+        hasCode: Boolean(code),
+        state,
+        expectedState,
+        error,
+    });
+
+    if (error) {
+        clearGoogleCalendarStateCookie(res);
+        return redirectToDoctorSchedule(res, { google_calendar_error: 'Google Calendar connection was cancelled or blocked.' });
+    }
+
+    if (!code || !state || !expectedState || state !== expectedState) {
+        clearGoogleCalendarStateCookie(res);
+        return redirectToDoctorSchedule(res, { google_calendar_error: 'Google Calendar connection could not be verified.' });
+    }
+
+    try {
+        clearGoogleCalendarStateCookie(res);
+        await connectDoctorGoogleCalendar({
+            doctorId: req.user.id,
+            code,
+        });
+        setAuthCookie(res, req.cookies.auth_token);
+        await syncDoctorUpcomingAppointments(req.user.id);
+        return redirectToDoctorSchedule(res, { google_calendar_connected: '1' });
+    } catch (callbackError) {
+        console.error('Google Calendar connection failed:', callbackError.message);
+        return redirectToDoctorSchedule(res, { google_calendar_error: callbackError.message });
+    }
+};
+
+const disconnectGoogleCalendar = async (req, res, next) => {
+    try {
+        if (req.user.role !== 'doctor') {
+            return res.status(403).json({
+                success: false,
+                message: 'Only doctors can disconnect Google Calendar.',
+            });
+        }
+
+        const user = await disconnectDoctorGoogleCalendar(req.user.id);
+        return res.json({
+            success: true,
+            message: 'Google Calendar disconnected successfully.',
+            user,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 const completeGoogleDoctorProfileHandler = async (req, res, next) => {
     try {
         const result = await completeGoogleDoctorProfile(req.user.id, req.body || {});
@@ -293,4 +410,7 @@ module.exports = {
     startGoogleSignIn,
     handleGoogleSignInCallback,
     completeGoogleDoctorProfileHandler,
+    startGoogleCalendarConnect,
+    handleGoogleCalendarConnectCallback,
+    disconnectGoogleCalendar,
 };

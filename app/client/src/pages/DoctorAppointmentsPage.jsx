@@ -2,10 +2,13 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CalendarClock, CheckCircle2, Clock3, FileText, FileUp, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
 import DashboardPageIntro from '../components/dashboard/DashboardPageIntro';
 import useDoctorDashboard from '../hooks/useDoctorDashboard';
-import { formatReadableDate, formatSlot, getStatusClasses } from '../lib/appointments';
+import { cancelAppointment, rescheduleAppointment } from '../lib/auth';
+import { formatReadableDate, formatSlot, getStatusClasses, getTomorrowDateString } from '../lib/appointments';
 
 const DoctorAppointmentsPage = () => {
     const {
@@ -15,8 +18,17 @@ const DoctorAppointmentsPage = () => {
         error,
         setError,
         changeAppointmentStatus,
+        loadDashboard,
     } = useDoctorDashboard();
     const [selectedNotesAppointment, setSelectedNotesAppointment] = useState(null);
+    const [selectedManageAppointment, setSelectedManageAppointment] = useState(null);
+    const [manageMode, setManageMode] = useState('reschedule');
+    const [manageDate, setManageDate] = useState('');
+    const [manageSlot, setManageSlot] = useState('');
+    const [manageReason, setManageReason] = useState('');
+    const [manageLoading, setManageLoading] = useState(false);
+    const [manageError, setManageError] = useState('');
+    const [manageInputKey, setManageInputKey] = useState(0);
 
     const sortedAppointments = useMemo(
         () => [...appointments].sort((a, b) => `${a.date}-${a.slot}`.localeCompare(`${b.date}-${b.slot}`)),
@@ -32,6 +44,31 @@ const DoctorAppointmentsPage = () => {
         [sortedAppointments]
     );
 
+    const hasNotes = (appointment) =>
+        Boolean(appointment.previousMedicalCondition?.trim() || appointment.symptoms?.trim());
+
+    const hasUploadedReports = (appointment) => (appointment?.medicalDocuments || []).length > 0;
+    const canManageAppointment = (appointment) => ['pending', 'confirmed'].includes(appointment?.status);
+
+    const openManageDialog = (appointment, mode = 'reschedule') => {
+        setSelectedManageAppointment(appointment);
+        setManageMode(mode);
+        setManageError('');
+        setManageReason('');
+        setManageDate(appointment?.date || '');
+        setManageSlot(appointment?.slot || '');
+        setManageInputKey((current) => current + 1);
+    };
+
+    const closeManageDialog = () => {
+        setSelectedManageAppointment(null);
+        setManageMode('reschedule');
+        setManageDate('');
+        setManageSlot('');
+        setManageReason('');
+        setManageError('');
+    };
+
     const handleAppointmentAction = async (appointmentId, status) => {
         try {
             await changeAppointmentStatus(appointmentId, status);
@@ -42,10 +79,61 @@ const DoctorAppointmentsPage = () => {
         }
     };
 
-    const hasNotes = (appointment) =>
-        Boolean(appointment.previousMedicalCondition?.trim() || appointment.symptoms?.trim());
+    const handleManageSubmit = async () => {
+        if (!selectedManageAppointment?._id) {
+            return;
+        }
 
-    const hasUploadedReports = (appointment) => (appointment?.medicalDocuments || []).length > 0;
+        try {
+            setManageLoading(true);
+            setManageError('');
+
+            if (manageMode === 'reschedule') {
+                if (!manageDate || !manageSlot) {
+                    setManageError('Please select both a new date and slot.');
+                    return;
+                }
+
+                const data = await rescheduleAppointment(selectedManageAppointment._id, {
+                    date: manageDate,
+                    slot: manageSlot,
+                    reason: manageReason,
+                });
+
+                toast.success(
+                    data.appointment?.rescheduleRequestedDate
+                        ? 'Reschedule request submitted.'
+                        : 'Appointment rescheduled successfully.'
+                );
+                setSelectedManageAppointment(data.appointment || null);
+            } else {
+                if (!manageReason.trim()) {
+                    setManageError('Please add a cancellation reason.');
+                    return;
+                }
+
+                const data = await cancelAppointment(selectedManageAppointment._id, {
+                    reason: manageReason,
+                });
+
+                toast.success(
+                    data.appointment?.status === 'cancelled'
+                        ? 'Appointment cancelled successfully.'
+                        : 'Cancellation request submitted.'
+                );
+                setSelectedManageAppointment(data.appointment || null);
+            }
+
+            await loadDashboard();
+            closeManageDialog();
+        } catch (requestError) {
+            const message = requestError.message || 'Unable to update appointment.';
+            setManageError(message);
+            toast.error(message);
+        } finally {
+            setManageLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -152,11 +240,17 @@ const DoctorAppointmentsPage = () => {
                                     <td className="px-6 py-4"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(appointment.status)}`}>{appointment.status}</span></td>
                                     <td className="px-6 py-4">
                                         {hasNotes(appointment) ? (
-                                            <button type="button" onClick={() => setSelectedNotesAppointment(appointment)} className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedNotesAppointment(appointment)}
+                                                className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                            >
                                                 <FileText size={14} />
                                                 View notes
                                             </button>
-                                        ) : <span className="text-xs text-slate-400 dark:text-slate-500">No notes yet</span>}
+                                        ) : (
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">No notes yet</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         {appointment.status === 'pending' ? (
@@ -167,12 +261,45 @@ const DoctorAppointmentsPage = () => {
                                                 >
                                                     Open
                                                 </Link>
-                                                <button type="button" disabled={updatingAppointmentId === appointment._id} onClick={() => handleAppointmentAction(appointment._id, 'confirmed')} className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60">
+                                                <button
+                                                    type="button"
+                                                    disabled={updatingAppointmentId === appointment._id}
+                                                    onClick={() => handleAppointmentAction(appointment._id, 'confirmed')}
+                                                    className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
                                                     <CheckCircle2 size={14} />
                                                     Approve
                                                 </button>
-                                                <button type="button" disabled={updatingAppointmentId === appointment._id} onClick={() => handleAppointmentAction(appointment._id, 'rejected')} className="inline-flex rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300">
+                                                <button
+                                                    type="button"
+                                                    disabled={updatingAppointmentId === appointment._id}
+                                                    onClick={() => handleAppointmentAction(appointment._id, 'rejected')}
+                                                    className="inline-flex rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300"
+                                                >
                                                     Reject
+                                                </button>
+                                            </div>
+                                        ) : canManageAppointment(appointment) ? (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Link
+                                                    to={`/doctor/appointments/${appointment._id}`}
+                                                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                                >
+                                                    Open
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openManageDialog(appointment, 'reschedule')}
+                                                    className="inline-flex items-center gap-2 rounded-full border border-cyan-300 px-4 py-2 text-xs font-semibold text-cyan-700 transition hover:border-cyan-500 hover:text-cyan-800 dark:border-cyan-800 dark:text-cyan-300"
+                                                >
+                                                    Reschedule
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openManageDialog(appointment, 'cancel')}
+                                                    className="inline-flex items-center gap-2 rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 hover:text-rose-800 dark:border-rose-800 dark:text-rose-300"
+                                                >
+                                                    Cancel
                                                 </button>
                                             </div>
                                         ) : (
@@ -193,6 +320,104 @@ const DoctorAppointmentsPage = () => {
                     </table>
                 </div>
             </section>
+
+            <Dialog open={Boolean(selectedManageAppointment)} onOpenChange={closeManageDialog}>
+                <DialogContent className="max-h-[86vh] max-w-2xl overflow-hidden rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex max-h-[86vh] flex-col">
+                        <div className="border-b border-slate-100 px-5 py-5 dark:border-slate-800">
+                            <DialogHeader>
+                                <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">
+                                    {manageMode === 'reschedule' ? 'Reschedule session' : 'Cancel session'}
+                                </p>
+                                <DialogTitle className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
+                                    {selectedManageAppointment?.patient?.name || 'Appointment'} on {formatReadableDate(selectedManageAppointment?.date)}
+                                </DialogTitle>
+                                <DialogDescription className="text-sm leading-6">
+                                    {manageMode === 'reschedule'
+                                        ? 'Change the session time and notify the patient immediately.'
+                                        : 'Cancel the session and add a reason for the patient.'}
+                                </DialogDescription>
+                            </DialogHeader>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-5 py-5">
+                            {manageError && (
+                                <div className="rounded-[1.15rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                    {manageError}
+                                </div>
+                            )}
+
+                            {manageMode === 'reschedule' ? (
+                                <div className="mt-4 space-y-4">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">New date</label>
+                                            <Input
+                                                key={`manage-date-${manageInputKey}`}
+                                                type="date"
+                                                min={getTomorrowDateString()}
+                                                value={manageDate}
+                                                onChange={(event) => setManageDate(event.target.value)}
+                                                className="h-11 rounded-2xl border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">New slot</label>
+                                            <Input
+                                                key={`manage-slot-${manageInputKey}`}
+                                                type="text"
+                                                value={manageSlot}
+                                                onChange={(event) => setManageSlot(event.target.value)}
+                                                placeholder="10:00-10:30"
+                                                className="h-11 rounded-2xl border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Reason</label>
+                                        <textarea
+                                            value={manageReason}
+                                            onChange={(event) => setManageReason(event.target.value)}
+                                            rows={4}
+                                            placeholder="Optional note for the patient"
+                                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mt-4 space-y-4">
+                                    <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Cancellation reason</p>
+                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            Add a short explanation so the patient knows why the session is being cancelled.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Reason</label>
+                                        <textarea
+                                            value={manageReason}
+                                            onChange={(event) => setManageReason(event.target.value)}
+                                            rows={5}
+                                            placeholder="Please tell the patient why you need to cancel."
+                                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-5 flex flex-wrap gap-3">
+                                <Button type="button" disabled={manageLoading} onClick={handleManageSubmit}>
+                                    {manageLoading ? 'Saving...' : manageMode === 'reschedule' ? 'Save reschedule' : 'Cancel session'}
+                                </Button>
+                                <Button type="button" variant="outline" disabled={manageLoading} onClick={closeManageDialog}>
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={Boolean(selectedNotesAppointment)} onOpenChange={() => setSelectedNotesAppointment(null)}>
                 <DialogContent className="rounded-[1.75rem] border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">

@@ -114,6 +114,86 @@ const appointmentSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    rescheduleRequestedDate: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    rescheduleRequestedSlot: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    rescheduleRequestedReason: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
+    rescheduleRequestedByRole: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    rescheduleRequestedAt: {
+        type: Date,
+        default: null,
+    },
+    cancellationRequestedReason: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
+    cancellationRequestedByRole: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    cancellationRequestedAt: {
+        type: Date,
+        default: null,
+    },
+    cancellationReason: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
+    cancelledByRole: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    cancelledAt: {
+        type: Date,
+        default: null,
+    },
+    googleCalendarEventId: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    googleCalendarEventHtmlLink: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    googleCalendarSyncedAt: {
+        type: Date,
+        default: null,
+    },
+    googleCalendarSyncStatus: {
+        type: String,
+        trim: true,
+        default: '',
+    },
+    googleCalendarSyncError: {
+        type: String,
+        trim: true,
+        maxlength: 1000,
+        default: '',
+    },
     medicalDocuments: [{
         title: {
             type: String,
