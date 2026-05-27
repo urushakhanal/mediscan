@@ -6,6 +6,10 @@
 const app = require('./app');
 const config = require('./config/env');
 const { connectDB } = require('./config/db');
+const {
+    startAppointmentReminderScheduler,
+    stopAppointmentReminderScheduler,
+} = require('./modules/appointments/services/appointmentReminder.service');
 
 /**
  * Start the server
@@ -17,6 +21,7 @@ const startServer = async () => {
         // ===========================
         console.log('🔌 Connecting to MongoDB...');
         await connectDB();
+        await startAppointmentReminderScheduler();
 
         // ===========================
         // Start Express Server
@@ -43,6 +48,7 @@ const startServer = async () => {
 
             server.close(() => {
                 console.log('✅ HTTP server closed');
+                stopAppointmentReminderScheduler();
 
                 // Close database connection
                 require('mongoose').connection.close(false, () => {

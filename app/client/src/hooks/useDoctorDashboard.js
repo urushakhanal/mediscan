@@ -9,11 +9,17 @@ import {
 const getInitialSettings = () => ({
     maxAppointmentsPerDay: 1,
     availableTimeSlots: [],
+    blockedDates: [],
+    weeklyBreaks: [],
+    emergencySlots: [],
 });
 
 const getInitialSettingsForm = () => ({
     slotCount: '0',
     availableTimeSlots: [],
+    blockedDates: [],
+    weeklyBreaks: [],
+    emergencySlots: [],
 });
 
 export const useDoctorDashboard = () => {
@@ -38,6 +44,9 @@ export const useDoctorDashboard = () => {
             const nextSettings = {
                 maxAppointmentsPerDay: settingsData.settings?.maxAppointmentsPerDay || 1,
                 availableTimeSlots: settingsData.settings?.availableTimeSlots || [],
+                blockedDates: settingsData.settings?.blockedDates || [],
+                weeklyBreaks: settingsData.settings?.weeklyBreaks || [],
+                emergencySlots: settingsData.settings?.emergencySlots || [],
             };
 
             setAppointments(appointmentsData.appointments || []);
@@ -45,6 +54,9 @@ export const useDoctorDashboard = () => {
             setSettingsForm({
                 slotCount: String(nextSettings.availableTimeSlots.length),
                 availableTimeSlots: nextSettings.availableTimeSlots,
+                blockedDates: nextSettings.blockedDates,
+                weeklyBreaks: nextSettings.weeklyBreaks,
+                emergencySlots: nextSettings.emergencySlots,
             });
         } catch (requestError) {
             setError(requestError.message || 'Unable to load doctor dashboard.');

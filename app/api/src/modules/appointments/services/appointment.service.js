@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 const Appointment = require('../../../database/models/appointment.model');
 const User = require('../../../database/models/user.model');
 const { ACTIVE_APPOINTMENT_STATUSES } = require('../../../constants/appointment.constants');
-const {
-    DEFAULT_DOCTOR_TIME_SLOTS,
-    DEFAULT_MAX_APPOINTMENTS_PER_DAY,
-} = require('../../../constants/user.constants');
+const { createDefaultDoctorAvailabilitySettings } = require('../../../constants/user.constants');
 const { createNotification } = require('../../notifications/services/notification.service');
 const fs = require('fs/promises');
 const path = require('path');
@@ -73,6 +70,157 @@ const validateTimeSlot = (slot) => {
     return normalizedSlot;
 };
 
+const parseTimeToMinutes = (timeValue) => {
+    const normalizedTime = normalizeSlot(timeValue);
+    const match = normalizedTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!match) {
+        return null;
+    }
+
+    return Number(match[1]) * 60 + Number(match[2]);
+};
+
+const parseSlotToRange = (slotValue) => {
+    const normalizedSlot = validateTimeSlot(slotValue);
+    const [startText, endText] = normalizedSlot.split('-');
+    const start = parseTimeToMinutes(startText);
+    const end = parseTimeToMinutes(endText);
+
+    if (!Number.isInteger(start) || !Number.isInteger(end)) {
+        const error = new Error('Time slots must use HH:MM-HH:MM format.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    return {
+        normalizedSlot,
+        start,
+        end,
+    };
+};
+
+const overlapsTimeRange = (left, right) => left.start < right.end && right.start < left.end;
+
+const normalizeAvailabilityDate = (dateValue) => {
+    const normalized = normalizeOptionalText(dateValue);
+    return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : '';
+};
+
+const normalizeAvailabilitySettings = (doctor) => {
+    const fallback = createDefaultDoctorAvailabilitySettings();
+    const settings = doctor?.availabilitySettings || fallback;
+
+    const availableTimeSlots = [...new Set((settings.availableTimeSlots || fallback.availableTimeSlots).map(validateTimeSlot))]
+        .sort((left, right) => parseSlotToRange(left).start - parseSlotToRange(right).start);
+
+    const blockedDates = (settings.blockedDates || []).map((entry) => ({
+        date: normalizeAvailabilityDate(entry?.date),
+        label: normalizeOptionalText(entry?.label),
+        type: normalizeOptionalText(entry?.type) || 'leave',
+        notes: normalizeOptionalText(entry?.notes),
+    })).filter((entry) => entry.date);
+
+    const weeklyBreaks = (settings.weeklyBreaks || []).map((entry) => {
+        const dayOfWeek = Number(entry?.dayOfWeek);
+        const start = parseTimeToMinutes(entry?.startTime);
+        const end = parseTimeToMinutes(entry?.endTime);
+
+        return {
+            dayOfWeek: Number.isInteger(dayOfWeek) && dayOfWeek >= 0 && dayOfWeek <= 6 ? dayOfWeek : null,
+            startTime: start === null ? '' : `${String(entry.startTime || '').slice(0, 5)}`,
+            endTime: end === null ? '' : `${String(entry.endTime || '').slice(0, 5)}`,
+            label: normalizeOptionalText(entry?.label),
+            notes: normalizeOptionalText(entry?.notes),
+            range: start !== null && end !== null ? { start, end } : null,
+        };
+    }).filter((entry) => Number.isInteger(entry.dayOfWeek) && entry.range);
+
+    const emergencySlots = (settings.emergencySlots || []).map((entry) => {
+        const normalizedDate = normalizeAvailabilityDate(entry?.date);
+        const slotValue = `${normalizeOptionalText(entry?.startTime)}-${normalizeOptionalText(entry?.endTime)}`;
+        const range = (() => {
+            try {
+                return parseSlotToRange(slotValue);
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!range) {
+            return {
+                date: normalizedDate,
+                label: normalizeOptionalText(entry?.label),
+                notes: normalizeOptionalText(entry?.notes),
+                startTime: '',
+                endTime: '',
+                range: null,
+            };
+        }
+
+        const [startTime, endTime] = range.normalizedSlot.split('-');
+        return {
+            date: normalizedDate,
+            label: normalizeOptionalText(entry?.label),
+            notes: normalizeOptionalText(entry?.notes),
+            startTime,
+            endTime,
+            range: { start: range.start, end: range.end },
+        };
+    }).filter((entry) => entry.date && entry.range);
+
+    return {
+        maxAppointmentsPerDay: Number(settings.maxAppointmentsPerDay) || fallback.maxAppointmentsPerDay,
+        availableTimeSlots,
+        blockedDates,
+        weeklyBreaks,
+        emergencySlots,
+    };
+};
+
+const getWeekdayFromDate = (dateValue) => {
+    const normalized = normalizeAvailabilityDate(dateValue);
+    if (!normalized) {
+        return null;
+    }
+
+    const [year, month, day] = normalized.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? null : date.getDay();
+};
+
+const getDoctorAvailabilityForDate = (doctor, dateValue) => {
+    const settings = normalizeAvailabilitySettings(doctor);
+    const normalizedDate = normalizeAvailabilityDate(dateValue);
+    const weekday = getWeekdayFromDate(normalizedDate);
+    const blockedDate = settings.blockedDates.find((entry) => entry.date === normalizedDate) || null;
+    const dateEmergencySlots = settings.emergencySlots.filter((entry) => entry.date === normalizedDate);
+    const weeklyBreaks = weekday === null
+        ? []
+        : settings.weeklyBreaks.filter((entry) => entry.dayOfWeek === weekday);
+
+    const baseSlots = settings.availableTimeSlots
+        .map((slot) => {
+            const range = parseSlotToRange(slot);
+            return { slot: range.normalizedSlot, range };
+        })
+        .filter(({ range }) => !weeklyBreaks.some((breakRule) => overlapsTimeRange(range, breakRule.range)))
+        .map(({ slot }) => slot);
+
+    const emergencySlots = dateEmergencySlots.map((entry) => `${entry.startTime}-${entry.endTime}`);
+    const availableSlots = blockedDate && emergencySlots.length === 0
+        ? []
+        : [...new Set([...baseSlots, ...emergencySlots])]
+            .sort((left, right) => parseSlotToRange(left).start - parseSlotToRange(right).start);
+
+    return {
+        ...settings,
+        blockedDate,
+        weeklyBreaks: weeklyBreaks.map(({ range: _range, ...entry }) => entry),
+        emergencySlots: dateEmergencySlots.map(({ range: _range, ...entry }) => entry),
+        availableSlots,
+    };
+};
+
 const ensureFutureDate = (date) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
         const error = new Error('Appointment date must use YYYY-MM-DD format.');
@@ -85,18 +233,6 @@ const ensureFutureDate = (date) => {
         error.statusCode = 400;
         throw error;
     }
-};
-
-const buildDoctorAvailability = (doctor) => {
-    const availableTimeSlots = doctor?.availabilitySettings?.availableTimeSlots?.length
-        ? doctor.availabilitySettings.availableTimeSlots.map((slot) => normalizeSlot(slot))
-        : [...DEFAULT_DOCTOR_TIME_SLOTS];
-    const maxAppointmentsPerDay = availableTimeSlots.length || DEFAULT_MAX_APPOINTMENTS_PER_DAY;
-
-    return {
-        maxAppointmentsPerDay,
-        availableTimeSlots,
-    };
 };
 
 const getDoctorForAppointments = async (doctorId) => {
@@ -113,7 +249,7 @@ const getAvailabilityForDoctor = async (doctorId, date) => {
     ensureFutureDate(date);
 
     const doctor = await getDoctorForAppointments(doctorId);
-    const settings = buildDoctorAvailability(doctor);
+    const settings = getDoctorAvailabilityForDate(doctor, date);
 
     const activeAppointments = await Appointment.find({
         doctor: doctorId,
@@ -123,11 +259,11 @@ const getAvailabilityForDoctor = async (doctorId, date) => {
 
     const bookedSlots = activeAppointments.map((appointment) => normalizeSlot(appointment.slot));
     const uniqueBookedSlots = [...new Set(bookedSlots)];
-    const remainingCapacity = Math.max(settings.maxAppointmentsPerDay - activeAppointments.length, 0);
-    const dailyLimitReached = activeAppointments.length >= settings.maxAppointmentsPerDay;
+    const remainingCapacity = Math.max(settings.availableSlots.length - activeAppointments.length, 0);
+    const dailyLimitReached = settings.availableSlots.length === 0 || activeAppointments.length >= settings.availableSlots.length;
     const availableSlots = dailyLimitReached
         ? []
-        : settings.availableTimeSlots.filter((slot) => !uniqueBookedSlots.includes(slot));
+        : settings.availableSlots.filter((slot) => !uniqueBookedSlots.includes(slot));
 
     return {
         date,
@@ -138,6 +274,9 @@ const getAvailabilityForDoctor = async (doctorId, date) => {
         configuredSlots: settings.availableTimeSlots,
         bookedSlots: uniqueBookedSlots,
         availableSlots,
+        blockedDate: settings.blockedDate,
+        weeklyBreaks: settings.weeklyBreaks,
+        emergencySlots: settings.emergencySlots,
     };
 };
 
@@ -228,17 +367,15 @@ const clearAppointmentChangeRequests = (appointment) => {
     appointment.cancellationRequestedAt = null;
 };
 
+const clearAppointmentReminderState = (appointment) => {
+    appointment.reminderLeadMinutesSent = [];
+};
+
 const ensureAppointmentSlotAvailability = async ({ appointmentId, doctorId, date, slot }) => {
     ensureFutureDate(date);
     const normalizedSlot = validateTimeSlot(slot);
     const doctor = await getDoctorForAppointments(doctorId);
-    const settings = buildDoctorAvailability(doctor);
-
-    if (!settings.availableTimeSlots.includes(normalizedSlot)) {
-        const error = new Error('Selected time slot is not part of the doctor availability settings.');
-        error.statusCode = 400;
-        throw error;
-    }
+    const settings = getDoctorAvailabilityForDate(doctor, date);
 
     const appointment = await Appointment.findById(appointmentId);
     if (!appointment) {
@@ -254,7 +391,19 @@ const ensureAppointmentSlotAvailability = async ({ appointmentId, doctorId, date
         _id: { $ne: appointmentId },
     });
 
-    if (activeAppointmentsCount >= settings.maxAppointmentsPerDay) {
+    if (settings.availableSlots.length === 0) {
+        const error = new Error('Doctor is unavailable on the selected date.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    if (!settings.availableSlots.includes(normalizedSlot)) {
+        const error = new Error('Selected time slot is not part of the doctor availability for that date.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (activeAppointmentsCount >= settings.availableSlots.length) {
         const error = new Error('Doctor has reached the maximum number of appointments for that day.');
         error.statusCode = 409;
         throw error;
@@ -309,20 +458,26 @@ const createAppointment = async ({
         throw error;
     }
 
-    const settings = buildDoctorAvailability(doctor);
-    if (!settings.availableTimeSlots.includes(normalizedSlot)) {
-        const error = new Error('Selected time slot is not part of the doctor availability settings.');
-        error.statusCode = 400;
-        throw error;
-    }
-
+    const settings = getDoctorAvailabilityForDate(doctor, date);
     const activeAppointmentsCount = await Appointment.countDocuments({
         doctor: doctorId,
         date,
         status: { $in: ACTIVE_APPOINTMENT_STATUSES },
     });
 
-    if (activeAppointmentsCount >= settings.maxAppointmentsPerDay) {
+    if (settings.availableSlots.length === 0) {
+        const error = new Error('Doctor is unavailable on the selected date.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    if (!settings.availableSlots.includes(normalizedSlot)) {
+        const error = new Error('Selected time slot is not part of the doctor availability for that date.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (activeAppointmentsCount >= settings.availableSlots.length) {
         const error = new Error('Doctor has reached the maximum number of appointments for that day.');
         error.statusCode = 409;
         throw error;
@@ -491,6 +646,7 @@ const rescheduleAppointment = async ({
     appointment.slot = normalizedSlot;
     appointment.activeSlotKey = `${appointment.doctor._id.toString()}:${requestedDate}:${normalizedSlot}`;
     clearAppointmentChangeRequests(appointment);
+    clearAppointmentReminderState(appointment);
     appointment.status = appointment.status === 'pending' ? 'pending' : appointment.status;
 
     await appointment.save();
@@ -590,6 +746,7 @@ const cancelAppointment = async ({
     appointment.cancellationReason = finalCancellationReason;
     appointment.activeSlotKey = undefined;
     clearAppointmentChangeRequests(appointment);
+    clearAppointmentReminderState(appointment);
     await appointment.save();
 
     const populatedAppointment = await populateDoctorAppointment(Appointment.findById(appointment._id));
@@ -735,6 +892,7 @@ const updateAppointmentStatus = async ({ appointmentId, doctorId, status }) => {
         appointment.activeSlotKey = undefined;
     }
     clearAppointmentChangeRequests(appointment);
+    clearAppointmentReminderState(appointment);
 
     await appointment.save();
 
@@ -774,6 +932,197 @@ const getDoctorAppointmentById = async (doctorId, appointmentId) => {
     return sanitizeAppointment(appointment);
 };
 
+const buildPatientTimelineEvent = ({
+    appointment,
+    type,
+    title,
+    timestamp,
+    summary = '',
+    details = [],
+    appointmentId = appointment?._id?.toString() || '',
+    status = appointment?.status || '',
+    link = '',
+    actionLabel = 'Open visit',
+}) => {
+    const resolvedTimestamp = timestamp ? new Date(timestamp) : null;
+    return {
+        id: `${appointmentId || 'event'}:${type}:${resolvedTimestamp ? resolvedTimestamp.toISOString() : Date.now()}`,
+        type,
+        title,
+        summary,
+        details: details.filter(Boolean),
+        timestamp: resolvedTimestamp ? resolvedTimestamp.toISOString() : null,
+        appointmentId,
+        status,
+        link,
+        actionLabel,
+    };
+};
+
+const getAppointmentTimelineForPatient = (appointment) => {
+    const events = [];
+    const visitDate = appointment.date ? new Date(`${appointment.date}T00:00:00`) : null;
+    const appointmentLink = `/doctor/appointments/${appointment._id}`;
+
+    events.push(
+        buildPatientTimelineEvent({
+            appointment,
+            type: 'appointment-requested',
+            title: appointment.status === 'confirmed' ? 'Appointment confirmed' : 'Appointment requested',
+            timestamp: appointment.createdAt || visitDate,
+            summary: `${appointment.date || 'Unknown date'} at ${appointment.slot || 'Unknown slot'}`,
+            details: [
+                appointment.previousMedicalCondition && `Previous condition: ${appointment.previousMedicalCondition}`,
+                appointment.symptoms && `Symptoms: ${appointment.symptoms}`,
+            ],
+            link: appointmentLink,
+        })
+    );
+
+    if (appointment.rescheduleRequestedAt) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'reschedule-requested',
+                title: 'Reschedule requested',
+                timestamp: appointment.rescheduleRequestedAt,
+                summary: `${appointment.rescheduleRequestedDate || appointment.date || 'Unknown date'}${appointment.rescheduleRequestedSlot ? ` at ${appointment.rescheduleRequestedSlot}` : ''}`,
+                details: [
+                    appointment.rescheduleRequestedReason && `Reason: ${appointment.rescheduleRequestedReason}`,
+                    appointment.rescheduleRequestedByRole ? `Requested by ${appointment.rescheduleRequestedByRole}` : '',
+                ],
+                link: appointmentLink,
+            })
+        );
+    }
+
+    if (appointment.cancellationRequestedAt) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'cancellation-requested',
+                title: 'Cancellation requested',
+                timestamp: appointment.cancellationRequestedAt,
+                summary: appointment.cancellationRequestedReason || 'Cancellation requested by the patient',
+                details: [
+                    appointment.cancellationRequestedByRole ? `Requested by ${appointment.cancellationRequestedByRole}` : '',
+                ],
+                link: appointmentLink,
+            })
+        );
+    }
+
+    if (appointment.scanRequestedAt || appointment.scanRequestNote) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'scan-request',
+                title: 'Report requested',
+                timestamp: appointment.scanRequestedAt || appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: appointment.scanRequestNote || 'Doctor requested a report or scan',
+                details: [],
+                link: appointmentLink,
+                actionLabel: 'Open request',
+            })
+        );
+    }
+
+    if (appointment.consultationNotes || appointment.diagnosis || appointment.prescription || appointment.doctorAdvice || appointment.recommendedTests || appointment.visitOutcome) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'consultation-updated',
+                title: appointment.status === 'completed' ? 'Consultation completed' : 'Consultation updated',
+                timestamp: appointment.completedAt || appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: appointment.consultationNotes || appointment.visitOutcome || 'Consultation details recorded',
+                details: [
+                    appointment.diagnosis && `Diagnosis: ${appointment.diagnosis}`,
+                    appointment.prescription && `Prescription: ${appointment.prescription}`,
+                    appointment.doctorAdvice && `Advice: ${appointment.doctorAdvice}`,
+                    appointment.recommendedTests && `Tests: ${appointment.recommendedTests}`,
+                    appointment.visitOutcome && `Outcome: ${appointment.visitOutcome}`,
+                ],
+                link: appointmentLink,
+                actionLabel: 'Open consultation',
+            })
+        );
+    }
+
+    if (appointment.followUpRequired) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'follow-up',
+                title: 'Follow-up needed',
+                timestamp: appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: appointment.followUpDate ? `Follow-up due on ${appointment.followUpDate}` : 'Follow-up required',
+                details: [],
+                link: appointmentLink,
+                actionLabel: 'Open follow-up',
+            })
+        );
+    }
+
+    if (appointment.medicalDocuments?.length) {
+        appointment.medicalDocuments.forEach((document) => {
+            events.push(
+                buildPatientTimelineEvent({
+                    appointment,
+                    type: 'report-uploaded',
+                    title: document.title || 'Uploaded report',
+                    timestamp: document.uploadedAt || appointment.updatedAt || appointment.createdAt || visitDate,
+                    summary: `${document.uploadedByRole === 'doctor' ? 'Doctor' : 'Patient'} uploaded a report`,
+                    details: [
+                        document.reviewNote && `Note: ${document.reviewNote}`,
+                        document.fileName && `File: ${document.fileName}`,
+                    ],
+                    link: appointmentLink,
+                })
+            );
+        });
+    }
+
+    if (appointment.status === 'completed' || appointment.completedAt) {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'visit-completed',
+                title: 'Visit completed',
+                timestamp: appointment.completedAt || appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: appointment.visitOutcome || appointment.diagnosis || 'The visit was marked completed.',
+                details: [],
+                link: appointmentLink,
+            })
+        );
+    } else if (appointment.status === 'cancelled' || appointment.status === 'rejected') {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'visit-closed',
+                title: appointment.status === 'cancelled' ? 'Appointment cancelled' : 'Appointment rejected',
+                timestamp: appointment.cancelledAt || appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: appointment.cancellationReason || 'This appointment is no longer active.',
+                details: [],
+                link: appointmentLink,
+            })
+        );
+    } else if (appointment.status === 'confirmed') {
+        events.push(
+            buildPatientTimelineEvent({
+                appointment,
+                type: 'visit-confirmed',
+                title: 'Appointment confirmed',
+                timestamp: appointment.updatedAt || appointment.createdAt || visitDate,
+                summary: `${appointment.date || 'Unknown date'} at ${appointment.slot || 'Unknown slot'}`,
+                details: [],
+                link: appointmentLink,
+            })
+        );
+    }
+
+    return events;
+};
+
 const getDoctorPatientRecord = async (doctorId, patientId) => {
     const patient = await User.findOne({ _id: patientId, role: 'patient' });
     if (!patient) {
@@ -792,6 +1141,10 @@ const getDoctorPatientRecord = async (doctorId, patientId) => {
         : null;
     const latestCompletedAppointment = [...sanitizedAppointments].reverse().find((item) => item.status === 'completed') || null;
     const latestFollowUpAppointment = [...sanitizedAppointments].reverse().find((item) => item.followUpRequired) || null;
+    const timeline = sanitizedAppointments
+        .flatMap((appointment) => getAppointmentTimelineForPatient(appointment))
+        .filter((event) => Boolean(event.timestamp))
+        .sort((left, right) => new Date(right.timestamp) - new Date(left.timestamp));
 
     return {
         patient: sanitizeUser(patient),
@@ -803,6 +1156,7 @@ const getDoctorPatientRecord = async (doctorId, patientId) => {
             latestCompletedAppointment,
             latestFollowUpAppointment,
             appointments: sanitizedAppointments,
+            timeline,
         },
     };
 };
@@ -880,6 +1234,7 @@ const updateDoctorAppointmentConsultation = async ({ appointmentId, doctorId, pa
             appointment.completedAt = appointment.completedAt || new Date();
             appointment.patientSummaryViewedAt = null;
             appointment.activeSlotKey = undefined;
+            clearAppointmentReminderState(appointment);
         }
     }
 
@@ -1033,7 +1388,7 @@ const getDoctorAvailabilitySettings = async (doctorId) => {
         throw error;
     }
 
-    return buildDoctorAvailability(doctor);
+    return normalizeAvailabilitySettings(doctor);
 };
 
 const updateDoctorAvailabilitySettings = async (doctorId, payload = {}) => {
@@ -1052,14 +1407,52 @@ const updateDoctorAvailabilitySettings = async (doctorId, payload = {}) => {
 
     const availableTimeSlots = [...new Set(payload.availableTimeSlots.map(validateTimeSlot))];
 
+    const blockedDates = Array.isArray(payload.blockedDates)
+        ? payload.blockedDates.map((entry) => ({
+            date: normalizeAvailabilityDate(entry?.date),
+            label: normalizeOptionalText(entry?.label),
+            type: normalizeOptionalText(entry?.type) || 'leave',
+            notes: normalizeOptionalText(entry?.notes),
+        })).filter((entry) => entry.date)
+        : [];
+
+    const weeklyBreaks = Array.isArray(payload.weeklyBreaks)
+        ? payload.weeklyBreaks.map((entry) => {
+            const dayOfWeek = Number(entry?.dayOfWeek);
+            const startTime = validateTimeSlot(`${normalizeOptionalText(entry?.startTime)}-${normalizeOptionalText(entry?.endTime)}`).split('-')[0];
+            const endTime = validateTimeSlot(`${normalizeOptionalText(entry?.startTime)}-${normalizeOptionalText(entry?.endTime)}`).split('-')[1];
+
+            return {
+                dayOfWeek: Number.isInteger(dayOfWeek) && dayOfWeek >= 0 && dayOfWeek <= 6 ? dayOfWeek : null,
+                startTime,
+                endTime,
+                label: normalizeOptionalText(entry?.label),
+                notes: normalizeOptionalText(entry?.notes),
+            };
+        }).filter((entry) => Number.isInteger(entry.dayOfWeek))
+        : [];
+
+    const emergencySlots = Array.isArray(payload.emergencySlots)
+        ? payload.emergencySlots.map((entry) => ({
+            date: normalizeAvailabilityDate(entry?.date),
+            startTime: validateTimeSlot(`${normalizeOptionalText(entry?.startTime)}-${normalizeOptionalText(entry?.endTime)}`).split('-')[0],
+            endTime: validateTimeSlot(`${normalizeOptionalText(entry?.startTime)}-${normalizeOptionalText(entry?.endTime)}`).split('-')[1],
+            label: normalizeOptionalText(entry?.label),
+            notes: normalizeOptionalText(entry?.notes),
+        })).filter((entry) => entry.date && entry.startTime && entry.endTime)
+        : [];
+
     doctor.availabilitySettings = {
         maxAppointmentsPerDay: availableTimeSlots.length,
         availableTimeSlots,
+        blockedDates,
+        weeklyBreaks,
+        emergencySlots,
     };
 
     await doctor.save();
 
-    return buildDoctorAvailability(doctor);
+    return normalizeAvailabilitySettings(doctor);
 };
 
 module.exports = {

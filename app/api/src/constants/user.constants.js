@@ -60,9 +60,18 @@ const DEFAULT_DOCTOR_TIME_SLOTS = [
 
 const DEFAULT_MAX_APPOINTMENTS_PER_DAY = 8;
 
+const createDefaultDoctorAvailabilitySettings = () => ({
+    maxAppointmentsPerDay: DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+    availableTimeSlots: [...DEFAULT_DOCTOR_TIME_SLOTS],
+    blockedDates: [],
+    weeklyBreaks: [],
+    emergencySlots: [],
+});
+
 module.exports = {
     DOCTOR_SPECIALIZATIONS,
     DOCTOR_QUALIFICATIONS,
     DEFAULT_DOCTOR_TIME_SLOTS,
     DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+    createDefaultDoctorAvailabilitySettings,
 };

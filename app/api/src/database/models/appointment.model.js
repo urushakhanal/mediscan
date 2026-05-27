@@ -160,6 +160,10 @@ const appointmentSchema = new mongoose.Schema({
         maxlength: 1000,
         default: '',
     },
+    reminderLeadMinutesSent: {
+        type: [Number],
+        default: [],
+    },
     cancelledByRole: {
         type: String,
         trim: true,

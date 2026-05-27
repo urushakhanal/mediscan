@@ -55,6 +55,85 @@ const formatDocumentTimestamp = (value) => {
     }).format(date);
 };
 
+const formatTimelineTimestamp = (value) => {
+    if (!value) {
+        return 'Recently';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return 'Recently';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    }).format(date);
+};
+
+const getTimelineToneClasses = (type) => {
+    if (type === 'report-uploaded') {
+        return 'border-l-emerald-500';
+    }
+
+    if (type === 'consultation-updated' || type === 'visit-completed' || type === 'visit-confirmed') {
+        return 'border-l-cyan-500';
+    }
+
+    if (type === 'follow-up') {
+        return 'border-l-amber-500';
+    }
+
+    if (type === 'reschedule-requested' || type === 'cancellation-requested' || type === 'visit-closed') {
+        return 'border-l-rose-500';
+    }
+
+    return 'border-l-slate-400';
+};
+
+const getTimelineBadgeClasses = (type) => {
+    if (type === 'report-uploaded') {
+        return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200';
+    }
+
+    if (type === 'consultation-updated' || type === 'visit-completed' || type === 'visit-confirmed') {
+        return 'border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200';
+    }
+
+    if (type === 'follow-up') {
+        return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200';
+    }
+
+    if (type === 'reschedule-requested' || type === 'cancellation-requested' || type === 'visit-closed') {
+        return 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200';
+    }
+
+    return 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
+};
+
+const getTimelineActionLabel = (type) => {
+    if (type === 'report-uploaded') {
+        return 'Open report';
+    }
+
+    if (type === 'consultation-updated') {
+        return 'Open consultation';
+    }
+
+    if (type === 'follow-up') {
+        return 'Open follow-up';
+    }
+
+    if (type === 'reschedule-requested' || type === 'cancellation-requested') {
+        return 'Open request';
+    }
+
+    return 'Open visit';
+};
+
 const DoctorPatientRecordPage = () => {
     const { patientId } = useParams();
     const [patient, setPatient] = useState(null);
@@ -116,6 +195,7 @@ const DoctorPatientRecordPage = () => {
     }, [followUpDate, followUpOpen, record?.latestAppointment?.doctor?._id]);
 
     const latestFollowUp = record?.latestFollowUpAppointment;
+    const timeline = record?.timeline || [];
 
     const stats = useMemo(() => ({
         total: record?.totalAppointments || 0,
@@ -242,7 +322,69 @@ const DoctorPatientRecordPage = () => {
                 </div>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]">
+            <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
+                        <Stethoscope size={18} />
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Timeline</p>
+                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Patient medical timeline</h2>
+                    </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                    {!loading && timeline.length === 0 && (
+                        <div className="rounded-[1.4rem] border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                            No timeline events have been recorded for this patient yet.
+                        </div>
+                    )}
+
+                    {timeline.map((event) => (
+                        <article
+                            key={event.id}
+                            className={`rounded-[1.4rem] border border-slate-200 border-l-4 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 ${getTimelineToneClasses(event.type)}`}
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">{event.title}</p>
+                                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        {formatTimelineTimestamp(event.timestamp)}
+                                    </p>
+                                    <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getTimelineBadgeClasses(event.type)}`}>
+                                        {event.type.replace(/-/g, ' ')}
+                                    </span>
+                                </div>
+
+                                {event.link && (
+                                    <Link
+                                        to={event.link}
+                                        className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white"
+                                    >
+                                        {getTimelineActionLabel(event.type)}
+                                    </Link>
+                                )}
+                            </div>
+
+                            <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                {event.summary || 'No details recorded.'}
+                            </p>
+
+                            {event.details.length > 0 && (
+                                <div className="mt-4 space-y-2 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                                    {event.details.map((detail) => (
+                                        <p key={detail} className="whitespace-pre-wrap text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                            {detail}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+                        </article>
+                    ))}
+                </div>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]" hidden>
                 <article className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-center gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-200">

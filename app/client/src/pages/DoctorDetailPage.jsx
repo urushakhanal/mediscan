@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, CalendarDays, Clock3, Mail, Phone, ShieldCheck, Stethoscope } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, Clock3, Mail, Phone, ShieldCheck, Stethoscope } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createAppointment, getDoctorAvailability, getVerifiedDoctorById } from '../lib/auth';
+import { createAppointment, getDoctorAvailability, getVerifiedDoctorById, getVerifiedDoctors } from '../lib/auth';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
     formatReadableDate,
@@ -21,6 +21,52 @@ const readFileAsDataUrl = (file) =>
         reader.readAsDataURL(file);
     });
 
+const BLOCK_TYPE_LABELS = {
+    leave: 'Leave',
+    holiday: 'Holiday',
+};
+
+const timeToMinutes = (value) => {
+    const [hours = '0', minutes = '0'] = String(value || '').split(':');
+    const parsedHours = Number(hours);
+    const parsedMinutes = Number(minutes);
+
+    if (Number.isNaN(parsedHours) || Number.isNaN(parsedMinutes)) {
+        return 0;
+    }
+
+    return parsedHours * 60 + parsedMinutes;
+};
+
+const slotToRange = (slot) => {
+    const [startTime = '', endTime = ''] = String(slot || '').split('-');
+
+    return {
+        startTime,
+        endTime,
+        start: timeToMinutes(startTime),
+        end: timeToMinutes(endTime),
+    };
+};
+
+const slotOverlapsRange = (slot, range) => {
+    if (!range?.startTime || !range?.endTime) {
+        return false;
+    }
+
+    const slotRange = slotToRange(slot);
+    return slotRange.start < timeToMinutes(range.endTime) && slotRange.end > timeToMinutes(range.startTime);
+};
+
+const formatBlockLabel = (entry) => {
+    const customLabel = String(entry?.label || '').trim();
+    if (customLabel) {
+        return customLabel;
+    }
+
+    return BLOCK_TYPE_LABELS[entry?.type] || 'Blocked day';
+};
+
 const DoctorDetailPage = () => {
     const { id } = useParams();
     const { user } = useAuth();
@@ -32,6 +78,9 @@ const DoctorDetailPage = () => {
     const [availability, setAvailability] = useState(null);
     const [availabilityLoading, setAvailabilityLoading] = useState(false);
     const [availabilityError, setAvailabilityError] = useState('');
+    const [alternativeDoctors, setAlternativeDoctors] = useState([]);
+    const [alternativeDoctorsLoading, setAlternativeDoctorsLoading] = useState(false);
+    const [alternativeDoctorsError, setAlternativeDoctorsError] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
     const [bookingLoading, setBookingLoading] = useState(false);
     const [bookingStep, setBookingStep] = useState(1);
@@ -43,6 +92,18 @@ const DoctorDetailPage = () => {
     const [reportReviewNote, setReportReviewNote] = useState('');
     const [reportFile, setReportFile] = useState(null);
     const [reportInputKey, setReportInputKey] = useState(0);
+
+    const canBook = user?.role === 'patient';
+    const isAuthenticated = Boolean(user);
+    const configuredSlots = useMemo(() => availability?.configuredSlots || [], [availability]);
+    const bookedSlots = useMemo(() => availability?.bookedSlots || [], [availability]);
+    const availableSlots = useMemo(() => availability?.availableSlots || [], [availability]);
+    const weeklyBreaks = useMemo(() => availability?.weeklyBreaks || [], [availability]);
+    const emergencySlots = useMemo(() => availability?.emergencySlots || [], [availability]);
+    const blockedDateInfo = availability?.blockedDate || null;
+    const blockedDateLabel = formatBlockLabel(blockedDateInfo);
+    const hasBlockedDay = Boolean(blockedDateInfo);
+    const shouldSuggestAlternatives = hasBlockedDay || (availability && availableSlots.length === 0);
 
     useEffect(() => {
         const loadDoctor = async () => {
@@ -97,21 +158,104 @@ const DoctorDetailPage = () => {
         }
     }, [bookingOpen, bookingDate, id]);
 
-    const canBook = user?.role === 'patient';
-    const isAuthenticated = Boolean(user);
-    const configuredSlots = useMemo(() => availability?.configuredSlots || [], [availability]);
-    const bookedSlots = useMemo(() => availability?.bookedSlots || [], [availability]);
+    useEffect(() => {
+        const loadAlternatives = async () => {
+            if (!bookingOpen || !doctor?.specialization || !bookingDate || !shouldSuggestAlternatives) {
+                setAlternativeDoctors([]);
+                setAlternativeDoctorsError('');
+                return;
+            }
+
+            try {
+                setAlternativeDoctorsLoading(true);
+                setAlternativeDoctorsError('');
+
+                const doctorListData = await getVerifiedDoctors();
+                const sameSpecialtyDoctors = (doctorListData.doctors || [])
+                    .filter((candidate) => candidate._id !== id)
+                    .filter((candidate) => candidate.specialization === doctor.specialization)
+                    .filter((candidate) => candidate.isActive !== false);
+
+                const candidateResults = await Promise.all(
+                    sameSpecialtyDoctors.map(async (candidate) => {
+                        try {
+                            const candidateData = await getDoctorAvailability(candidate._id, bookingDate);
+                            const candidateAvailability = candidateData?.availability || null;
+                            const candidateSlots = candidateAvailability?.availableSlots || [];
+
+                            return {
+                                ...candidate,
+                                hasAvailability: candidateSlots.length > 0,
+                                openSlotCount: candidateSlots.length,
+                            };
+                        } catch {
+                            return {
+                                ...candidate,
+                                hasAvailability: false,
+                                openSlotCount: 0,
+                            };
+                        }
+                    })
+                );
+
+                const sortedCandidates = candidateResults
+                    .sort((left, right) => Number(right.hasAvailability) - Number(left.hasAvailability) || left.name.localeCompare(right.name))
+                    .slice(0, 4);
+
+                setAlternativeDoctors(sortedCandidates);
+            } catch (requestError) {
+                setAlternativeDoctors([]);
+                setAlternativeDoctorsError(requestError.message || 'Unable to load other doctors with the same specialty.');
+            } finally {
+                setAlternativeDoctorsLoading(false);
+            }
+        };
+
+        loadAlternatives();
+    }, [bookingOpen, bookingDate, doctor, id, shouldSuggestAlternatives]);
 
     const getSlotState = (slot) => {
+        if (availableSlots.includes(slot)) {
+            const emergencySlot = emergencySlots.find((entry) => `${entry.startTime}-${entry.endTime}` === slot);
+            return {
+                key: emergencySlot ? 'emergency' : 'available',
+                label: emergencySlot ? 'Emergency opening' : 'Available',
+            };
+        }
+
         if (bookedSlots.includes(slot)) {
-            return 'booked';
+            return {
+                key: 'booked',
+                label: 'Booked',
+            };
+        }
+
+        if (hasBlockedDay) {
+            return {
+                key: 'blocked',
+                label: blockedDateLabel,
+            };
+        }
+
+        const breakRule = weeklyBreaks.find((entry) => slotOverlapsRange(slot, entry));
+        if (breakRule) {
+            return {
+                key: 'break',
+                label: breakRule.label?.trim() || 'Break',
+            };
         }
 
         if (availability?.dailyLimitReached) {
-            return 'unavailable';
+            return {
+                key: 'full',
+                label: 'Fully booked',
+            };
         }
 
-        return 'available';
+        return {
+            key: 'unavailable',
+            label: 'Unavailable',
+        };
     };
 
     const handleBookAppointment = async (event) => {
@@ -160,7 +304,7 @@ const DoctorDetailPage = () => {
     };
 
     const goToNotesStep = () => {
-        if (!bookingDate || !selectedSlot) {
+        if (!bookingDate || !selectedSlot || !availableSlots.includes(selectedSlot)) {
             toast.error('Please select both a date and a time slot.');
             return;
         }
@@ -365,32 +509,156 @@ const DoctorDetailPage = () => {
                                                 <label htmlFor="appointment-date" className="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-200">
                                                     Appointment date
                                                 </label>
-                                                <input
-                                                    id="appointment-date"
-                                                    type="date"
-                                                    min={getTomorrowDateString()}
-                                                    value={bookingDate}
-                                                    onChange={(event) => setBookingDate(event.target.value)}
-                                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                                        Choose a slot for {formatReadableDate(bookingDate)}
-                                                    </p>
-                                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                                        Only available slots can be selected. Booked slots stay disabled.
-                                                    </p>
+                                                    <input
+                                                        id="appointment-date"
+                                                        type="date"
+                                                        min={getTomorrowDateString()}
+                                                        value={bookingDate}
+                                                        onChange={(event) => {
+                                                            setBookingDate(event.target.value);
+                                                            setSelectedSlot('');
+                                                        }}
+                                                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        required
+                                                    />
                                                 </div>
 
-                                                {availabilityError && (
-                                                    <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
-                                                        {availabilityError}
+                                                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                            Choose a slot for {formatReadableDate(bookingDate)}
+                                                        </p>
+                                                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                            Available windows can be selected, while booked or blocked windows stay disabled.
+                                                        </p>
                                                     </div>
-                                                )}
+
+                                                    {(hasBlockedDay || weeklyBreaks.length > 0 || emergencySlots.length > 0) && (
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            {hasBlockedDay && (
+                                                                <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                                                    {blockedDateLabel}
+                                                                </span>
+                                                            )}
+                                                            {weeklyBreaks.length > 0 && (
+                                                                <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200">
+                                                                    Breaks on this day
+                                                                </span>
+                                                            )}
+                                                            {emergencySlots.length > 0 && (
+                                                                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                                                    Emergency openings
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {hasBlockedDay && (
+                                                        <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                                            <p className="font-semibold">
+                                                                Dr. {formatUserDisplayName(doctor)} is on {blockedDateLabel.toLowerCase()} on {formatReadableDate(bookingDate)}.
+                                                            </p>
+                                                            <p className="mt-1 text-xs leading-5 text-rose-700/90 dark:text-rose-200/80">
+                                                                {blockedDateInfo?.notes || 'This day is closed for bookings, so please choose another date.'}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {!hasBlockedDay && weeklyBreaks.length > 0 && (
+                                                        <div className="mt-3 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-4 text-sm text-cyan-900 dark:border-cyan-900/60 dark:bg-cyan-950/25 dark:text-cyan-100">
+                                                            <p className="font-semibold">Some time slots are blocked for routine breaks.</p>
+                                                            <p className="mt-1 text-xs leading-5 text-cyan-800/90 dark:text-cyan-100/80">
+                                                                These are usually lunch or admin breaks, so only the open windows can be selected.
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {shouldSuggestAlternatives && (
+                                                        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                                <div>
+                                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                                        Other {formatSpecialization(doctor.specialization)} doctors
+                                                                    </p>
+                                                                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                                                        {hasBlockedDay
+                                                                            ? `${formatUserDisplayName(doctor)} is unavailable on this date.`
+                                                                            : `This doctor has no open slots on ${formatReadableDate(bookingDate)}.`}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                                                    Same specialty
+                                                                </div>
+                                                            </div>
+
+                                                            {alternativeDoctorsLoading ? (
+                                                                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                                                                    {Array.from({ length: 2 }).map((_, index) => (
+                                                                        <div
+                                                                            key={`alt-doctor-skeleton-${index}`}
+                                                                            className="h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            ) : alternativeDoctorsError ? (
+                                                                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                                                    {alternativeDoctorsError}
+                                                                </div>
+                                                            ) : alternativeDoctors.length === 0 ? (
+                                                                <div className="mt-4 rounded-2xl border border-dashed border-slate-300 px-3.5 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                                                    No other verified doctors with the same specialty are available right now.
+                                                                </div>
+                                                            ) : (
+                                                                <div className="mt-4 grid gap-3">
+                                                                    {alternativeDoctors.map((candidate) => (
+                                                                        <div
+                                                                            key={candidate._id}
+                                                                            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 sm:flex-row sm:items-center sm:justify-between"
+                                                                        >
+                                                                            <div className="min-w-0">
+                                                                                <p className="font-semibold text-slate-900 dark:text-white">
+                                                                                    {formatUserDisplayName(candidate)}
+                                                                                </p>
+                                                                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                                                    {candidate.currentlyWorkingAt || 'Clinic details not shared'}
+                                                                                </p>
+                                                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                                                    <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200">
+                                                                                        {formatSpecialization(candidate.specialization)}
+                                                                                    </span>
+                                                                                    <span className={[
+                                                                                        'inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold',
+                                                                                        candidate.hasAvailability
+                                                                                            ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                                                                                            : 'border border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+                                                                                    ].join(' ')}>
+                                                                                        {candidate.hasAvailability
+                                                                                            ? `${candidate.openSlotCount} open slot${candidate.openSlotCount === 1 ? '' : 's'} on this date`
+                                                                                            : 'No slots on this date'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <Link
+                                                                                to={`/doctors/${candidate._id}`}
+                                                                                onClick={() => setBookingOpen(false)}
+                                                                                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                                                                            >
+                                                                                View profile
+                                                                                <ArrowRight size={14} />
+                                                                            </Link>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {availabilityError && (
+                                                        <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+                                                            {availabilityError}
+                                                        </div>
+                                                    )}
 
                                                 <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                                                     {availabilityLoading &&
@@ -404,23 +672,35 @@ const DoctorDetailPage = () => {
                                                         </div>
                                                     )}
 
+                                                    {!availabilityLoading && configuredSlots.length > 0 && hasBlockedDay && availableSlots.length === 0 && (
+                                                        <div className="col-span-full rounded-xl border border-dashed border-rose-300 bg-rose-50/70 px-3.5 py-4 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/20 dark:text-rose-200">
+                                                            This date is not bookable because the doctor marked it as {blockedDateLabel.toLowerCase()}.
+                                                        </div>
+                                                    )}
+
                                                     {!availabilityLoading &&
                                                         configuredSlots.map((slot) => {
                                                             const slotState = getSlotState(slot);
-                                                            const isDisabled = slotState !== 'available';
+                                                            const isDisabled = slotState.key !== 'available' && slotState.key !== 'emergency';
 
                                                             return (
                                                                 <button
-                                                                key={slot}
-                                                                type="button"
-                                                                disabled={isDisabled}
-                                                                onClick={() => setSelectedSlot(slot)}
-                                                                className={[
+                                                                    key={slot}
+                                                                    type="button"
+                                                                    disabled={isDisabled}
+                                                                    onClick={() => setSelectedSlot(slot)}
+                                                                    className={[
                                                                         'inline-flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition disabled:cursor-not-allowed',
                                                                         selectedSlot === slot
                                                                             ? 'border-cyan-600 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/30 dark:text-cyan-200'
-                                                                            : isDisabled
+                                                                            : slotState.key === 'booked'
                                                                                 ? 'border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500'
+                                                                                : slotState.key === 'break'
+                                                                                    ? 'border-cyan-100 bg-cyan-50 text-cyan-700 dark:border-cyan-900/40 dark:bg-cyan-950/20 dark:text-cyan-100'
+                                                                                    : slotState.key === 'blocked'
+                                                                                        ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/20 dark:text-rose-200'
+                                                                                        : isDisabled
+                                                                                            ? 'border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500'
                                                                                 : 'border-slate-300 text-slate-700 hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-white dark:hover:text-white',
                                                                     ].join(' ')}
                                                                 >
@@ -429,7 +709,7 @@ const DoctorDetailPage = () => {
                                                                         <span className="whitespace-nowrap">{formatSlot(slot)}</span>
                                                                     </span>
                                                                     <span className="shrink-0 whitespace-nowrap text-[11px] uppercase tracking-[0.16em]">
-                                                                        {slotState}
+                                                                        {slotState.label}
                                                                     </span>
                                                                 </button>
                                                             );
@@ -556,7 +836,7 @@ const DoctorDetailPage = () => {
                                     <button
                                         type="button"
                                         onClick={goToNotesStep}
-                                        disabled={!selectedSlot}
+                                        disabled={!selectedSlot || !availableSlots.includes(selectedSlot)}
                                         className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                     >
                                         Continue
@@ -573,7 +853,7 @@ const DoctorDetailPage = () => {
                                         </button>
                                         <button
                                             type="submit"
-                                            disabled={bookingLoading || !selectedSlot}
+                                            disabled={bookingLoading || !selectedSlot || !availableSlots.includes(selectedSlot)}
                                             className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                         >
                                             {bookingLoading ? 'Submitting...' : 'Confirm booking request'}

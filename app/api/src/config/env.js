@@ -55,6 +55,16 @@ const config = {
         fromName: process.env.SMTP_FROM_NAME || process.env.APP_NAME || 'MediScan',
     },
 
+    // Appointment reminders
+    appointmentReminders: {
+        enabled: String(process.env.APPOINTMENT_REMINDERS_ENABLED || 'true').toLowerCase() !== 'false',
+        checkIntervalMinutes: Math.max(parseInt(process.env.APPOINTMENT_REMINDER_CHECK_INTERVAL_MINUTES, 10) || 5, 1),
+        leadMinutes: String(process.env.APPOINTMENT_REMINDER_LEAD_MINUTES || '1440,120')
+            .split(',')
+            .map((value) => parseInt(value.trim(), 10))
+            .filter((value) => Number.isInteger(value) && value > 0),
+    },
+
     // Google OAuth
     google: {
         enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL),

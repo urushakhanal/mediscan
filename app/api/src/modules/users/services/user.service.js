@@ -2,8 +2,7 @@ const User = require('../../../database/models/user.model');
 const {
     DOCTOR_SPECIALIZATIONS,
     DOCTOR_QUALIFICATIONS,
-    DEFAULT_DOCTOR_TIME_SLOTS,
-    DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+    createDefaultDoctorAvailabilitySettings,
 } = require('../../../constants/user.constants');
 
 const sanitizeUser = (user) => {
@@ -154,10 +153,7 @@ const updateUser = async (id, payload) => {
         mergedUpdates.isVerified = false;
         mergedUpdates.availabilitySettings = undefined;
     } else {
-        mergedUpdates.availabilitySettings = existingUser.availabilitySettings || {
-            maxAppointmentsPerDay: DEFAULT_MAX_APPOINTMENTS_PER_DAY,
-            availableTimeSlots: [...DEFAULT_DOCTOR_TIME_SLOTS],
-        };
+        mergedUpdates.availabilitySettings = existingUser.availabilitySettings || createDefaultDoctorAvailabilitySettings();
     }
 
     await validateUserPayload(id, mergedUpdates);

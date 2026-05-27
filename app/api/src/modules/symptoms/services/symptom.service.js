@@ -13,6 +13,156 @@ const normalizeSeverityLabel = (severity) => {
     return 'low';
 };
 
+const getNormalizedSymptomText = (payload) => [
+    ...(Array.isArray(payload.symptoms) ? payload.symptoms : []),
+    payload.reliefFactors || '',
+].join(' ').toLowerCase();
+
+const hasAnyPattern = (text, patterns) => patterns.some((pattern) => pattern.test(text));
+
+const buildFallbackPossibleConditions = (payload) => {
+    const symptoms = getNormalizedSymptomText(payload);
+    const conditions = [];
+
+    if (/(cough|sore throat|runny nose|congestion|fever|fatigue|body aches)/.test(symptoms)) {
+        conditions.push({
+            name: 'Viral upper respiratory infection',
+            confidence: 62,
+            reason: 'The symptoms include common respiratory or flu-like features.',
+        });
+    }
+
+    if (/(stomach|abdominal|nausea|vomiting|diarrhea|indigestion|cramping)/.test(symptoms)) {
+        conditions.push({
+            name: 'Gastrointestinal irritation or infection',
+            confidence: 60,
+            reason: 'The symptoms suggest a possible digestive tract issue.',
+        });
+    }
+
+    if (/(headache|migraine|dizzy|dizziness|lightheaded)/.test(symptoms)) {
+        conditions.push({
+            name: 'Headache or migraine syndrome',
+            confidence: 58,
+            reason: 'The symptoms include common headache-related descriptors.',
+        });
+    }
+
+    if (/(rash|itch|hives|swelling|redness|allergic)/.test(symptoms)) {
+        conditions.push({
+            name: 'Allergic or inflammatory skin reaction',
+            confidence: 57,
+            reason: 'The symptoms include skin or allergy-related findings.',
+        });
+    }
+
+    if (conditions.length === 0) {
+        conditions.push({
+            name: 'General viral illness or nonspecific inflammation',
+            confidence: 48,
+            reason: 'The available symptom details are nonspecific, so only broad possibilities can be suggested.',
+        });
+    }
+
+    return conditions.slice(0, 3);
+};
+
+const buildFallbackTriage = (payload) => {
+    const symptomText = getNormalizedSymptomText(payload);
+    const severeSymptoms = [
+        /chest pain/,
+        /trouble breathing/,
+        /shortness of breath/,
+        /difficulty breathing/,
+        /blue lips/,
+        /severe bleeding/,
+        /loss of consciousness/,
+        /fainting/,
+        /seizure/,
+        /stroke/,
+        /one-sided weakness/,
+        /facial droop/,
+        /confusion/,
+        /anaphylaxis/,
+        /suicidal/,
+    ];
+    const urgentSymptoms = [
+        /high fever/,
+        /fever/,
+        /severe pain/,
+        /worsening/,
+        /persistent vomiting/,
+        /dehydration/,
+        /blood in/,
+        /cannot keep fluids down/,
+        /severe weakness/,
+    ];
+
+    if (hasAnyPattern(symptomText, severeSymptoms)) {
+        return {
+            triageLevel: 'emergency',
+            urgencyMessage: 'Seek emergency care now if these symptoms are current or worsening.',
+            summary: 'The reported symptoms include possible emergency warning signs, so urgent in-person evaluation is recommended.',
+        };
+    }
+
+    if (payload.severity >= 8 || hasAnyPattern(symptomText, urgentSymptoms)) {
+        return {
+            triageLevel: 'urgent',
+            urgencyMessage: 'Prompt urgent care evaluation is recommended.',
+            summary: 'The symptoms sound significant enough that you should be assessed promptly by a clinician.',
+        };
+    }
+
+    if (payload.severity >= 5 || payload.duration === '1-2-weeks' || payload.duration === 'more-than-2-weeks') {
+        return {
+            triageLevel: 'clinic',
+            urgencyMessage: 'A clinic visit is recommended soon.',
+            summary: 'The symptoms appear persistent or moderately concerning, so a routine clinical assessment is appropriate.',
+        };
+    }
+
+    return {
+        triageLevel: 'self-care',
+        urgencyMessage: 'Self-care may be reasonable if symptoms stay mild and do not worsen.',
+        summary: 'The symptoms sound mild, but you should monitor closely for any worsening or new warning signs.',
+    };
+};
+
+const buildFallbackAssessment = (payload) => {
+    const triage = buildFallbackTriage(payload);
+
+    return {
+        ...triage,
+        possibleConditions: buildFallbackPossibleConditions(payload),
+        careTips: [
+            'Rest and stay well hydrated.',
+            'Monitor your symptoms and temperature if relevant.',
+            'Avoid heavy activity until you feel better.',
+            'Use simple symptom relief measures that you normally tolerate safely.',
+            'Arrange medical review if symptoms worsen or do not improve.',
+        ],
+        otcOptions: [
+            'Acetaminophen or ibuprofen if you normally can take them safely.',
+            'Oral rehydration fluids if you may be dehydrated.',
+            'Saline or other simple local symptom relief measures if relevant.',
+        ],
+        advice: 'This is a conservative fallback assessment because the AI provider is temporarily unavailable. A clinician can give the most accurate guidance.',
+        immediateCare: 'Go to emergency care immediately if you develop chest pain, trouble breathing, confusion, fainting, severe bleeding, or rapidly worsening symptoms.',
+        followUpAdvice: 'If symptoms persist, worsen, or new symptoms appear, arrange a clinician review as soon as possible.',
+        disclaimer: 'This fallback is informational only and does not replace professional medical care or emergency evaluation.',
+    };
+};
+
+const isProviderCapacityError = (error) => {
+    const message = String(error?.message || '').toLowerCase();
+    return error?.statusCode === 429
+        || error?.providerStatus === 429
+        || message.includes('service tier capacity exceeded')
+        || message.includes('rate limit')
+        || message.includes('too many requests');
+};
+
 const buildPrompt = (payload) => {
     const symptomList = payload.symptoms.join(', ');
 
@@ -149,7 +299,13 @@ const requestMistralAssessment = async (payload) => {
         if (!response.ok) {
             const errorBody = await response.text().catch(() => '');
             const providerMessage = errorBody.trim() || `Provider returned status ${response.status}.`;
-            throw createHttpError(`Mistral symptom checker request failed: ${providerMessage}`, 502);
+            const error = createHttpError(
+                `Mistral symptom checker request failed: ${providerMessage}`,
+                response.status === 429 ? 429 : 502,
+            );
+            error.providerStatus = response.status;
+            error.providerMessage = providerMessage;
+            throw error;
         }
 
         const data = await response.json();
@@ -170,6 +326,14 @@ const requestMistralAssessment = async (payload) => {
     } catch (error) {
         if (error?.name === 'AbortError') {
             throw createHttpError('Mistral symptom checker timed out. Please try again.', 504);
+        }
+
+        if (isProviderCapacityError(error)) {
+            return {
+                source: 'rules-fallback',
+                model: config.mistralModel,
+                assessment: buildFallbackAssessment(payload),
+            };
         }
 
         if (error?.statusCode) {

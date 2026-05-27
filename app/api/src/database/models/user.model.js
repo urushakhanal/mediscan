@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const {
     DOCTOR_SPECIALIZATIONS,
     DOCTOR_QUALIFICATIONS,
-    DEFAULT_DOCTOR_TIME_SLOTS,
+    createDefaultDoctorAvailabilitySettings,
     DEFAULT_MAX_APPOINTMENTS_PER_DAY,
 } = require('../../constants/user.constants');
 
@@ -14,7 +14,100 @@ const availabilitySettingsSchema = new mongoose.Schema({
     },
     availableTimeSlots: {
         type: [String],
-        default: () => [...DEFAULT_DOCTOR_TIME_SLOTS],
+        default: () => createDefaultDoctorAvailabilitySettings().availableTimeSlots,
+    },
+    blockedDates: {
+        type: [{
+            date: {
+                type: String,
+                required: true,
+                match: /^\d{4}-\d{2}-\d{2}$/,
+            },
+            label: {
+                type: String,
+                trim: true,
+                maxlength: 100,
+                default: '',
+            },
+            type: {
+                type: String,
+                trim: true,
+                maxlength: 40,
+                default: 'leave',
+            },
+            notes: {
+                type: String,
+                trim: true,
+                maxlength: 240,
+                default: '',
+            },
+        }],
+        default: [],
+    },
+    weeklyBreaks: {
+        type: [{
+            dayOfWeek: {
+                type: Number,
+                min: 0,
+                max: 6,
+                required: true,
+            },
+            startTime: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            endTime: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            label: {
+                type: String,
+                trim: true,
+                maxlength: 100,
+                default: '',
+            },
+            notes: {
+                type: String,
+                trim: true,
+                maxlength: 240,
+                default: '',
+            },
+        }],
+        default: [],
+    },
+    emergencySlots: {
+        type: [{
+            date: {
+                type: String,
+                required: true,
+                match: /^\d{4}-\d{2}-\d{2}$/,
+            },
+            startTime: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            endTime: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            label: {
+                type: String,
+                trim: true,
+                maxlength: 100,
+                default: '',
+            },
+            notes: {
+                type: String,
+                trim: true,
+                maxlength: 240,
+                default: '',
+            },
+        }],
+        default: [],
     },
 }, { _id: false });
 

@@ -4,8 +4,7 @@ const User = require('../../../database/models/user.model');
 const config = require('../../../config/env');
 const { updateUser } = require('../../users/services/user.service');
 const {
-    DEFAULT_DOCTOR_TIME_SLOTS,
-    DEFAULT_MAX_APPOINTMENTS_PER_DAY,
+    createDefaultDoctorAvailabilitySettings,
 } = require('../../../constants/user.constants');
 
 const createToken = (user) => {
@@ -65,10 +64,7 @@ const registerUser = async ({
         currentlyWorkingAt,
         isVerified: false,
         availabilitySettings: role === 'doctor'
-            ? {
-                maxAppointmentsPerDay: DEFAULT_MAX_APPOINTMENTS_PER_DAY,
-                availableTimeSlots: [...DEFAULT_DOCTOR_TIME_SLOTS],
-            }
+            ? createDefaultDoctorAvailabilitySettings()
             : undefined,
     });
     const token = createToken(user);
