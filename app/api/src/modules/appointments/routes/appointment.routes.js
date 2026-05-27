@@ -4,6 +4,8 @@ const requireRole = require('../../auth/middlewares/requireRole.middleware');
 const {
     findDoctorAvailability,
     bookAppointment,
+    initiateKhaltiBookingPayment,
+    verifyKhaltiBookingPayment,
     getPatientAppointments,
     getDoctorAppointments,
     getDoctorPatients,
@@ -26,6 +28,8 @@ const router = express.Router();
 router.get('/doctor/:doctorId/availability', findDoctorAvailability);
 
 router.post('/', authMiddleware, requireRole('patient'), bookAppointment);
+router.post('/payments/khalti/initiate', authMiddleware, requireRole('patient'), initiateKhaltiBookingPayment);
+router.post('/payments/khalti/:sessionId/verify', authMiddleware, requireRole('patient'), verifyKhaltiBookingPayment);
 router.get('/patient/me', authMiddleware, requireRole('patient'), getPatientAppointments);
 router.get('/doctor/me', authMiddleware, requireRole('doctor'), getDoctorAppointments);
 router.get('/doctor/me/patients', authMiddleware, requireRole('doctor'), getDoctorPatients);

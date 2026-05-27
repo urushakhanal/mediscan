@@ -64,6 +64,20 @@ export const formatSlot = (value) => {
     return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
 };
 
+export const formatCurrencyNpr = (value) => {
+    const amount = Number(value);
+
+    if (!Number.isFinite(amount)) {
+        return 'Rs. 0';
+    }
+
+    return new Intl.NumberFormat('en-NP', {
+        style: 'currency',
+        currency: 'NPR',
+        maximumFractionDigits: 2,
+    }).format(amount);
+};
+
 export const getStatusClasses = (status) => {
     switch (status) {
     case 'confirmed':

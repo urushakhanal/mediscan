@@ -52,6 +52,7 @@ const validateUserPayload = async (id, updates) => {
     const nextCurrentlyWorkingAt = typeof updates.currentlyWorkingAt === 'string'
         ? updates.currentlyWorkingAt.trim()
         : updates.currentlyWorkingAt;
+    const nextConsultationFee = updates.consultationFee === undefined ? undefined : Number(updates.consultationFee);
 
     if ((nextRole === 'patient' || nextRole === 'doctor') && !nextPhone) {
         const error = new Error(`Phone number is required for ${nextRole}s.`);
@@ -102,6 +103,12 @@ const validateUserPayload = async (id, updates) => {
             throw error;
         }
 
+        if (!Number.isFinite(nextConsultationFee) || nextConsultationFee < 0) {
+            const error = new Error('Consultation fee must be a valid non-negative amount.');
+            error.statusCode = 400;
+            throw error;
+        }
+
         const existingNmc = await User.findOne({ nmcNumber: nextNmcNumber, _id: { $ne: id } });
         if (existingNmc) {
             const error = new Error('A doctor with this NMC number already exists.');
@@ -112,7 +119,7 @@ const validateUserPayload = async (id, updates) => {
 };
 
 const updateUser = async (id, payload) => {
-    const allowed = ['name', 'email', 'role', 'phone', 'nmcNumber', 'specialization', 'experienceYears', 'qualification', 'currentlyWorkingAt'];
+    const allowed = ['name', 'email', 'role', 'phone', 'nmcNumber', 'specialization', 'experienceYears', 'qualification', 'currentlyWorkingAt', 'consultationFee'];
     const updates = {};
     allowed.forEach((field) => {
         if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined) {
@@ -141,6 +148,7 @@ const updateUser = async (id, payload) => {
         experienceYears: Object.prototype.hasOwnProperty.call(updates, 'experienceYears') ? updates.experienceYears : existingUser.experienceYears,
         qualification: Object.prototype.hasOwnProperty.call(updates, 'qualification') ? updates.qualification : existingUser.qualification,
         currentlyWorkingAt: Object.prototype.hasOwnProperty.call(updates, 'currentlyWorkingAt') ? updates.currentlyWorkingAt : existingUser.currentlyWorkingAt,
+        consultationFee: Object.prototype.hasOwnProperty.call(updates, 'consultationFee') ? updates.consultationFee : existingUser.consultationFee,
         isVerified: existingUser.isVerified,
     };
 
@@ -150,6 +158,7 @@ const updateUser = async (id, payload) => {
         mergedUpdates.experienceYears = undefined;
         mergedUpdates.qualification = undefined;
         mergedUpdates.currentlyWorkingAt = undefined;
+        mergedUpdates.consultationFee = undefined;
         mergedUpdates.isVerified = false;
         mergedUpdates.availabilitySettings = undefined;
     } else {

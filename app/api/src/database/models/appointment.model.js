@@ -198,6 +198,42 @@ const appointmentSchema = new mongoose.Schema({
         maxlength: 1000,
         default: '',
     },
+    payment: {
+        provider: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        status: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        amount: {
+            type: Number,
+            min: 0,
+            default: 0,
+        },
+        currency: {
+            type: String,
+            trim: true,
+            default: 'NPR',
+        },
+        transactionUuid: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        referenceId: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        paidAt: {
+            type: Date,
+            default: null,
+        },
+    },
     medicalDocuments: [{
         title: {
             type: String,

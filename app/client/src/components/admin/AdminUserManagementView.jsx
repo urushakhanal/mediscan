@@ -5,7 +5,7 @@ import { activateUserById, blockUserById, deleteUserById, getUsers, verifyDoctor
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import DeleteConfirmationDialog from './DeleteConfirmationDialog';
 import { formatExperienceYears, formatUserDisplayName } from '../../lib/utils';
-import { formatSpecialization } from '../../lib/appointments';
+import { formatCurrencyNpr, formatSpecialization } from '../../lib/appointments';
 
 const AdminUserManagementView = ({ userRole, title, description }) => {
     const [users, setUsers] = useState([]);
@@ -302,6 +302,10 @@ const AdminUserManagementView = ({ userRole, title, description }) => {
                                 <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
                                     <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Qualification</p>
                                     <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{detailTarget.qualification || '-'}</p>
+                                </div>
+                                <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Consultation Fee</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{formatCurrencyNpr(detailTarget.consultationFee)}</p>
                                 </div>
                                 <div className="rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/80">
                                     <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Currently Working At</p>

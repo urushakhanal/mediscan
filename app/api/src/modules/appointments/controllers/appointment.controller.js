@@ -1,6 +1,7 @@
 const {
     getAvailabilityForDoctor,
     createAppointment,
+    createKhaltiPaymentSession,
     listPatientAppointments,
     listDoctorAppointments,
     listDoctorPatients,
@@ -16,6 +17,7 @@ const {
     createDoctorFollowUpAppointment,
     rescheduleAppointment,
     cancelAppointment,
+    verifyKhaltiPaymentSession,
 } = require('../services/appointment.service');
 
 const findDoctorAvailability = async (req, res, next) => {
@@ -46,6 +48,41 @@ const bookAppointment = async (req, res, next) => {
             success: true,
             message: 'Appointment request submitted successfully.',
             appointment,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const initiateKhaltiBookingPayment = async (req, res, next) => {
+    try {
+        const paymentSession = await createKhaltiPaymentSession({
+            patientId: req.user.id,
+            payload: req.body || {},
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Khalti payment session created successfully.',
+            paymentSession,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const verifyKhaltiBookingPayment = async (req, res, next) => {
+    try {
+        const result = await verifyKhaltiPaymentSession({
+            sessionId: req.params.sessionId,
+            patientId: req.user.id,
+            pidx: req.body?.pidx || req.query?.pidx,
+        });
+
+        return res.json({
+            success: true,
+            message: 'Payment verified and appointment booked successfully.',
+            ...result,
         });
     } catch (error) {
         return next(error);
@@ -274,6 +311,8 @@ const updateMyAvailabilitySettings = async (req, res, next) => {
 module.exports = {
     findDoctorAvailability,
     bookAppointment,
+    initiateKhaltiBookingPayment,
+    verifyKhaltiBookingPayment,
     getPatientAppointments,
     getDoctorAppointments,
     getDoctorPatients,

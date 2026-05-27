@@ -3,9 +3,15 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, Mail, Phone, ShieldCheck, Stethoscope } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createAppointment, getDoctorAvailability, getVerifiedDoctorById, getVerifiedDoctors } from '../lib/auth';
+import {
+    getDoctorAvailability,
+    getVerifiedDoctorById,
+    getVerifiedDoctors,
+    initiateKhaltiAppointmentPayment,
+} from '../lib/auth';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
+    formatCurrencyNpr,
     formatReadableDate,
     formatSlot,
     formatSpecialization,
@@ -104,6 +110,7 @@ const DoctorDetailPage = () => {
     const blockedDateLabel = formatBlockLabel(blockedDateInfo);
     const hasBlockedDay = Boolean(blockedDateInfo);
     const shouldSuggestAlternatives = hasBlockedDay || (availability && availableSlots.length === 0);
+    const consultationFee = Number(doctor?.consultationFee) || 0;
 
     useEffect(() => {
         const loadDoctor = async () => {
@@ -275,7 +282,7 @@ const DoctorDetailPage = () => {
 
             const reportFileData = reportFile ? await readFileAsDataUrl(reportFile) : '';
 
-            await createAppointment({
+            const paymentSessionData = await initiateKhaltiAppointmentPayment({
                 doctorId: id,
                 date: bookingDate,
                 slot: selectedSlot,
@@ -286,18 +293,16 @@ const DoctorDetailPage = () => {
                 reportFileData,
                 reportReviewNote: reportFile ? reportReviewNote : '',
             });
-            toast.success('Appointment request submitted with pending status.');
-            setBookingDetails({
-                previousMedicalCondition: '',
-                symptoms: '',
-            });
-            setReportTitle('');
-            setReportReviewNote('');
-            setReportFile(null);
-            setReportInputKey((current) => current + 1);
-            setBookingOpen(false);
+
+            const paymentSession = paymentSessionData?.paymentSession;
+            if (!paymentSession?.redirectUrl) {
+                throw new Error('Unable to start the Khalti payment flow.');
+            }
+
+            toast.success('Redirecting to Khalti for payment...');
+            window.location.assign(paymentSession.redirectUrl);
         } catch (requestError) {
-            toast.error(requestError.message || 'Unable to create appointment.');
+            toast.error(requestError.message || 'Unable to start the payment.');
         } finally {
             setBookingLoading(false);
         }
@@ -380,7 +385,7 @@ const DoctorDetailPage = () => {
                             </div>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
                                 <div className="flex items-start gap-3">
                                     <div className="mt-0.5 text-cyan-700 dark:text-cyan-300">
@@ -415,6 +420,11 @@ const DoctorDetailPage = () => {
                             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Qualification</p>
                                 <p className="mt-1 font-medium text-slate-900 dark:text-white">{formatQualification(doctor.qualification)}</p>
+                            </div>
+
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Consultation fee</p>
+                                <p className="mt-1 font-medium text-slate-900 dark:text-white">{formatCurrencyNpr(consultationFee)}</p>
                             </div>
                         </div>
                     </div>
@@ -732,6 +742,9 @@ const DoctorDetailPage = () => {
                                                         <Clock3 size={16} />
                                                         {formatSlot(selectedSlot)}
                                                     </span>
+                                                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                                        Pay {formatCurrencyNpr(consultationFee)}
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -825,6 +838,10 @@ const DoctorDetailPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50/70 p-4 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-100">
+                                                This booking will redirect you to Khalti. The appointment is created only after the payment is verified successfully.
+                                            </div>
                                         </>
                                     )}
                                 </div>
@@ -856,7 +873,7 @@ const DoctorDetailPage = () => {
                                             disabled={bookingLoading || !selectedSlot || !availableSlots.includes(selectedSlot)}
                                             className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                         >
-                                            {bookingLoading ? 'Submitting...' : 'Confirm booking request'}
+                                            {bookingLoading ? 'Redirecting...' : `Pay ${formatCurrencyNpr(consultationFee)} with Khalti`}
                                         </button>
                                     </>
                                 )}

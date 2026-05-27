@@ -182,6 +182,11 @@ const userSchema = new mongoose.Schema({
         trim: true,
         maxlength: 150,
     },
+    consultationFee: {
+        type: Number,
+        min: 0,
+        default: Math.max(parseInt(process.env.DEFAULT_CONSULTATION_FEE, 10) || 500, 0),
+    },
     isVerified: {
         type: Boolean,
         default: false,

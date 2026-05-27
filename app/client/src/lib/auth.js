@@ -60,6 +60,10 @@ export const getVerifiedDoctorById = (id) => request(`/api/users/doctors/${id}`)
 export const getDoctorAvailability = (doctorId, date) =>
     request(`/api/appointments/doctor/${doctorId}/availability?date=${encodeURIComponent(date)}`);
 export const createAppointment = (payload) => request('/api/appointments', { method: 'POST', body: payload });
+export const initiateKhaltiAppointmentPayment = (payload) =>
+    request('/api/appointments/payments/khalti/initiate', { method: 'POST', body: payload });
+export const verifyKhaltiAppointmentPayment = (sessionId, payload) =>
+    request(`/api/appointments/payments/khalti/${sessionId}/verify`, { method: 'POST', body: payload });
 export const getPatientAppointments = () => request('/api/appointments/patient/me');
 export const markPatientAppointmentSummaryViewed = (id) =>
     request(`/api/appointments/patient/me/${id}/summary-viewed`, { method: 'PATCH' });

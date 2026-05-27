@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const Appointment = require('../../../database/models/appointment.model');
+const PaymentSession = require('../../../database/models/paymentSession.model');
 const User = require('../../../database/models/user.model');
 const { ACTIVE_APPOINTMENT_STATUSES } = require('../../../constants/appointment.constants');
 const { createDefaultDoctorAvailabilitySettings } = require('../../../constants/user.constants');
 const { createNotification } = require('../../notifications/services/notification.service');
+const config = require('../../../config/env');
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -283,6 +285,116 @@ const getAvailabilityForDoctor = async (doctorId, date) => {
 const normalizeOptionalText = (value) => String(value || '').trim();
 const normalizeBoolean = (value) => value === true || value === 'true' || value === 1 || value === '1';
 const UPLOADS_DIR = path.resolve(__dirname, '../../../../uploads');
+const KHALTI_PAYMENT_PROVIDER = 'khalti';
+
+const getDoctorConsultationFee = (doctor) => {
+    const fee = Number(doctor?.consultationFee);
+    return Number.isFinite(fee) && fee >= 0 ? fee : config.defaultConsultationFee;
+};
+
+const ensureKhaltiIsEnabled = () => {
+    if (!config.khalti.enabled) {
+        const error = new Error('Khalti payment is not configured on the server.');
+        error.statusCode = 503;
+        throw error;
+    }
+};
+
+const toPaisaAmount = (value) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? Math.round(numericValue * 100) : 0;
+};
+
+const buildStoredAppointmentPayload = ({ doctor, patient, date, normalizedSlot, payload = {} }) => ({
+    doctorId: doctor._id,
+    patientId: patient._id,
+    date,
+    slot: normalizedSlot,
+    previousMedicalCondition: normalizeOptionalText(payload?.previousMedicalCondition),
+    symptoms: normalizeOptionalText(payload?.symptoms),
+    reportTitle: normalizeOptionalText(payload?.reportTitle),
+    reportFileName: normalizeOptionalText(payload?.reportFileName),
+    reportFileData: normalizeOptionalText(payload?.reportFileData),
+    reportReviewNote: normalizeOptionalText(payload?.reportReviewNote),
+});
+
+const getExistingPaymentAppointmentResult = async (paymentSession) => {
+    if (!paymentSession?.appointment) {
+        return null;
+    }
+
+    const existingAppointment = await populateDoctorAppointment(Appointment.findById(paymentSession.appointment));
+    if (!existingAppointment) {
+        return null;
+    }
+
+    return {
+        appointment: sanitizeAppointment(existingAppointment),
+        payment: {
+            provider: paymentSession.provider,
+            status: paymentSession.status,
+            amount: paymentSession.amount,
+            currency: paymentSession.currency || 'NPR',
+            transactionUuid: paymentSession.transactionUuid,
+            referenceId: paymentSession.referenceId || '',
+            providerSessionId: paymentSession.providerSessionId || '',
+        },
+    };
+};
+
+const expirePaymentSessionIfNeeded = async (paymentSession) => {
+    if (!paymentSession?.expiresAt || paymentSession.expiresAt.getTime() >= Date.now()) {
+        return;
+    }
+
+    paymentSession.status = 'expired';
+    paymentSession.failedAt = paymentSession.failedAt || new Date();
+    await paymentSession.save();
+
+    const error = new Error('This payment session has expired. Please start the booking again.');
+    error.statusCode = 410;
+    throw error;
+};
+
+const finalizeSuccessfulPaymentSession = async ({
+    paymentSession,
+    provider,
+    referenceId,
+    providerSessionId = '',
+}) => {
+    const appointment = await createAppointment({
+        ...paymentSession.appointmentPayload,
+        payment: {
+            provider,
+            status: 'paid',
+            amount: paymentSession.amount,
+            currency: paymentSession.currency || 'NPR',
+            transactionUuid: paymentSession.transactionUuid,
+            referenceId: normalizeOptionalText(referenceId),
+            paidAt: new Date(),
+        },
+    });
+
+    paymentSession.status = 'paid';
+    paymentSession.referenceId = normalizeOptionalText(referenceId);
+    paymentSession.providerSessionId = normalizeOptionalText(providerSessionId || paymentSession.providerSessionId);
+    paymentSession.paidAt = new Date();
+    paymentSession.appointment = appointment?._id || null;
+    await paymentSession.save();
+
+    return {
+        appointment,
+        payment: {
+            provider,
+            status: 'paid',
+            amount: paymentSession.amount,
+            currency: paymentSession.currency || 'NPR',
+            transactionUuid: paymentSession.transactionUuid,
+            referenceId: paymentSession.referenceId,
+            providerSessionId: paymentSession.providerSessionId || '',
+        },
+    };
+};
 
 const ensureUploadsDir = async () => {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
@@ -353,7 +465,7 @@ const buildMedicalDocumentEntry = async ({
 
 const populateDoctorAppointment = (query) =>
     query
-        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role consultationFee')
         .populate('patient', 'name email phone role');
 
 const clearAppointmentChangeRequests = (appointment) => {
@@ -426,26 +538,9 @@ const ensureAppointmentSlotAvailability = async ({ appointmentId, doctorId, date
     return { normalizedSlot };
 };
 
-const createAppointment = async ({
-    doctorId,
-    patientId,
-    date,
-    slot,
-    previousMedicalCondition,
-    symptoms,
-    reportTitle,
-    reportFileName,
-    reportFileData,
-    reportReviewNote,
-    status = 'pending',
-    createdByRole = 'patient',
-}) => {
+const buildAppointmentBookingContext = async ({ doctorId, patientId, date, slot }) => {
     ensureFutureDate(date);
     const normalizedSlot = validateTimeSlot(slot);
-    const normalizedStatus = normalizeOptionalText(status);
-    const appointmentStatus = ['pending', 'confirmed'].includes(normalizedStatus)
-        ? normalizedStatus
-        : 'pending';
 
     const [doctor, patient] = await Promise.all([
         getDoctorForAppointments(doctorId),
@@ -482,6 +577,39 @@ const createAppointment = async ({
         error.statusCode = 409;
         throw error;
     }
+
+    return {
+        doctor,
+        patient,
+        normalizedSlot,
+    };
+};
+
+const createAppointment = async ({
+    doctorId,
+    patientId,
+    date,
+    slot,
+    previousMedicalCondition,
+    symptoms,
+    reportTitle,
+    reportFileName,
+    reportFileData,
+    reportReviewNote,
+    status = 'pending',
+    createdByRole = 'patient',
+    payment = null,
+}) => {
+    const normalizedStatus = normalizeOptionalText(status);
+    const appointmentStatus = ['pending', 'confirmed'].includes(normalizedStatus)
+        ? normalizedStatus
+        : 'pending';
+    const { doctor, patient, normalizedSlot } = await buildAppointmentBookingContext({
+        doctorId,
+        patientId,
+        date,
+        slot,
+    });
 
     try {
         const appointmentId = new mongoose.Types.ObjectId();
@@ -526,6 +654,15 @@ const createAppointment = async ({
             activeSlotKey: `${doctorId}:${date}:${normalizedSlot}`,
             previousMedicalCondition: normalizeOptionalText(previousMedicalCondition),
             symptoms: normalizeOptionalText(symptoms),
+            payment: payment ? {
+                provider: normalizeOptionalText(payment.provider),
+                status: normalizeOptionalText(payment.status),
+                amount: Number(payment.amount) || 0,
+                currency: normalizeOptionalText(payment.currency) || 'NPR',
+                transactionUuid: normalizeOptionalText(payment.transactionUuid),
+                referenceId: normalizeOptionalText(payment.referenceId),
+                paidAt: payment.paidAt || null,
+            } : undefined,
             medicalDocuments,
         });
 
@@ -560,6 +697,159 @@ const createAppointment = async ({
     }
 };
 
+const createKhaltiPaymentSession = async ({ patientId, payload = {} }) => {
+    ensureKhaltiIsEnabled();
+
+    const doctorId = payload?.doctorId;
+    const date = normalizeOptionalText(payload?.date);
+    const slot = normalizeOptionalText(payload?.slot);
+
+    const { doctor, patient, normalizedSlot } = await buildAppointmentBookingContext({
+        doctorId,
+        patientId,
+        date,
+        slot,
+    });
+
+    const amount = getDoctorConsultationFee(doctor);
+    const amountInPaisa = toPaisaAmount(amount);
+    const transactionUuid = `${Date.now()}-${new mongoose.Types.ObjectId().toString().slice(-8)}`;
+    const returnUrl = `${config.clientUrl}/patient/payment/khalti/success?session=${transactionUuid}`;
+
+    const initiateResponse = await fetch(config.khalti.initiateUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Key ${config.khalti.secretKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            return_url: returnUrl,
+            website_url: config.clientUrl,
+            amount: amountInPaisa,
+            purchase_order_id: transactionUuid,
+            purchase_order_name: `Doctor appointment with ${doctor.name || 'doctor'}`,
+            customer_info: {
+                name: patient.name || 'Patient',
+                email: patient.email || '',
+                phone: patient.phone || '',
+            },
+        }),
+    });
+
+    const initiatePayload = await initiateResponse.json().catch(() => null);
+    if (!initiateResponse.ok || !initiatePayload?.pidx || !initiatePayload?.payment_url) {
+        const error = new Error(initiatePayload?.detail || initiatePayload?.message || 'Unable to start Khalti payment.');
+        error.statusCode = 502;
+        throw error;
+    }
+
+    const paymentSession = await PaymentSession.create({
+        provider: KHALTI_PAYMENT_PROVIDER,
+        status: 'initiated',
+        patient: patient._id,
+        doctor: doctor._id,
+        amount,
+        currency: 'NPR',
+        transactionUuid,
+        providerSessionId: normalizeOptionalText(initiatePayload.pidx),
+        productCode: 'appointment-booking',
+        appointmentPayload: buildStoredAppointmentPayload({
+            doctor,
+            patient,
+            date,
+            normalizedSlot,
+            payload,
+        }),
+        expiresAt: initiatePayload.expires_at ? new Date(initiatePayload.expires_at) : new Date(Date.now() + (30 * 60 * 1000)),
+    });
+
+    return {
+        sessionId: paymentSession._id.toString(),
+        provider: KHALTI_PAYMENT_PROVIDER,
+        amount,
+        currency: 'NPR',
+        doctor: sanitizeUser(doctor),
+        redirectUrl: initiatePayload.payment_url,
+        pidx: initiatePayload.pidx,
+        expiresAt: initiatePayload.expires_at || null,
+    };
+};
+
+const verifyKhaltiPaymentSession = async ({ sessionId, patientId, pidx }) => {
+    ensureKhaltiIsEnabled();
+
+    const paymentSession = await PaymentSession.findOne({
+        transactionUuid: sessionId,
+        patient: patientId,
+        provider: KHALTI_PAYMENT_PROVIDER,
+    });
+
+    if (!paymentSession) {
+        const error = new Error('Payment session not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const existingResult = await getExistingPaymentAppointmentResult(paymentSession);
+    if (existingResult) {
+        return existingResult;
+    }
+
+    await expirePaymentSessionIfNeeded(paymentSession);
+
+    const normalizedPidx = normalizeOptionalText(pidx);
+    if (!normalizedPidx || normalizedPidx !== normalizeOptionalText(paymentSession.providerSessionId)) {
+        const error = new Error('The Khalti payment reference does not match this session.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const lookupResponse = await fetch(config.khalti.lookupUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Key ${config.khalti.secretKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pidx: normalizedPidx }),
+    });
+
+    const lookupPayload = await lookupResponse.json().catch(() => null);
+    if (!lookupResponse.ok || !lookupPayload) {
+        const error = new Error(lookupPayload?.detail || lookupPayload?.message || 'Unable to confirm the Khalti payment.');
+        error.statusCode = 502;
+        throw error;
+    }
+
+    const lookupStatus = normalizeOptionalText(lookupPayload.status).toLowerCase();
+    if (lookupStatus !== 'completed') {
+        paymentSession.status = lookupStatus || 'failed';
+        paymentSession.failedAt = paymentSession.failedAt || new Date();
+        paymentSession.verificationPayload = lookupPayload;
+        await paymentSession.save();
+
+        const error = new Error('Khalti did not confirm this payment as completed.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        normalizeOptionalText(lookupPayload.pidx) !== normalizeOptionalText(paymentSession.providerSessionId)
+        || Number(lookupPayload.total_amount) !== toPaisaAmount(paymentSession.amount)
+    ) {
+        const error = new Error('The Khalti lookup response does not match the original payment request.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    paymentSession.verificationPayload = lookupPayload;
+    return finalizeSuccessfulPaymentSession({
+        paymentSession,
+        provider: KHALTI_PAYMENT_PROVIDER,
+        referenceId: lookupPayload.transaction_id || lookupPayload.pidx,
+        providerSessionId: lookupPayload.pidx,
+    });
+};
+
 const rescheduleAppointment = async ({
     appointmentId,
     actorId,
@@ -573,7 +863,7 @@ const rescheduleAppointment = async ({
         : { _id: appointmentId, patient: actorId };
 
     const appointment = await Appointment.findOne(query)
-        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role consultationFee')
         .populate('patient', 'name email phone role');
 
     if (!appointment) {
@@ -682,7 +972,7 @@ const cancelAppointment = async ({
         : { _id: appointmentId, patient: actorId };
 
     const appointment = await Appointment.findOne(query)
-        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role consultationFee')
         .populate('patient', 'name email phone role');
 
     if (!appointment) {
@@ -1265,7 +1555,7 @@ const uploadAppointmentDocument = async ({ appointmentId, userId, userRole, payl
         : { _id: appointmentId, patient: userId };
 
     const appointment = await Appointment.findOne(query)
-        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role')
+        .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role consultationFee')
         .populate('patient', 'name email phone role');
     if (!appointment) {
         const error = new Error('Appointment not found.');
@@ -1458,6 +1748,7 @@ const updateDoctorAvailabilitySettings = async (doctorId, payload = {}) => {
 module.exports = {
     getAvailabilityForDoctor,
     createAppointment,
+    createKhaltiPaymentSession,
     listPatientAppointments,
     listDoctorAppointments,
     listDoctorPatients,
@@ -1474,4 +1765,5 @@ module.exports = {
     getDoctorAvailabilitySettings,
     updateDoctorAvailabilitySettings,
     createDoctorFollowUpAppointment,
+    verifyKhaltiPaymentSession,
 };

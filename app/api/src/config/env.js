@@ -15,6 +15,9 @@ require('dotenv').config();
  * @property {string} appName - Application name
  * @property {string} appVersion - Application version
  */
+const khaltiMode = String(process.env.KHALTI_MODE || 'test').toLowerCase() === 'live' ? 'live' : 'test';
+const khaltiSecretKey = process.env.KHALTI_SECRET_KEY || '';
+
 const config = {
     // Server port (default: 5000)
     port: parseInt(process.env.PORT, 10) || 5000,
@@ -74,8 +77,23 @@ const config = {
         calendarCallbackUrl: process.env.GOOGLE_CALENDAR_CALLBACK_URL || process.env.GOOGLE_CALENDAR_REDIRECT_URL || process.env.GOOGLE_CALLBACK_URL || '',
     },
 
+    defaultConsultationFee: Math.max(parseInt(process.env.DEFAULT_CONSULTATION_FEE, 10) || 500, 0),
+
+    khalti: {
+        enabled: Boolean(khaltiSecretKey),
+        mode: khaltiMode,
+        secretKey: khaltiSecretKey,
+    },
+
     appTimeZone: process.env.APP_TIMEZONE || 'Asia/Katmandu',
 };
+
+config.khalti.baseUrl = config.khalti.mode === 'live'
+    ? 'https://khalti.com/api/v2'
+    : 'https://dev.khalti.com/api/v2';
+
+config.khalti.initiateUrl = `${config.khalti.baseUrl}/epayment/initiate/`;
+config.khalti.lookupUrl = `${config.khalti.baseUrl}/epayment/lookup/`;
 
 // Validate required environment variables
 if (!process.env.MONGO_URI) {

@@ -28,6 +28,7 @@ import DoctorPatientsPage from './pages/DoctorPatientsPage';
 import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage';
 import DoctorSchedulePage from './pages/DoctorSchedulePage';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
+import AppointmentPaymentReturnPage from './pages/AppointmentPaymentReturnPage';
 import PatientCarePlansPage from './pages/PatientCarePlansPage';
 import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
 import DoctorCarePlanRequestsPage from './pages/DoctorCarePlanRequestsPage';
@@ -47,6 +48,22 @@ function App() {
                     <Route path="/care-plans/:id" element={<CarePlanDetailPage />} />
                     <Route path="/doctors" element={<DoctorsPage />} />
                     <Route path="/doctors/:id" element={<DoctorDetailPage />} />
+                    <Route
+                        path="/patient/payment/khalti/success"
+                        element={(
+                            <RoleRoute allowedRoles={['patient']}>
+                                <AppointmentPaymentReturnPage mode="success" provider="khalti" />
+                            </RoleRoute>
+                        )}
+                    />
+                    <Route
+                        path="/patient/payment/khalti/failure"
+                        element={(
+                            <RoleRoute allowedRoles={['patient']}>
+                                <AppointmentPaymentReturnPage mode="failure" provider="khalti" />
+                            </RoleRoute>
+                        )}
+                    />
                     <Route
                         path="/patient"
                         element={(
