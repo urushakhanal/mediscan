@@ -16,6 +16,7 @@ const notificationRoutes = require('./modules/notifications/routes/notification.
 const symptomRoutes = require('./modules/symptoms/routes/symptom.routes');
 const appointmentRoutes = require('./modules/appointments/routes/appointment.routes');
 const carePlanRoutes = require('./modules/carePlans/routes/carePlan.routes');
+const medicineAvailabilityRoutes = require('./modules/medicineAvailability/routes/medicineAvailability.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./docs/swagger');
 
@@ -71,6 +72,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/symptoms', symptomRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/care-plans', carePlanRoutes);
+app.use('/api/medicine-availability', medicineAvailabilityRoutes);
 
 // ===========================
 // Error Handling

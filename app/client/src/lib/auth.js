@@ -89,6 +89,8 @@ export const uploadPatientAppointmentDocument = (id, payload) =>
 export const getDoctorAvailabilitySettings = () => request('/api/appointments/doctor-settings/me');
 export const updateDoctorAvailabilitySettings = (payload) =>
     request('/api/appointments/doctor-settings/me', { method: 'PUT', body: payload });
+export const getDoctorActiveMedicineAvailabilityLocations = () =>
+    request('/api/medicine-availability/doctor/active');
 export const getCarePlans = () => request('/api/care-plans');
 export const getCarePlanById = (id) => request(`/api/care-plans/${id}`);
 export const createCarePlanBooking = (id, payload) =>
@@ -114,3 +116,11 @@ export const verifyDoctorById = (id, payload) =>
 export const blockUserById = (id) => request(`/api/users/${id}/block`, { method: 'PATCH' });
 export const activateUserById = (id) => request(`/api/users/${id}/activate`, { method: 'PATCH' });
 export const deleteUserById = (id) => request(`/api/users/${id}`, { method: 'DELETE' });
+export const getAdminMedicineAvailabilityLocations = () =>
+    request('/api/medicine-availability/admin');
+export const createAdminMedicineAvailabilityLocation = (payload) =>
+    request('/api/medicine-availability/admin', { method: 'POST', body: payload });
+export const updateAdminMedicineAvailabilityLocation = (id, payload) =>
+    request(`/api/medicine-availability/admin/${id}`, { method: 'PUT', body: payload });
+export const updateAdminMedicineAvailabilityLocationStatus = (id, payload) =>
+    request(`/api/medicine-availability/admin/${id}/status`, { method: 'PATCH', body: payload });

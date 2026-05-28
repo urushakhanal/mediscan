@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ClipboardList, LayoutDashboard, ListChecks, ShieldCheck, Stethoscope, Users } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, ListChecks, MapPinned, ShieldCheck, Stethoscope, Users } from 'lucide-react';
 
 const navigationItems = [
     {
@@ -27,6 +27,11 @@ const navigationItems = [
         label: 'Plan Requests',
         to: '/admin/care-plan-requests',
         icon: ListChecks,
+    },
+    {
+        label: 'Medicine Directory',
+        to: '/admin/medicine-availability',
+        icon: MapPinned,
     },
 ];
 

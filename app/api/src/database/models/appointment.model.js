@@ -68,6 +68,48 @@ const appointmentSchema = new mongoose.Schema({
         maxlength: 2000,
         default: '',
     },
+    prescriptionItems: [{
+        medicine: {
+            type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        strength: {
+            type: String,
+            trim: true,
+            maxlength: 100,
+            default: '',
+        },
+        dosage: {
+            type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        frequency: {
+            type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        duration: {
+            type: String,
+            trim: true,
+            maxlength: 200,
+            default: '',
+        },
+        instructions: {
+            type: String,
+            trim: true,
+            maxlength: 500,
+            default: '',
+        },
+        availabilityLocationIds: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'MedicineAvailabilityLocation',
+        }],
+    }],
     doctorAdvice: {
         type: String,
         trim: true,

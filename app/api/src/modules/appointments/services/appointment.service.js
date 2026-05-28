@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Appointment = require('../../../database/models/appointment.model');
 const PaymentSession = require('../../../database/models/paymentSession.model');
+const MedicineAvailabilityLocation = require('../../../database/models/medicineAvailabilityLocation.model');
 const User = require('../../../database/models/user.model');
 const { ACTIVE_APPOINTMENT_STATUSES } = require('../../../constants/appointment.constants');
 const { createDefaultDoctorAvailabilitySettings } = require('../../../constants/user.constants');
@@ -37,6 +38,31 @@ const sanitizeAppointment = (appointment) => {
             ...document,
             fileUrl: document?.fileUrl || '',
         }));
+    }
+    if (Array.isArray(obj.prescriptionItems)) {
+        obj.prescriptionItems = obj.prescriptionItems.map((item) => {
+            const locations = Array.isArray(item?.availabilityLocationIds)
+                ? item.availabilityLocationIds.map((entry) => {
+                    if (entry && typeof entry === 'object' && entry._id) {
+                        const locationObj = entry.toObject ? entry.toObject() : { ...entry };
+                        delete locationObj.__v;
+                        return locationObj;
+                    }
+                    return null;
+                }).filter(Boolean)
+                : [];
+
+            return {
+                medicine: item?.medicine || '',
+                strength: item?.strength || '',
+                dosage: item?.dosage || '',
+                frequency: item?.frequency || '',
+                duration: item?.duration || '',
+                instructions: item?.instructions || '',
+                availabilityLocationIds: locations.map((location) => location._id),
+                availabilityLocations: locations,
+            };
+        });
     }
     return obj;
 };
@@ -453,6 +479,96 @@ const parseUploadData = (value) => {
     };
 };
 
+const normalizeIdArray = (value) => {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return [...new Set(value.map((entry) => normalizeOptionalText(entry)).filter(Boolean))];
+};
+
+const buildPrescriptionTextFromItems = (items) => {
+    const lines = (Array.isArray(items) ? items : [])
+        .map((item, index) => {
+            const medicine = normalizeOptionalText(item?.medicine);
+            const strength = normalizeOptionalText(item?.strength);
+            const dosage = normalizeOptionalText(item?.dosage);
+            const frequency = normalizeOptionalText(item?.frequency);
+            const duration = normalizeOptionalText(item?.duration);
+            const instructions = normalizeOptionalText(item?.instructions);
+
+            if (!medicine && !strength && !dosage && !frequency && !duration && !instructions) {
+                return null;
+            }
+
+            const headerParts = [medicine, strength].filter(Boolean).join(' ');
+            const bodyParts = [dosage, frequency, duration].filter(Boolean).join(' | ');
+
+            return [
+                `${index + 1}. ${headerParts || 'Medicine'}`,
+                bodyParts ? `   ${bodyParts}` : null,
+                instructions ? `   Instructions: ${instructions}` : null,
+            ].filter(Boolean).join('\n');
+        })
+        .filter(Boolean);
+
+    return lines.join('\n\n');
+};
+
+const normalizePrescriptionItems = async (items = []) => {
+    if (!Array.isArray(items)) {
+        const error = new Error('Prescription items must be an array.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const normalizedItems = items.map((item) => ({
+        medicine: normalizeOptionalText(item?.medicine),
+        strength: normalizeOptionalText(item?.strength),
+        dosage: normalizeOptionalText(item?.dosage),
+        frequency: normalizeOptionalText(item?.frequency),
+        duration: normalizeOptionalText(item?.duration),
+        instructions: normalizeOptionalText(item?.instructions),
+        availabilityLocationIds: normalizeIdArray(item?.availabilityLocationIds),
+    })).filter((item) => (
+        item.medicine
+        || item.strength
+        || item.dosage
+        || item.frequency
+        || item.duration
+        || item.instructions
+    ));
+
+    const allLocationIds = [...new Set(
+        normalizedItems.flatMap((item) => item.availabilityLocationIds)
+    )];
+
+    if (!allLocationIds.length) {
+        return normalizedItems.map((item) => ({
+            ...item,
+            availabilityLocationIds: [],
+        }));
+    }
+
+    const activeLocations = await MedicineAvailabilityLocation.find({
+        _id: { $in: allLocationIds },
+        isActive: true,
+    }).select('_id');
+    const activeLocationIdSet = new Set(activeLocations.map((entry) => entry._id.toString()));
+    const invalidIds = allLocationIds.filter((id) => !activeLocationIdSet.has(id));
+
+    if (invalidIds.length) {
+        const error = new Error('One or more medicine availability locations are invalid or inactive.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    return normalizedItems.map((item) => ({
+        ...item,
+        availabilityLocationIds: item.availabilityLocationIds.map((id) => new mongoose.Types.ObjectId(id)),
+    }));
+};
+
 const buildMedicalDocumentEntry = async ({
     appointmentId,
     title,
@@ -485,7 +601,8 @@ const buildMedicalDocumentEntry = async ({
 const populateDoctorAppointment = (query) =>
     query
         .populate('doctor', 'name email phone specialization nmcNumber isVerified availabilitySettings role consultationFee')
-        .populate('patient', 'name email phone role');
+        .populate('patient', 'name email phone role')
+        .populate('prescriptionItems.availabilityLocationIds', 'name address phone isActive');
 
 const clearAppointmentChangeRequests = (appointment) => {
     appointment.rescheduleRequestedDate = '';
@@ -1493,7 +1610,16 @@ const updateDoctorAppointmentConsultation = async ({ appointmentId, doctorId, pa
     const previousScanRequestNote = appointment.scanRequestNote;
     const consultationNotes = normalizeOptionalText(payload.consultationNotes);
     const diagnosis = normalizeOptionalText(payload.diagnosis);
-    const prescription = normalizeOptionalText(payload.prescription);
+    const hasPrescriptionItemsInPayload = Object.prototype.hasOwnProperty.call(payload, 'prescriptionItems');
+    const normalizedPrescriptionItems = hasPrescriptionItemsInPayload
+        ? await normalizePrescriptionItems(payload.prescriptionItems || [])
+        : null;
+    const generatedPrescription = hasPrescriptionItemsInPayload
+        ? buildPrescriptionTextFromItems(normalizedPrescriptionItems)
+        : '';
+    const prescription = hasPrescriptionItemsInPayload
+        ? normalizeOptionalText(payload.prescription) || generatedPrescription
+        : normalizeOptionalText(payload.prescription);
     const doctorAdvice = normalizeOptionalText(payload.doctorAdvice);
     const recommendedTests = normalizeOptionalText(payload.recommendedTests);
     const visitOutcome = normalizeOptionalText(payload.visitOutcome);
@@ -1529,6 +1655,17 @@ const updateDoctorAppointmentConsultation = async ({ appointmentId, doctorId, pa
     appointment.consultationNotes = consultationNotes;
     appointment.diagnosis = diagnosis;
     appointment.prescription = prescription;
+    appointment.prescriptionItems = hasPrescriptionItemsInPayload
+        ? normalizedPrescriptionItems.map((item) => ({
+            medicine: item.medicine,
+            strength: item.strength,
+            dosage: item.dosage,
+            frequency: item.frequency,
+            duration: item.duration,
+            instructions: item.instructions,
+            availabilityLocationIds: item.availabilityLocationIds,
+        }))
+        : appointment.prescriptionItems;
     appointment.doctorAdvice = doctorAdvice;
     appointment.recommendedTests = recommendedTests;
     appointment.visitOutcome = visitOutcome;

@@ -34,6 +34,7 @@ import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
 import DoctorCarePlanRequestsPage from './pages/DoctorCarePlanRequestsPage';
 import AdminCarePlansPage from './pages/AdminCarePlansPage';
 import AdminCarePlanRequestsPage from './pages/AdminCarePlanRequestsPage';
+import AdminMedicineAvailabilityPage from './pages/AdminMedicineAvailabilityPage';
 
 function App() {
     return (
@@ -115,6 +116,7 @@ function App() {
                         <Route path="doctors" element={<AdminDoctorsPage />} />
                         <Route path="care-plans" element={<AdminCarePlansPage />} />
                         <Route path="care-plan-requests" element={<AdminCarePlanRequestsPage />} />
+                        <Route path="medicine-availability" element={<AdminMedicineAvailabilityPage />} />
                         <Route path="patients" element={<AdminPatientsPage />} />
                     </Route>
                     <Route

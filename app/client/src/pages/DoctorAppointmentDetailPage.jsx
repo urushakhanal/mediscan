@@ -14,6 +14,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
     cancelAppointment,
+    getDoctorActiveMedicineAvailabilityLocations,
     getDoctorAppointmentById,
     rescheduleAppointment,
     updateAppointmentStatus,
@@ -53,6 +54,7 @@ const createPrescriptionLine = () => ({
     frequency: '',
     duration: '',
     instructions: '',
+    availabilityLocationIds: [],
 });
 
 const getInitialPrescriptionDraft = () => [createPrescriptionLine()];
@@ -109,8 +111,33 @@ const parsePrescriptionText = (value) =>
                 frequency,
                 duration,
                 instructions: instructionText,
+                availabilityLocationIds: [],
             };
         });
+
+const getPrescriptionDraftFromAppointment = (nextAppointment) => {
+    if (Array.isArray(nextAppointment?.prescriptionItems) && nextAppointment.prescriptionItems.length > 0) {
+        return nextAppointment.prescriptionItems.map((item) => ({
+            medicine: item?.medicine || '',
+            strength: item?.strength || '',
+            dosage: item?.dosage || '',
+            frequency: item?.frequency || '',
+            duration: item?.duration || '',
+            instructions: item?.instructions || '',
+            availabilityLocationIds: Array.isArray(item?.availabilityLocationIds)
+                ? item.availabilityLocationIds.map((entry) => (
+                    typeof entry === 'string' ? entry : String(entry?._id || '')
+                )).filter(Boolean)
+                : [],
+        }));
+    }
+
+    if (nextAppointment?.prescription?.trim()) {
+        return parsePrescriptionText(nextAppointment.prescription);
+    }
+
+    return getInitialPrescriptionDraft();
+};
 
 const formatDateTime = (value) => {
     if (!value) {
@@ -175,6 +202,7 @@ const DoctorAppointmentDetailPage = () => {
     const [scanRequestSaving, setScanRequestSaving] = useState(false);
     const [scanRequestError, setScanRequestError] = useState('');
     const [prescriptionDraft, setPrescriptionDraft] = useState(getInitialPrescriptionDraft());
+    const [availabilityLocations, setAvailabilityLocations] = useState([]);
     const [rescheduleDate, setRescheduleDate] = useState('');
     const [rescheduleSlot, setRescheduleSlot] = useState('');
     const [rescheduleReason, setRescheduleReason] = useState('');
@@ -188,11 +216,7 @@ const DoctorAppointmentDetailPage = () => {
     const syncAppointment = useCallback((nextAppointment) => {
         setAppointment(nextAppointment);
         setScanRequestNote(nextAppointment?.scanRequestNote || '');
-        setPrescriptionDraft(
-            nextAppointment?.prescription?.trim()
-                ? parsePrescriptionText(nextAppointment.prescription)
-                : getInitialPrescriptionDraft()
-        );
+        setPrescriptionDraft(getPrescriptionDraftFromAppointment(nextAppointment));
         setRescheduleDate(nextAppointment?.rescheduleRequestedDate || nextAppointment?.date || '');
         setRescheduleSlot(nextAppointment?.rescheduleRequestedSlot || nextAppointment?.slot || '');
         setRescheduleReason('');
@@ -235,6 +259,19 @@ const DoctorAppointmentDetailPage = () => {
     useEffect(() => {
         loadAppointment();
     }, [loadAppointment]);
+
+    useEffect(() => {
+        const loadLocations = async () => {
+            try {
+                const data = await getDoctorActiveMedicineAvailabilityLocations();
+                setAvailabilityLocations(data.locations || []);
+            } catch {
+                setAvailabilityLocations([]);
+            }
+        };
+
+        loadLocations();
+    }, []);
 
     const isConsultationLocked = useMemo(
         () => !appointment || ['completed', 'rejected', 'cancelled'].includes(appointment.status) || !isConsultationEditing,
@@ -400,6 +437,15 @@ const DoctorAppointmentDetailPage = () => {
             const data = await updateDoctorAppointmentConsultation(id, {
                 ...form,
                 prescription: form.prescription.trim() || generatedPrescription,
+                prescriptionItems: prescriptionDraft.map((item) => ({
+                    medicine: item.medicine,
+                    strength: item.strength,
+                    dosage: item.dosage,
+                    frequency: item.frequency,
+                    duration: item.duration,
+                    instructions: item.instructions,
+                    availabilityLocationIds: Array.isArray(item.availabilityLocationIds) ? item.availabilityLocationIds : [],
+                })),
                 scanRequestNote,
                 status: nextStatus,
             });
@@ -425,11 +471,7 @@ const DoctorAppointmentDetailPage = () => {
         }
 
         setForm(getFormStateFromAppointment(appointment));
-        setPrescriptionDraft(
-            appointment?.prescription?.trim()
-                ? parsePrescriptionText(appointment.prescription)
-                : getInitialPrescriptionDraft()
-        );
+        setPrescriptionDraft(getPrescriptionDraftFromAppointment(appointment));
         setIsConsultationEditing(true);
     };
 
@@ -897,6 +939,65 @@ const DoctorAppointmentDetailPage = () => {
                                                                 placeholder="Special instructions"
                                                                 className="h-11 rounded-2xl border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950"
                                                             />
+                                                            <div className="md:col-span-2">
+                                                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                                                                    Available at
+                                                                </label>
+                                                                <select
+                                                                    value=""
+                                                                    onChange={(event) => {
+                                                                        const nextId = event.target.value;
+                                                                        if (!nextId) {
+                                                                            return;
+                                                                        }
+
+                                                                        const currentIds = Array.isArray(item.availabilityLocationIds)
+                                                                            ? item.availabilityLocationIds
+                                                                            : [];
+                                                                        if (currentIds.includes(nextId)) {
+                                                                            return;
+                                                                        }
+
+                                                                        handlePrescriptionDraftChange(index, 'availabilityLocationIds', [...currentIds, nextId]);
+                                                                    }}
+                                                                    disabled={isConsultationLocked}
+                                                                    className="h-11 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-cyan-500 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:disabled:bg-slate-900"
+                                                                >
+                                                                    <option value="">Select location</option>
+                                                                    {availabilityLocations.map((location) => (
+                                                                        <option key={location._id} value={location._id}>
+                                                                            {location.name} - {location.address}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                                    {(item.availabilityLocationIds || []).map((locationId) => {
+                                                                        const location = availabilityLocations.find((entry) => entry._id === locationId);
+                                                                        return (
+                                                                            <span
+                                                                                key={`${index}-${locationId}`}
+                                                                                className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-900/50 dark:bg-cyan-950/30 dark:text-cyan-200"
+                                                                            >
+                                                                                {location ? location.name : 'Selected location'}
+                                                                                <button
+                                                                                    type="button"
+                                                                                    disabled={isConsultationLocked}
+                                                                                    onClick={() => {
+                                                                                        const nextIds = (item.availabilityLocationIds || []).filter((id) => id !== locationId);
+                                                                                        handlePrescriptionDraftChange(index, 'availabilityLocationIds', nextIds);
+                                                                                    }}
+                                                                                    className="text-cyan-700 transition hover:text-cyan-900 disabled:cursor-not-allowed disabled:opacity-60 dark:text-cyan-200 dark:hover:text-white"
+                                                                                >
+                                                                                    x
+                                                                                </button>
+                                                                            </span>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                                                    Pick one location at a time from dropdown.
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}

@@ -89,6 +89,12 @@ const readFileAsDataUrl = (file) =>
         reader.readAsDataURL(file);
     });
 
+const formatMedicineLabel = (item) => {
+    const medicine = String(item?.medicine || '').trim();
+    const strength = String(item?.strength || '').trim();
+    return [medicine, strength].filter(Boolean).join(' ') || 'Medicine';
+};
+
 const PatientAppointmentsPage = () => {
     const { appointments, loading, error, loadAppointments, newSummariesCount } = usePatientAppointments();
     const [selectedSummaryAppointment, setSelectedSummaryAppointment] = useState(null);
@@ -571,6 +577,37 @@ const PatientAppointmentsPage = () => {
                                 <p className="mt-2.5 max-h-32 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
                                     {selectedSummaryAppointment?.doctorAdvice || 'Not recorded'}
                                 </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Medicine availability</p>
+                            <div className="mt-3 space-y-3">
+                                {(selectedSummaryAppointment?.prescriptionItems || []).length > 0 ? (
+                                    selectedSummaryAppointment.prescriptionItems.map((item, index) => {
+                                        const locations = item?.availabilityLocations || [];
+                                        return (
+                                            <article key={`${formatMedicineLabel(item)}-${index}`} className="rounded-[1rem] border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+                                                <p className="font-semibold text-slate-900 dark:text-white">{formatMedicineLabel(item)}</p>
+                                                {locations.length > 0 ? (
+                                                    <div className="mt-2 space-y-2">
+                                                        {locations.map((location) => (
+                                                            <div key={location._id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300">
+                                                                <p className="font-semibold text-slate-900 dark:text-white">{location.name}</p>
+                                                                <p className="mt-1">{location.address}</p>
+                                                                <p className="mt-1">{location.phone}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Availability not provided.</p>
+                                                )}
+                                            </article>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No structured medicine availability has been recorded yet.</p>
+                                )}
                             </div>
                         </div>
 
