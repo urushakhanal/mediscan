@@ -362,18 +362,37 @@ const finalizeSuccessfulPaymentSession = async ({
     referenceId,
     providerSessionId = '',
 }) => {
-    const appointment = await createAppointment({
-        ...paymentSession.appointmentPayload,
-        payment: {
-            provider,
-            status: 'paid',
-            amount: paymentSession.amount,
-            currency: paymentSession.currency || 'NPR',
-            transactionUuid: paymentSession.transactionUuid,
-            referenceId: normalizeOptionalText(referenceId),
-            paidAt: new Date(),
-        },
-    });
+    let appointment;
+    try {
+        appointment = await createAppointment({
+            ...paymentSession.appointmentPayload,
+            payment: {
+                provider,
+                status: 'paid',
+                amount: paymentSession.amount,
+                currency: paymentSession.currency || 'NPR',
+                transactionUuid: paymentSession.transactionUuid,
+                referenceId: normalizeOptionalText(referenceId),
+                paidAt: new Date(),
+            },
+        });
+    } catch (error) {
+        // Payment verification can be called twice (e.g. React StrictMode/dev retries).
+        // If appointment was already created for this transaction, return that instead of failing.
+        if (error?.statusCode !== 409) {
+            throw error;
+        }
+
+        const existingAppointment = await populateDoctorAppointment(
+            Appointment.findOne({ 'payment.transactionUuid': paymentSession.transactionUuid })
+        );
+
+        if (!existingAppointment) {
+            throw error;
+        }
+
+        appointment = sanitizeAppointment(existingAppointment);
+    }
 
     paymentSession.status = 'paid';
     paymentSession.referenceId = normalizeOptionalText(referenceId);
