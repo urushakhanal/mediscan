@@ -2,6 +2,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../../database/models/user.model');
 const config = require('../../../config/env');
+const { updateUser } = require('../../users/services/user.service');
+const {
+    createDefaultDoctorAvailabilitySettings,
+} = require('../../../constants/user.constants');
 
 const createToken = (user) => {
     return jwt.sign(
@@ -18,7 +22,18 @@ const sanitizeUser = (user) => {
     return obj;
 };
 
-const registerUser = async ({ name, email, password, role = 'patient', phone, nmcNumber, specialization }) => {
+const registerUser = async ({
+    name,
+    email,
+    password,
+    role = 'patient',
+    phone,
+    nmcNumber,
+    specialization,
+    experienceYears,
+    qualification,
+    currentlyWorkingAt,
+}) => {
     const existing = await User.findOne({ email });
     if (existing) {
         const error = new Error('User with this email already exists.');
@@ -44,7 +59,13 @@ const registerUser = async ({ name, email, password, role = 'patient', phone, nm
         phone,
         nmcNumber,
         specialization,
+        experienceYears,
+        qualification,
+        currentlyWorkingAt,
         isVerified: false,
+        availabilitySettings: role === 'doctor'
+            ? createDefaultDoctorAvailabilitySettings()
+            : undefined,
     });
     const token = createToken(user);
 
@@ -63,6 +84,12 @@ const loginUser = async ({ email, password }) => {
     if (!isMatch) {
         const error = new Error('Invalid email or password.');
         error.statusCode = 401;
+        throw error;
+    }
+
+    if (!user.isActive) {
+        const error = new Error('Your account has been blocked. Please contact the superadmin.');
+        error.statusCode = 403;
         throw error;
     }
 
@@ -98,7 +125,40 @@ const getCurrentUser = async (userId) => {
         error.statusCode = 404;
         throw error;
     }
+
+    if (!user.isActive) {
+        const error = new Error('Your account has been blocked. Please contact the superadmin.');
+        error.statusCode = 403;
+        throw error;
+    }
+
     return sanitizeUser(user);
+};
+
+const completeGoogleDoctorProfile = async (userId, payload = {}) => {
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+        const error = new Error('User not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (currentUser.authProvider !== 'google') {
+        const error = new Error('Google sign-in is required before completing this profile.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    await updateUser(userId, {
+        ...payload,
+        role: 'doctor',
+    });
+
+    const refreshedUser = await User.findById(userId);
+    return {
+        user: sanitizeUser(refreshedUser),
+        token: createToken(refreshedUser),
+    };
 };
 
 module.exports = {
@@ -106,4 +166,5 @@ module.exports = {
     loginUser,
     changePassword,
     getCurrentUser,
+    completeGoogleDoctorProfile,
 };

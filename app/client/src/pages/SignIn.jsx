@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { startGoogleSignIn } from '../lib/auth';
 
 const SignIn = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { signIn } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const googleError = params.get('google_error');
+        if (googleError) {
+            setError(googleError);
+        }
+    }, [location.search]);
 
     const handleChange = (event) => {
         setError('');
@@ -37,6 +47,10 @@ const SignIn = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleGoogleSignIn = () => {
+        window.location.href = startGoogleSignIn();
     };
 
     return (
@@ -103,6 +117,20 @@ const SignIn = () => {
                         {loading ? 'Signing in...' : 'Sign in'}
                     </button>
                 </form>
+
+                <div className="my-6 flex items-center gap-4">
+                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">or</span>
+                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:border-slate-500 dark:hover:bg-slate-700"
+                >
+                    Continue with Google
+                </button>
 
                 <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
                     New to MediScan?{' '}

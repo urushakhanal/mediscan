@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, ListChecks, MapPinned, ShieldCheck, Stethoscope, Users } from 'lucide-react';
 
 const navigationItems = [
     {
@@ -9,9 +9,29 @@ const navigationItems = [
         icon: LayoutDashboard,
     },
     {
-        label: 'Users',
-        to: '/admin/users',
+        label: 'Doctors',
+        to: '/admin/doctors',
+        icon: Stethoscope,
+    },
+    {
+        label: 'Patients',
+        to: '/admin/patients',
         icon: Users,
+    },
+    {
+        label: 'Care Plans',
+        to: '/admin/care-plans',
+        icon: ClipboardList,
+    },
+    {
+        label: 'Plan Requests',
+        to: '/admin/care-plan-requests',
+        icon: ListChecks,
+    },
+    {
+        label: 'Medicine Directory',
+        to: '/admin/medicine-availability',
+        icon: MapPinned,
     },
 ];
 
@@ -31,14 +51,14 @@ const AdminLayout = () => {
     return (
         <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eef6f7_100%)] text-slate-900 dark:bg-[linear-gradient(180deg,#020617_0%,#0f172a_100%)] dark:text-slate-50">
             <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
+                <aside className="flex flex-col border-b border-slate-200 bg-white/90 px-5 py-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r dark:border-slate-800 dark:bg-slate-950/80">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/20">
                             <ShieldCheck size={20} />
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Admin</p>
-                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">MediScan Console</h1>
+                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Dashboard</h1>
                         </div>
                     </div>
 
@@ -65,7 +85,7 @@ const AdminLayout = () => {
                         })}
                     </nav>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto pt-8 lg:pb-2">
                         <Link
                             to="/"
                             className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:border-white dark:hover:text-white"

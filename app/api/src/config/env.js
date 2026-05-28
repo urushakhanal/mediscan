@@ -15,6 +15,9 @@ require('dotenv').config();
  * @property {string} appName - Application name
  * @property {string} appVersion - Application version
  */
+const khaltiMode = String(process.env.KHALTI_MODE || 'test').toLowerCase() === 'live' ? 'live' : 'test';
+const khaltiSecretKey = process.env.KHALTI_SECRET_KEY || '';
+
 const config = {
     // Server port (default: 5000)
     port: parseInt(process.env.PORT, 10) || 5000,
@@ -38,11 +41,59 @@ const config = {
     // Superadmin bootstrap key
     superadminSetupKey: process.env.SUPERADMIN_SETUP_KEY || 'change_me_superadmin',
 
-    // AI provider (OpenRouter)
-    openRouterApiKey: process.env.OPENROUTER_API_KEY || '',
-    openRouterModel: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1-0528:free',
-    openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    // AI provider (Mistral)
+    mistralApiKey: process.env.MISTRAL_API_KEY || process.env.OPENROUTER_API_KEY || '',
+    mistralModel: process.env.MISTRAL_MODEL || 'mistral-small-latest',
+    mistralBaseUrl: process.env.MISTRAL_BASE_URL || 'https://api.mistral.ai/v1',
+
+    // SMTP / email
+    smtp: {
+        enabled: Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS),
+        host: process.env.SMTP_HOST || '',
+        port: parseInt(process.env.SMTP_PORT, 10) || 587,
+        secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
+        from: process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@mediscan.local',
+        fromName: process.env.SMTP_FROM_NAME || process.env.APP_NAME || 'MediScan',
+    },
+
+    // Appointment reminders
+    appointmentReminders: {
+        enabled: String(process.env.APPOINTMENT_REMINDERS_ENABLED || 'true').toLowerCase() !== 'false',
+        checkIntervalMinutes: Math.max(parseInt(process.env.APPOINTMENT_REMINDER_CHECK_INTERVAL_MINUTES, 10) || 5, 1),
+        leadMinutes: String(process.env.APPOINTMENT_REMINDER_LEAD_MINUTES || '1440,120')
+            .split(',')
+            .map((value) => parseInt(value.trim(), 10))
+            .filter((value) => Number.isInteger(value) && value > 0),
+    },
+
+    // Google OAuth
+    google: {
+        enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL),
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        callbackUrl: process.env.GOOGLE_CALLBACK_URL || '',
+        calendarCallbackUrl: process.env.GOOGLE_CALENDAR_CALLBACK_URL || process.env.GOOGLE_CALENDAR_REDIRECT_URL || process.env.GOOGLE_CALLBACK_URL || '',
+    },
+
+    defaultConsultationFee: Math.max(parseInt(process.env.DEFAULT_CONSULTATION_FEE, 10) || 500, 0),
+
+    khalti: {
+        enabled: Boolean(khaltiSecretKey),
+        mode: khaltiMode,
+        secretKey: khaltiSecretKey,
+    },
+
+    appTimeZone: process.env.APP_TIMEZONE || 'Asia/Katmandu',
 };
+
+config.khalti.baseUrl = config.khalti.mode === 'live'
+    ? 'https://khalti.com/api/v2'
+    : 'https://dev.khalti.com/api/v2';
+
+config.khalti.initiateUrl = `${config.khalti.baseUrl}/epayment/initiate/`;
+config.khalti.lookupUrl = `${config.khalti.baseUrl}/epayment/lookup/`;
 
 // Validate required environment variables
 if (!process.env.MONGO_URI) {
@@ -56,6 +107,10 @@ if (!process.env.JWT_SECRET) {
 
 if (!process.env.SUPERADMIN_SETUP_KEY) {
     console.warn('⚠️  Warning: SUPERADMIN_SETUP_KEY is not set. Using a default bootstrap key is not secure for production.');
+}
+
+if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_SECRET) {
+    console.warn('⚠️  Warning: GOOGLE_CLIENT_ID is set but GOOGLE_CLIENT_SECRET is missing.');
 }
 
 module.exports = config;

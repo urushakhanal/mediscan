@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "seed:users": "node src/scripts/seedDefaultUsers.js"
     },
     "keywords": [
         "express",
@@ -24,6 +25,7 @@
         "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.0.1",
         "morgan": "^1.10.1",
+        "nodemailer": "^8.0.5",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1"
     },

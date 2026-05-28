@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { startGoogleSignIn } from '../lib/auth';
 
 const initialState = {
     name: '',
@@ -9,7 +10,10 @@ const initialState = {
     password: '',
     phone: '',
     nmcNumber: '',
+    experienceYears: '',
     specialization: '',
+    qualification: '',
+    currentlyWorkingAt: '',
 };
 
 const roleOptions = [
@@ -23,6 +27,47 @@ const specializationOptions = [
     { value: 'dermatology', label: 'Dermatology' },
     { value: 'neurology', label: 'Neurology' },
     { value: 'pediatrics', label: 'Pediatrics' },
+    { value: 'orthopedics', label: 'Orthopedics' },
+    { value: 'gynecology', label: 'Gynecology' },
+    { value: 'obstetrics', label: 'Obstetrics' },
+    { value: 'psychiatry', label: 'Psychiatry' },
+    { value: 'oncology', label: 'Oncology' },
+    { value: 'radiology', label: 'Radiology' },
+    { value: 'anesthesiology', label: 'Anesthesiology' },
+    { value: 'ophthalmology', label: 'Ophthalmology' },
+    { value: 'ent', label: 'ENT' },
+    { value: 'urology', label: 'Urology' },
+    { value: 'nephrology', label: 'Nephrology' },
+    { value: 'endocrinology', label: 'Endocrinology' },
+    { value: 'gastroenterology', label: 'Gastroenterology' },
+    { value: 'pulmonology', label: 'Pulmonology' },
+    { value: 'hematology', label: 'Hematology' },
+    { value: 'rheumatology', label: 'Rheumatology' },
+    { value: 'infectious-disease', label: 'Infectious Disease' },
+    { value: 'plastic-surgery', label: 'Plastic Surgery' },
+    { value: 'neurosurgery', label: 'Neurosurgery' },
+    { value: 'general-surgery', label: 'General Surgery' },
+    { value: 'vascular-surgery', label: 'Vascular Surgery' },
+    { value: 'emergency-medicine', label: 'Emergency Medicine' },
+    { value: 'family-medicine', label: 'Family Medicine' },
+    { value: 'internal-medicine', label: 'Internal Medicine' },
+    { value: 'pathology', label: 'Pathology' },
+    { value: 'rehabilitation-medicine', label: 'Rehabilitation Medicine' },
+];
+
+const qualificationOptions = [
+    { value: 'mbbs', label: 'MBBS' },
+    { value: 'bds', label: 'BDS' },
+    { value: 'md', label: 'MD' },
+    { value: 'ms', label: 'MS' },
+    { value: 'dm', label: 'DM' },
+    { value: 'mch', label: 'MCh' },
+    { value: 'dnb', label: 'DNB' },
+    { value: 'fcps', label: 'FCPS' },
+    { value: 'phd', label: 'PhD' },
+    { value: 'mph', label: 'MPH' },
+    { value: 'bsc-nursing', label: 'BSc Nursing' },
+    { value: 'msc-nursing', label: 'MSc Nursing' },
 ];
 
 const SignUp = () => {
@@ -45,7 +90,10 @@ const SignUp = () => {
 
         if (role === 'doctor') {
             payload.nmcNumber = formData.nmcNumber.trim();
+            payload.experienceYears = Number(formData.experienceYears);
             payload.specialization = formData.specialization;
+            payload.qualification = formData.qualification;
+            payload.currentlyWorkingAt = formData.currentlyWorkingAt.trim();
         }
 
         return payload;
@@ -57,8 +105,15 @@ const SignUp = () => {
         setFormData((prev) => ({
             ...prev,
             nmcNumber: nextRole === 'doctor' ? prev.nmcNumber : '',
+            experienceYears: nextRole === 'doctor' ? prev.experienceYears : '',
             specialization: nextRole === 'doctor' ? prev.specialization : '',
+            qualification: nextRole === 'doctor' ? prev.qualification : '',
+            currentlyWorkingAt: nextRole === 'doctor' ? prev.currentlyWorkingAt : '',
         }));
+    };
+
+    const handleGoogleSignIn = () => {
+        window.location.href = startGoogleSignIn(role);
     };
 
     const handleChange = (event) => {
@@ -93,6 +148,21 @@ const SignUp = () => {
 
         if (role === 'doctor' && !submitPayload.specialization) {
             setError('Specialization is required for doctor registration.');
+            return;
+        }
+
+        if (role === 'doctor' && !Number.isFinite(submitPayload.experienceYears)) {
+            setError('Experience year is required for doctor registration.');
+            return;
+        }
+
+        if (role === 'doctor' && !submitPayload.qualification) {
+            setError('Qualification is required for doctor registration.');
+            return;
+        }
+
+        if (role === 'doctor' && !submitPayload.currentlyWorkingAt) {
+            setError('Currently working at is required for doctor registration.');
             return;
         }
 
@@ -153,6 +223,24 @@ const SignUp = () => {
                                             {option.label}
                                         </button>
                                     ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-white/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/30">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Prefer Google sign-in?</p>
+                                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                            Use your Google account and we will finish the rest of the setup after sign-in.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleGoogleSignIn}
+                                        className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:border-slate-500 dark:hover:bg-slate-700"
+                                    >
+                                        Continue with Google
+                                    </button>
                                 </div>
                             </div>
 
@@ -254,6 +342,22 @@ const SignUp = () => {
                                         </div>
 
                                         <div>
+                                            <label htmlFor="experienceYears" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                Experienced year
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="experienceYears"
+                                                min="0"
+                                                max="80"
+                                                value={formData.experienceYears}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                            />
+                                        </div>
+
+                                        <div>
                                             <label htmlFor="specialization" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                                                 Specialization
                                             </label>
@@ -272,6 +376,40 @@ const SignUp = () => {
                                                 ))}
                                             </select>
                                         </div>
+
+                                        <div>
+                                            <label htmlFor="qualification" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                Qualification
+                                            </label>
+                                            <select
+                                                id="qualification"
+                                                value={formData.qualification}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                            >
+                                                <option value="">Select qualification</option>
+                                                {qualificationOptions.map((option) => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label htmlFor="currentlyWorkingAt" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                            Currently working at
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="currentlyWorkingAt"
+                                            value={formData.currentlyWorkingAt}
+                                            onChange={handleChange}
+                                            required
+                                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                        />
                                     </div>
                                 </div>
                             )}

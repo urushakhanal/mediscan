@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middlewares/auth.middleware');
+const requireRole = require('../middlewares/requireRole.middleware');
 const {
     register,
     registerSuperadmin,
@@ -7,6 +8,12 @@ const {
     logout,
     me,
     updatePassword,
+    startGoogleSignIn,
+    handleGoogleSignInCallback,
+    completeGoogleDoctorProfileHandler,
+    startGoogleCalendarConnect,
+    handleGoogleCalendarConnectCallback,
+    disconnectGoogleCalendar,
 } = require('../controllers/auth.controller');
 
 const router = express.Router();
@@ -49,6 +56,18 @@ const router = express.Router();
  *               nmcNumber:
  *                 type: string
  *                 description: Required when role is doctor
+ *               experienceYears:
+ *                 type: number
+ *                 description: Required when role is doctor
+ *               specialization:
+ *                 type: string
+ *                 description: Required when role is doctor
+ *               qualification:
+ *                 type: string
+ *                 description: Required when role is doctor
+ *               currentlyWorkingAt:
+ *                 type: string
+ *                 description: Required when role is doctor
  *           examples:
  *             patient:
  *               summary: Register patient
@@ -61,11 +80,16 @@ const router = express.Router();
  *             doctor:
  *               summary: Register doctor
  *               value:
- *                 name: Dr. John Smith
+ *                 name: John Smith
  *                 email: dr.john@example.com
  *                 password: StrongPass123
  *                 role: doctor
+ *                 phone: "+15551234568"
  *                 nmcNumber: NMC-123456
+ *                 experienceYears: 8
+ *                 specialization: gynecology
+ *                 qualification: md
+ *                 currentlyWorkingAt: City Hospital
  *     responses:
  *       201:
  *         description: User registered
@@ -147,6 +171,12 @@ router.post('/register-superadmin', registerSuperadmin);
  *         description: Invalid credentials
  */
 router.post('/login', login);
+router.get('/google', startGoogleSignIn);
+router.get('/google/callback', handleGoogleSignInCallback);
+router.patch('/google/doctor-profile', authMiddleware, completeGoogleDoctorProfileHandler);
+router.get('/google/calendar', authMiddleware, requireRole('doctor'), startGoogleCalendarConnect);
+router.get('/google/calendar/callback', authMiddleware, requireRole('doctor'), handleGoogleCalendarConnectCallback);
+router.delete('/google/calendar', authMiddleware, requireRole('doctor'), disconnectGoogleCalendar);
 
 /**
  * @swagger

@@ -105,6 +105,16 @@ NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/app_db
 APP_NAME=AppMonorepo
 APP_VERSION=1.0.0
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+SMTP_FROM=no-reply@mediscan.local
+SMTP_FROM_NAME=MediScan
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:8080/api/auth/google/callback
 ```
 
 #### Client Configuration

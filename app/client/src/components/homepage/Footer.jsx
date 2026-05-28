@@ -5,86 +5,151 @@ import {
   Instagram,
   Linkedin,
   ChevronRight,
+  MapPin,
+  Phone,
+  Mail,
+  ArrowUpRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const socialLinks = [
+  { icon: Facebook, label: "Facebook", href: "#" },
+  { icon: Twitter, label: "Twitter", href: "#" },
+  { icon: Instagram, label: "Instagram", href: "#" },
+  { icon: Linkedin, label: "LinkedIn", href: "#" },
+];
+
+const quickLinks = [
+  { label: "Home", id: "top" },
+  { label: "How It Works", id: "how-it-works" },
+  { label: "Testimonials", id: "testimonials" },
+  { label: "Contact", id: "contact" },
+];
+
+const resourceLinks = [
+  { label: "Find Doctors", href: "/doctors" },
+  { label: "Symptom Checker", href: "/symptom-checker" },
+  { label: "Care Plans", href: "/care-plans" },
+  { label: "Create Account", href: "/signup" },
+];
+
 const Footer = () => {
+  const scrollToSection = (id) => {
+    if (id === "top") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <motion.footer
       id="contact"
-      className="bg-gray-900 dark:bg-gray-950 text-white py-4 px-4 md:px-8"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-100 via-white to-slate-100 px-6 py-9 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white md:px-10 lg:px-12"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
       viewport={{ once: true }}
     >
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Logo & Mission */}
-        <div>
-          <div className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent mb-2">
-            MediScan
-          </div>
-          <p className="text-gray-400 dark:text-gray-500 mb-2 max-w-sm text-sm">
-            Your AI-powered health companion for fast, accessible diagnosis and
-            expert care.
-          </p>
-          <div className="flex gap-3 mt-2">
-            {[Facebook, Twitter, Instagram, Linkedin].map((Icon, index) => (
-              <button
-                key={index}
-                className="p-2 rounded-full bg-gray-800 hover:bg-teal-600 transition-colors"
-                aria-label={`Open ${Icon.name}`}
-              >
-                <Icon className="h-4 w-4 text-white" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h3 className="text-base font-semibold mb-2">Quick Links</h3>
-          <ul className="space-y-1 text-gray-400 dark:text-gray-500 text-sm">
-            {[
-              "Home",
-              "How It Works",
-              "Features",
-              "Contact",
-              "Terms",
-              "Privacy",
-            ].map((item, index) => (
-              <li key={index}>
-                <button
-                  onClick={() => {
-                    const el = document.getElementById(
-                      item.toLowerCase().replace(/\s+/g, "-")
-                    );
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white flex items-center gap-2 transition-all"
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mb-6 grid gap-4 md:grid-cols-[1.3fr_0.9fr_1fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
+              MediScan
+            </p>
+            <h2 className="mt-3 max-w-md text-2xl font-bold tracking-tight text-teal-600 dark:text-teal-400 md:text-3xl">
+              Simple digital care with a calmer, more connected experience.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-600 dark:text-slate-300">
+              Check symptoms, explore specialists, and take the next step with confidence through one streamlined healthcare platform.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              {socialLinks.map(({ icon: Icon, label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-primary/40 hover:bg-primary/10 hover:text-primary dark:border-white/10 dark:bg-white/6 dark:text-slate-200 dark:hover:bg-primary/15 dark:hover:text-white"
                 >
-                  <ChevronRight className="h-3 w-3" />
-                  {item}
-                </button>
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
+              Quick Links
+            </h3>
+            <ul className="mt-3 space-y-2">
+              {quickLinks.map((item) => (
+                <li key={item.label}>
+                  <button
+                    onClick={() => scrollToSection(item.id)}
+                    className="inline-flex items-center gap-2 text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  >
+                    <ChevronRight className="h-4 w-4 text-primary" />
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
+              Contact
+            </h3>
+            <ul className="mt-3 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                <span>123 Health Street, Kathmandu, Nepal</span>
               </li>
-            ))}
-          </ul>
+              <li className="flex items-start gap-3">
+                <Phone className="mt-0.5 h-4 w-4 text-primary" />
+                <span>+977-9800000000</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail className="mt-0.5 h-4 w-4 text-primary" />
+                <span>contact@mediscan.com</span>
+              </li>
+            </ul>
+
+            <div className="mt-4 rounded-2xl bg-slate-50/90 p-3.5 dark:bg-slate-900/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                Start Here
+              </p>
+              <div className="mt-2.5 space-y-1.5">
+                {resourceLinks.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center justify-between rounded-xl px-3 py-1.5 text-sm text-slate-700 transition hover:bg-white hover:text-slate-900 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-white"
+                  >
+                    <span>{item.label}</span>
+                    <ArrowUpRight className="h-4 w-4 text-primary" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Contact Info */}
-        <div>
-          <h3 className="text-base font-semibold mb-2">Contact</h3>
-          <ul className="text-gray-400 dark:text-gray-500 text-sm space-y-1">
-            <li>📍 123 Health Street, Kathmandu, Nepal</li>
-            <li>📞 +977-9800000000</li>
-            <li>📧 contact@mediscan.com</li>
-          </ul>
+        <div className="flex flex-col gap-2.5 pt-3 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} MediScan. All rights reserved.</p>
+          <div className="flex flex-wrap gap-5">
+            <a href="#" className="transition hover:text-slate-900 dark:hover:text-white">
+              Privacy Policy
+            </a>
+            <a href="#" className="transition hover:text-slate-900 dark:hover:text-white">
+              Terms of Service
+            </a>
+            <a href="#" className="transition hover:text-slate-900 dark:hover:text-white">
+              Support
+            </a>
+          </div>
         </div>
-      </div>
-
-      {/* Bottom Strip */}
-      <div className="border-t border-gray-800 mt-4 pt-2 text-center text-gray-500 dark:text-gray-600 text-xs">
-        © {new Date().getFullYear()} MediScan. All rights reserved.
       </div>
     </motion.footer>
   );

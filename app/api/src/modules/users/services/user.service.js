@@ -1,5 +1,9 @@
 const User = require('../../../database/models/user.model');
-const { DOCTOR_SPECIALIZATIONS } = require('../../../constants/user.constants');
+const {
+    DOCTOR_SPECIALIZATIONS,
+    DOCTOR_QUALIFICATIONS,
+    createDefaultDoctorAvailabilitySettings,
+} = require('../../../constants/user.constants');
 
 const sanitizeUser = (user) => {
     const obj = user.toObject ? user.toObject() : user;
@@ -43,6 +47,12 @@ const validateUserPayload = async (id, updates) => {
     const nextPhone = typeof updates.phone === 'string' ? updates.phone.trim() : updates.phone;
     const nextNmcNumber = typeof updates.nmcNumber === 'string' ? updates.nmcNumber.trim() : updates.nmcNumber;
     const nextSpecialization = typeof updates.specialization === 'string' ? updates.specialization.trim() : updates.specialization;
+    const nextExperienceYears = Number(updates.experienceYears);
+    const nextQualification = typeof updates.qualification === 'string' ? updates.qualification.trim() : updates.qualification;
+    const nextCurrentlyWorkingAt = typeof updates.currentlyWorkingAt === 'string'
+        ? updates.currentlyWorkingAt.trim()
+        : updates.currentlyWorkingAt;
+    const nextConsultationFee = updates.consultationFee === undefined ? undefined : Number(updates.consultationFee);
 
     if ((nextRole === 'patient' || nextRole === 'doctor') && !nextPhone) {
         const error = new Error(`Phone number is required for ${nextRole}s.`);
@@ -69,6 +79,36 @@ const validateUserPayload = async (id, updates) => {
             throw error;
         }
 
+        if (!Number.isFinite(nextExperienceYears) || nextExperienceYears < 0 || nextExperienceYears > 80) {
+            const error = new Error('Experience year must be between 0 and 80.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        if (!nextQualification) {
+            const error = new Error('Qualification is required for doctors.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        if (!DOCTOR_QUALIFICATIONS.includes(nextQualification)) {
+            const error = new Error(`Qualification must be one of: ${DOCTOR_QUALIFICATIONS.join(', ')}.`);
+            error.statusCode = 400;
+            throw error;
+        }
+
+        if (!nextCurrentlyWorkingAt) {
+            const error = new Error('Currently working at is required for doctors.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        if (!Number.isFinite(nextConsultationFee) || nextConsultationFee < 0) {
+            const error = new Error('Consultation fee must be a valid non-negative amount.');
+            error.statusCode = 400;
+            throw error;
+        }
+
         const existingNmc = await User.findOne({ nmcNumber: nextNmcNumber, _id: { $ne: id } });
         if (existingNmc) {
             const error = new Error('A doctor with this NMC number already exists.');
@@ -79,7 +119,7 @@ const validateUserPayload = async (id, updates) => {
 };
 
 const updateUser = async (id, payload) => {
-    const allowed = ['name', 'email', 'role', 'phone', 'nmcNumber', 'specialization'];
+    const allowed = ['name', 'email', 'role', 'phone', 'nmcNumber', 'specialization', 'experienceYears', 'qualification', 'currentlyWorkingAt', 'consultationFee'];
     const updates = {};
     allowed.forEach((field) => {
         if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined) {
@@ -105,13 +145,24 @@ const updateUser = async (id, payload) => {
         phone: Object.prototype.hasOwnProperty.call(updates, 'phone') ? updates.phone : existingUser.phone,
         nmcNumber: Object.prototype.hasOwnProperty.call(updates, 'nmcNumber') ? updates.nmcNumber : existingUser.nmcNumber,
         specialization: Object.prototype.hasOwnProperty.call(updates, 'specialization') ? updates.specialization : existingUser.specialization,
+        experienceYears: Object.prototype.hasOwnProperty.call(updates, 'experienceYears') ? updates.experienceYears : existingUser.experienceYears,
+        qualification: Object.prototype.hasOwnProperty.call(updates, 'qualification') ? updates.qualification : existingUser.qualification,
+        currentlyWorkingAt: Object.prototype.hasOwnProperty.call(updates, 'currentlyWorkingAt') ? updates.currentlyWorkingAt : existingUser.currentlyWorkingAt,
+        consultationFee: Object.prototype.hasOwnProperty.call(updates, 'consultationFee') ? updates.consultationFee : existingUser.consultationFee,
         isVerified: existingUser.isVerified,
     };
 
     if (mergedUpdates.role !== 'doctor') {
         mergedUpdates.nmcNumber = undefined;
         mergedUpdates.specialization = undefined;
+        mergedUpdates.experienceYears = undefined;
+        mergedUpdates.qualification = undefined;
+        mergedUpdates.currentlyWorkingAt = undefined;
+        mergedUpdates.consultationFee = undefined;
         mergedUpdates.isVerified = false;
+        mergedUpdates.availabilitySettings = undefined;
+    } else {
+        mergedUpdates.availabilitySettings = existingUser.availabilitySettings || createDefaultDoctorAvailabilitySettings();
     }
 
     await validateUserPayload(id, mergedUpdates);
@@ -140,6 +191,26 @@ const updateDoctorVerification = async (id, isVerified) => {
     return sanitizeUser(user);
 };
 
+const updateUserActiveStatus = async (id, isActive, actorId) => {
+    const user = await User.findById(id);
+    if (!user) {
+        const error = new Error('User not found.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (actorId && user._id.toString() === actorId.toString()) {
+        const error = new Error('You cannot block your own account.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    user.isActive = Boolean(isActive);
+    await user.save();
+
+    return sanitizeUser(user);
+};
+
 const deleteUser = async (id) => {
     const user = await User.findByIdAndDelete(id);
     if (!user) {
@@ -157,5 +228,6 @@ module.exports = {
     getUserById,
     updateUser,
     updateDoctorVerification,
+    updateUserActiveStatus,
     deleteUser,
 };
