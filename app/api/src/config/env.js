@@ -17,6 +17,11 @@ require('dotenv').config();
  */
 const khaltiMode = String(process.env.KHALTI_MODE || 'test').toLowerCase() === 'live' ? 'live' : 'test';
 const khaltiSecretKey = process.env.KHALTI_SECRET_KEY || '';
+const authCookieSameSite = process.env.AUTH_COOKIE_SAME_SITE
+    || (process.env.NODE_ENV === 'production' ? 'none' : 'lax');
+const authCookieSecure = process.env.AUTH_COOKIE_SECURE
+    ? String(process.env.AUTH_COOKIE_SECURE).toLowerCase() === 'true'
+    : process.env.NODE_ENV === 'production';
 
 const config = {
     // Server port (default: 5000)
@@ -37,6 +42,11 @@ const config = {
     // Auth settings
     jwtSecret: process.env.JWT_SECRET || 'change_me_in_production',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    authCookie: {
+        sameSite: authCookieSameSite,
+        secure: authCookieSecure,
+        domain: process.env.AUTH_COOKIE_DOMAIN || '',
+    },
 
     // Superadmin bootstrap key
     superadminSetupKey: process.env.SUPERADMIN_SETUP_KEY || 'change_me_superadmin',

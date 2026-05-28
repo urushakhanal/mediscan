@@ -23,84 +23,68 @@ const {
     syncDoctorUpcomingAppointments,
 } = require('../services/googleCalendar.service');
 
-const setAuthCookie = (res, token) => {
-    res.cookie('auth_token', token, {
+const buildCookieOptions = (overrides = {}) => {
+    const options = {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
+        sameSite: config.authCookie.sameSite,
+        secure: config.authCookie.secure,
         path: '/',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+        ...overrides,
+    };
+
+    if (config.authCookie.domain) {
+        options.domain = config.authCookie.domain;
+    }
+
+    return options;
+};
+
+const setAuthCookie = (res, token) => {
+    res.cookie('auth_token', token, buildCookieOptions({
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+    }));
 };
 
 const clearAuthCookie = (res) => {
-    res.cookie('auth_token', '', {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('auth_token', '', buildCookieOptions({
         expires: new Date(0),
-    });
+    }));
 };
 
 const setGoogleStateCookie = (res, state) => {
-    res.cookie('google_oauth_state', state, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_oauth_state', state, buildCookieOptions({
         maxAge: 10 * 60 * 1000,
-    });
+    }));
 };
 
 const setGoogleRoleCookie = (res, role) => {
-    res.cookie('google_oauth_role', role, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_oauth_role', role, buildCookieOptions({
         maxAge: 10 * 60 * 1000,
-    });
+    }));
 };
 
 const clearGoogleRoleCookie = (res) => {
-    res.cookie('google_oauth_role', '', {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_oauth_role', '', buildCookieOptions({
         expires: new Date(0),
-    });
+    }));
 };
 
 const clearGoogleStateCookie = (res) => {
-    res.cookie('google_oauth_state', '', {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_oauth_state', '', buildCookieOptions({
         expires: new Date(0),
-    });
+    }));
 };
 
 const setGoogleCalendarStateCookie = (res, state) => {
-    res.cookie('google_calendar_oauth_state', state, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_calendar_oauth_state', state, buildCookieOptions({
         maxAge: 10 * 60 * 1000,
-    });
+    }));
 };
 
 const clearGoogleCalendarStateCookie = (res) => {
-    res.cookie('google_calendar_oauth_state', '', {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: config.nodeEnv === 'production',
-        path: '/',
+    res.cookie('google_calendar_oauth_state', '', buildCookieOptions({
         expires: new Date(0),
-    });
+    }));
 };
 
 const redirectToSignInError = (res, message = 'Unable to sign in with Google right now.') => {
