@@ -22,6 +22,10 @@ const { setupSwagger } = require('./docs/swagger');
 
 // Create Express application
 const app = express();
+const allowedOrigins = String(config.clientUrl || '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean);
 
 // ===========================
 // Middleware Setup
@@ -29,7 +33,18 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-    origin: config.clientUrl,
+    origin(origin, callback) {
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        const normalizedOrigin = String(origin).replace(/\/$/, '');
+        if (allowedOrigins.includes(normalizedOrigin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
 }));
 
