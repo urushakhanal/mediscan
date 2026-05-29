@@ -12,6 +12,8 @@ const {
     listAdminBookings,
     listDoctorCarePlans,
     updateBookingStatus,
+    createKhaltiPaymentSessionForBooking,
+    verifyKhaltiPaymentSessionForBooking,
 } = require('../services/carePlan.service');
 
 const getCarePlans = async (req, res, next) => {
@@ -113,6 +115,42 @@ const bookCarePlan = async (req, res, next) => {
     }
 };
 
+const initiateKhaltiCarePlanBookingPayment = async (req, res, next) => {
+    try {
+        const paymentSession = await createKhaltiPaymentSessionForBooking({
+            carePlanId: req.params.id,
+            patientId: req.user.id,
+            payload: req.body || {},
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Khalti payment session created successfully.',
+            paymentSession,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const verifyKhaltiCarePlanBookingPayment = async (req, res, next) => {
+    try {
+        const result = await verifyKhaltiPaymentSessionForBooking({
+            sessionId: req.params.sessionId,
+            patientId: req.user.id,
+            pidx: req.body?.pidx || req.query?.pidx,
+        });
+
+        return res.json({
+            success: true,
+            message: 'Payment verified and care plan booked successfully.',
+            ...result,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 const getMyPatientBookings = async (req, res, next) => {
     try {
         const bookings = await listPatientBookings(req.user.id);
@@ -176,6 +214,8 @@ module.exports = {
     patchCarePlanStatus,
     removeCarePlan,
     bookCarePlan,
+    initiateKhaltiCarePlanBookingPayment,
+    verifyKhaltiCarePlanBookingPayment,
     getMyPatientBookings,
     getMyDoctorBookings,
     getAdminBookings,
