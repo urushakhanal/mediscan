@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Stethoscope, Users } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createCarePlanBooking, getCarePlanById } from '../lib/auth';
+import { createCarePlanBooking, getCarePlanById, initiateKhaltiCarePlanBookingPayment } from '../lib/auth';
 import { formatReadableDate, formatSpecialization, getTodayDateString } from '../lib/appointments';
 import { formatUserDisplayName } from '../lib/utils';
 import { formatCarePlanDuration, formatCarePlanPrice, getCarePlanIcon } from '../lib/carePlans';
@@ -68,6 +68,17 @@ const CarePlanDetailPage = () => {
 
     try {
       setBookingLoading(true);
+      const planPrice = Number(carePlan?.price) || 0;
+      if (planPrice > 0) {
+        const data = await initiateKhaltiCarePlanBookingPayment(carePlan._id, bookingState);
+        const redirectUrl = data?.paymentSession?.redirectUrl;
+        if (!redirectUrl) {
+          throw new Error('Khalti payment URL was not returned by the server.');
+        }
+        window.location.href = redirectUrl;
+        return;
+      }
+
       await createCarePlanBooking(carePlan._id, bookingState);
       setBookingSubmitted(true);
       toast.success('Care plan request submitted successfully.');
@@ -280,7 +291,7 @@ const CarePlanDetailPage = () => {
                       disabled={bookingLoading}
                       className="inline-flex rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {bookingLoading ? 'Submitting...' : 'Request care plan'}
+                      {bookingLoading ? 'Processing...' : ((Number(carePlan?.price) || 0) > 0 ? 'Pay with Khalti' : 'Request care plan')}
                     </button>
                   </div>
                 </form>

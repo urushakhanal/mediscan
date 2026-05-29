@@ -29,6 +29,7 @@ import DoctorPatientRecordPage from './pages/DoctorPatientRecordPage';
 import DoctorSchedulePage from './pages/DoctorSchedulePage';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import AppointmentPaymentReturnPage from './pages/AppointmentPaymentReturnPage';
+import CarePlanPaymentReturnPage from './pages/CarePlanPaymentReturnPage';
 import PatientCarePlansPage from './pages/PatientCarePlansPage';
 import DoctorCarePlansPage from './pages/DoctorCarePlansPage';
 import DoctorCarePlanRequestsPage from './pages/DoctorCarePlanRequestsPage';
@@ -62,6 +63,22 @@ function App() {
                         element={(
                             <RoleRoute allowedRoles={['patient']}>
                                 <AppointmentPaymentReturnPage mode="failure" provider="khalti" />
+                            </RoleRoute>
+                        )}
+                    />
+                    <Route
+                        path="/patient/care-plans/payment/khalti/success"
+                        element={(
+                            <RoleRoute allowedRoles={['patient']}>
+                                <CarePlanPaymentReturnPage mode="success" />
+                            </RoleRoute>
+                        )}
+                    />
+                    <Route
+                        path="/patient/care-plans/payment/khalti/failure"
+                        element={(
+                            <RoleRoute allowedRoles={['patient']}>
+                                <CarePlanPaymentReturnPage mode="failure" />
                             </RoleRoute>
                         )}
                     />

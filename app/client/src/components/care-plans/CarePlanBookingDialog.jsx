@@ -4,7 +4,7 @@ import { CalendarDays, CheckCircle2, Clock3, Stethoscope, Users } from 'lucide-r
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { useAuth } from '../../context/AuthContext';
-import { createCarePlanBooking } from '../../lib/auth';
+import { createCarePlanBooking, initiateKhaltiCarePlanBookingPayment } from '../../lib/auth';
 import { formatReadableDate, formatSpecialization, getTodayDateString } from '../../lib/appointments';
 import { formatUserDisplayName } from '../../lib/utils';
 import { formatCarePlanDuration, formatCarePlanPrice, getCarePlanIcon } from '../../lib/carePlans';
@@ -44,6 +44,16 @@ const CarePlanBookingDialog = ({ carePlan, open, onOpenChange, onBooked }) => {
 
         try {
             setLoading(true);
+            const planPrice = Number(carePlan?.price) || 0;
+            if (planPrice > 0) {
+                const data = await initiateKhaltiCarePlanBookingPayment(carePlan._id, bookingState);
+                const redirectUrl = data?.paymentSession?.redirectUrl;
+                if (!redirectUrl) {
+                    throw new Error('Khalti payment URL was not returned by the server.');
+                }
+                window.location.href = redirectUrl;
+                return;
+            }
             await createCarePlanBooking(carePlan._id, bookingState);
             toast.success('Care plan request submitted successfully.');
             onBooked?.();
@@ -204,7 +214,7 @@ const CarePlanBookingDialog = ({ carePlan, open, onOpenChange, onBooked }) => {
                                                 disabled={loading}
                                                 className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                             >
-                                                {loading ? 'Submitting...' : 'Request care plan'}
+                                                {loading ? 'Processing...' : ((Number(carePlan?.price) || 0) > 0 ? 'Pay with Khalti' : 'Request care plan')}
                                             </button>
                                             <button
                                                 type="button"

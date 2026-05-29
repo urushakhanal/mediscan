@@ -1,0 +1,2385 @@
+         Project and Professionalism
+                    (6CS007)
+
+         A2: Project Report
+MediScan AI-Powered Healthcare
+
+         Platform for Nepal
+
+Student Id    : 2406788
+Student Name  : Urusha Khanal
+Group         : L6CG14
+Supervisor    : Mr. Utshav Dahal
+Cohort        :4
+
+Submitted on  : 26th May 2026
+
+              1
+Declaration Sheet
+
+Presented in partial fulfilment of the assessment requirements for the above award.
+This work or any part thereof has not previously been presented in any form to the
+University or to any other institutional body whether for assessment or for other
+purposes. Save for any express acknowledgements, references and/or bibliographies
+cited in the work. I confirm that the intellectual contents of the work are the result of
+my own efforts and of no other person.
+It is acknowledged that the author of any project work shall own the copyright.
+However, by submitting such copyright work for assessment, the author grants to the
+University a perpetual royalty-free license to do all or any of those things referred to in
+section 16(i) of the Copyright Designs and Patents Act 1988. (viz: to copy work; to
+issue copies to the public; to perform or show or play the work in public; to broadcast
+the work or to make an adaptation of the work).
+Student Name : Urusha Khanal
+Student Number: 2406788
+
+Signature:     Date: 26th May 2026
+
+            2
+Table of Contents
+
+Abstract ...................................................................................................................... 8
+1. Introduction ......................................................................................................... 10
+
+   1.1 Project Briefing .............................................................................................. 10
+      1.1.1 Overall Working, Problem Domain, and Technical Solution .................... 10
+
+   1.2 AI Implementation .......................................................................................... 12
+      1.2.1 AI Aspect Addressed............................................................................... 12
+      1.2.2 Learning Type -- Supervised Learning Justification ............................... 12
+      1.2.3 Mathematics Behind the AI and Model Description ................................. 13
+      1.2.4 Agent Description .................................................................................... 15
+
+   1.3 Aims............................................................................................................... 16
+      1.3.1 Project Aims ............................................................................................ 16
+
+   1.4 Objectives ...................................................................................................... 17
+      1.4.1 Project Objectives ................................................................................... 17
+
+   1.5 Artefact .......................................................................................................... 18
+      1.5.1 Functional Decomposition Diagram ........................................................ 18
+      1.5.2 System as a Whole ................................................................................. 18
+      1.5.3 Subsystem Descriptions.......................................................................... 19
+
+   1.6 Academic Question........................................................................................ 20
+      1.6.1 Detailed Explanation of the Academic Question ..................................... 20
+
+   1.7 Scope and Limitations ................................................................................... 21
+   1.8 Report Structure ............................................................................................ 22
+2. Literature Review ................................................................................................ 23
+   2.1 Digital Healthcare Platforms and Patient-Centred Systems........................... 23
+   2.2 AI in Clinical Decision Support and Symptom Triage..................................... 23
+   2.3 Comparable Systems .................................................................................... 25
+
+      2.3.1 Commercial Healthcare Platforms........................................................... 25
+      2.3.2 Academic Prototype Systems ................................................................. 25
+   2.4 AI Algorithm Performance and Related Research ......................................... 26
+      2.4.1 Research Papers and Algorithm Analysis ............................................... 26
+      2.4.2 Intelligence Goals and Ideas Behind the AI............................................. 27
+      2.4.3 Algorithm Performance Comparison ....................................................... 27
+3. Project Methodology............................................................................................ 29
+   3.1 Methodology Selection .................................................................................. 29
+   3.2 Justification of Scrum..................................................................................... 29
+   3.3 Gantt Chart .................................................................................................... 30
+4. Technologies and Tools Used ............................................................................. 33
+
+                                                        3
+   4.1 Justification of Technologies.......................................................................... 33
+   4.2 Backend Technologies .................................................................................. 33
+
+      4.2.1 Node.js and Express ............................................................................... 33
+      4.2.2 MongoDB and Mongoose........................................................................ 33
+      4.2.3 JWT and bcryptjs .................................................................................... 34
+      4.2.4 Mistral AI Integration ............................................................................... 34
+      4.2.5 Google OAuth and Calendar API ............................................................ 34
+      4.2.6 Nodemailer and Swagger........................................................................ 34
+   4.3 Frontend Technologies .................................................................................. 35
+      4.3.1 React and React Router.......................................................................... 35
+      4.3.2 Tailwind CSS, Radix UI, and Supporting Libraries .................................. 35
+   4.4 Development Tools ........................................................................................ 35
+5. Artefact Designs .................................................................................................. 36
+   5.1 Subsystem 1: Authentication and Access ...................................................... 36
+      5.1.1 Software Requirements Specification ..................................................... 36
+      5.1.2 Design and Modelling Diagrams ............................................................. 37
+      5.1.3 Testing .................................................................................................... 38
+   5.2 Subsystem 2: User and Superadmin Governance ......................................... 39
+      5.2.1 Software Requirements Specification ..................................................... 39
+      5.2.2 Design and Modelling Diagrams ............................................................. 40
+      5.2.3 Testing .................................................................................................... 41
+   5.3 Subsystem 3: AI Symptom Checker .............................................................. 41
+      5.3.1 Software Requirements Specification ..................................................... 42
+      5.3.2 Design and Modelling Diagrams ............................................................. 42
+      5.3.3 Testing .................................................................................................... 44
+   5.4 Subsystem 4: Appointment Management ...................................................... 45
+      5.4.1 Software Requirements Specification ..................................................... 45
+      5.4.2 Design and Modelling Diagrams ............................................................. 46
+      5.4.3 Testing .................................................................................................... 49
+   5.5 Subsystem 5: Care Plan Management .......................................................... 49
+      5.5.1 Software Requirements Specification ..................................................... 49
+      5.5.2 Design and Modelling Diagrams ............................................................. 51
+      5.5.3 Testing .................................................................................................... 52
+   5.6 Subsystem 6: Payment and Medicine Inventory ............................................ 52
+      5.6.1 Software Requirements Specification ..................................................... 52
+      5.6.2 Design and Modelling Diagrams ............................................................. 53
+      5.6.3 Testing .................................................................................................... 54
+
+                                                        4
+   5.7 Subsystem 7: Notifications and Email............................................................ 54
+      5.7.1 Software Requirements Specification ..................................................... 54
+      5.7.2 Design and Modelling Diagrams ............................................................. 55
+      5.7.3 Testing .................................................................................................... 56
+
+   5.8 Subsystem 8: System Monitoring and Documentation .................................. 56
+      5.8.1 Software Requirements Specification ..................................................... 56
+      5.8.2 Design and Modelling Diagrams ............................................................. 57
+      5.8.3 Testing .................................................................................................... 57
+
+   5.9 System-Wide Diagrams ................................................................................. 58
+      5.9.1 Full Entity Relationship Diagram ............................................................. 58
+      5.9.2 System Class Diagram............................................................................ 58
+      5.9.3 Full Use Case Diagram ........................................................................... 59
+
+   5.10 Test Plan and Test Cases ........................................................................... 60
+      5.10.1 Test Plan Summary............................................................................... 61
+      5.10.2 Unit Tests .............................................................................................. 61
+      5.10.3 Integration Tests ................................................................................... 72
+      5.10.4 Test Summary ....................................................................................... 79
+
+6. Conclusion .......................................................................................................... 80
+   6.1 Revisiting Aims, Objectives, and Academic Question.................................... 80
+   6.2 Discoveries and Conclusions......................................................................... 81
+
+7. Critical Evaluation................................................................................................ 82
+   7.1 Self-Reflection on the Final Report ................................................................ 82
+   7.2 Findings and Process Evaluation................................................................... 82
+   7.3 System Evaluation ......................................................................................... 83
+   7.4 Planning, Management, and Quality of Sources............................................ 83
+   7.5 Personal Self-Reflection ................................................................................ 84
+
+8. Evidence of Project Management ....................................................................... 85
+   8.1 Supervisor Log Sheet .................................................................................... 85
+   8.2 Updated Gantt Chart...................................................................................... 96
+
+9. References and Bibliography .............................................................................. 97
+10. Appendices ..................................................................................................... 100
+
+   10.1 Environment Variables............................................................................... 100
+   10.2 System Setup Guide .................................................................................. 100
+   10.3 Suggested Automated Test Cases ............................................................ 101
+
+      Authentication Service .................................................................................... 101
+      Symptom Service ............................................................................................ 101
+      Appointment Service ....................................................................................... 101
+
+                                                        5
+      Care Plan Service ........................................................................................... 102
+
+Table of Figures
+
+Figure 1: High-Level System Architecture of MediScan ........................................... 11
+Figure 2: AI Symptom Checker Agent Flow -- From Patient Input to Structured
+Assessment.............................................................................................................. 16
+Figure 3: Functional Decomposition Diagram of MediScan...................................... 18
+Figure 4: Project Gantt Chart -- MediScan Development Phases and Milestones .. 30
+Figure 5: Activity Diagram -- User Registration and Login Flow .............................. 37
+Figure 6: Sequence Diagram -- Login Interaction across Frontend, AuthController,
+AuthService, and MongoDB ..................................................................................... 38
+Figure 7: Wireframe -- Sign In and Sign Up Pages ................................................. 38
+Figure 8: Activity Diagram -- Doctor Verification Workflow4 .................................... 40
+Figure 9: Wireframe -- Doctor Directory and Doctor Profile Pages ......................... 41
+Figure 10: Use Case Diagram -- Superadmin Governance Operations .................. 41
+Figure 11: Activity Diagram -- Symptom Checker Flow from Patient Input to
+Assessment Output .................................................................................................. 43
+Figure 12: Sequence Diagram -- Symptom Analysis Request through Backend to
+Mistral API ................................................................................................................ 44
+Figure 13: Wireframe -- Symptom Checker Page and Assessment Result Modal .. 44
+Figure 14: Activity Diagram -- Patient Appointment Booking Flow .......................... 46
+Figure 15: Activity Diagram -- Doctor Consultation Completion Flow...................... 47
+Figure 16: Sequence Diagram -- Appointment Booking Request............................ 48
+Figure 17: Wireframe -- Patient Appointments Page and Doctor Appointment Detail
+Page......................................................................................................................... 48
+Figure 18: ERD -- Appointment Entity and Relationships........................................ 49
+Figure 19: Activity Diagram -- Care Plan Booking Request and Doctor Response
+Flow.......................................................................................................................... 51
+Figure 20: Wireframe -- Public Care Plans Page and Admin Care Plan Management
+Interface ................................................................................................................... 51
+Figure 21: ERD -- Care Plan and Care Plan Booking Entities................................. 52
+Figure 22: Activity Diagram -- Booking Confirmation Payment Flow ....................... 53
+Figure 23: Wireframe -- Booking Confirmation Screen and Medicine Inventory
+Screen...................................................................................................................... 54
+Figure 24: Wireframe -- Notification Inbox in Navbar .............................................. 55
+Figure 25: ERD -- Notification Entity and Relationships .......................................... 56
+Figure 26: Wireframe -- Health Monitoring Dashboard Page .................................. 57
+Figure 27: Complete Entity Relationship Diagram -- MediScan MongoDB Schema 58
+Figure 28: Backend Class Diagram -- Controller, Service, and Model Dependencies
+................................................................................................................................. 59
+Figure 29: Full System Use Case Diagram .............................................................. 60
+Figure 30: TC-U01 -- Register patient with valid credentials ................................... 62
+Figure 31: TC-U02 -- Login with blocked account rejected ..................................... 62
+Figure 32: TC-U03 -- Unverified doctor hidden from public directory ...................... 63
+Figure 33: TC-U04 -- Superadmin cannot block own account................................. 64
+Figure 34: TC-U05 -- Valid symptom payload returns structured assessment ........ 65
+
+                                                        6
+Figure 35: TC-U07 -- Patient cannot book appointment on past date ..................... 66
+Figure 36: TC-U08 -- Duplicate slot booking rejected ............................................. 67
+Figure 37: TC-U09 -- Consultation note saves all clinical fields .............................. 68
+Figure 38: TC-U10 -- Care plan creation rejected without assigned doctor............. 69
+Figure 39: TC-U11 -- Care plan deletion blocked when bookings exist .................. 70
+Figure 40: TC-U12 -- Mark notification as read updates isRead state .................... 71
+Figure 41: TC-I01 -- Symptom assessment exports correctly to PDF ..................... 72
+Figure 42: TC-I02 -- Appointment booking creates doctor notification .................... 73
+Figure 43: TC-I03 -- Unauthenticated user redirected from protected route............ 74
+Figure 44: TC-I04 -- Patient cannot access doctor-only appointment details .......... 75
+Figure 45: TC-I05 -- Completed consultations appear in patient timeline................ 76
+Figure 46: TC-I06 -- Care plan booking confirms payment and notifies doctor ....... 77
+Figure 47: TC-I08 -- Automated reminder creates patient notification..................... 78
+Figure 48: Project Log Sheet -- Supervisor-Signed Meeting Records..................... 95
+Figure 49: Updated Gantt Chart ............................................................................... 96
+
+                                                        7
+Abstract
+
+MediScan is a full-stack, role-based digital healthcare web application developed as
+the primary artefact for this final year project. The system addresses the fragmented
+nature of outpatient digital care by combining patient triage, verified doctor discovery,
+structured appointment management, AI-assisted symptom analysis, care plan
+publishing, booking confirmation payment handling, simple medicine inventory
+tracking, and a multi-role notification infrastructure into a single integrated platform.
+The system serves three principal user roles -- patient, doctor, and superadmin --
+each with a dedicated dashboard and a distinct set of permitted operations.
+
+The backend is implemented as a modular monolith REST API built with Node.js and
+Express, organized into feature modules covering authentication, user governance,
+appointments, symptom analysis, care plans, notifications, and system monitoring.
+Data has persisted in MongoDB through Mongoose schemas. The frontend is a React
+single-page application using React Router for role-based route separation, Tailwind
+CSS for styling, and Radix UI primitives for accessible modal interactions.
+Authentication is handled via JSON Web Tokens stored in HTTP Only cookies, with
+Google OAuth support for social sign-in. The system also integrates with the Google
+Calendar API for doctor schedule synchronization and with the Mistral AI chat
+completion API for the symptom checker module.
+
+The AI-assisted symptom checker represents the most technically distinctive
+component of the system. It accepts patient-submitted symptoms, duration, severity,
+and relief factors, constructs a structured clinical prompt, and submits it to the Mistral
+large language model via a chat completion API call. The model returns a structured
+assessment including urgency classification, possible conditions, care
+recommendations, and escalation advice. A rule-based fallback mechanism is
+implemented to maintain service continuity when the AI provider is unavailable. This
+use of a large language model for natural language symptom triage situates MediScan
+within the broader field of AI-assisted clinical decision support.
+
+The academic question explored in this project is: to what extent does AI-assisted
+symptom triage improve early healthcare decision support compared to manual self-
+assessment symptoms? The project was developed following an incremental Agile
+
+                                                        8
+methodology aligned with Scrum, with each development phase delivering a complete,
+demonstrable module before the next was begun. The report presents the full system
+design, including software requirements specifications, UML diagrams, AI
+implementation analysis, and testing evidence for each subsystem. Identified
+limitations include the absence of automated tests, partial Google Calendar
+integration, insecure configuration defaults, and base64-based file uploads, all of
+which are discussed as areas for future improvement.
+Keywords: Healthcare Web Application, AI-Assisted Symptom Triage, Mistral LLM, Natural
+Language Processing, Appointment Management, Role-Based Access Control, MongoDB,
+Express, React, Agile Development
+
+                                                        9
+1. Introduction
+
+1.1 Project Briefing
+
+1.1.1 Overall Working, Problem Domain, and Technical Solution
+The delivery of outpatient healthcare presents a coordination challenge that spans
+multiple stakeholders -- patients seeking timely medical attention, doctors managing
+complex appointment schedules and clinical records, and administrators ensuring
+platform quality and trust. In the absence of integrated digital tooling, these
+stakeholders typically operate through disconnected channels: patients discover
+doctors through word of mouth or informal directories, appointments are booked via
+phone, consultation records are maintained in paper files or separate electronic
+systems, and symptom self-assessment is conducted through general search engines
+with no personalized clinical guidance. This fragmentation reduces efficiency,
+increases the risk of miscommunication, and limits continuity of care.
+
+MediScan was designed and developed to address these challenges within a single,
+integrated healthcare web platform. The system enables patients to discover verified
+doctors through a searchable public directory, check real-time availability, book
+appointments with optional document uploads, receive consultation summaries and
+prescriptions, use an AI-assisted symptom checker for preliminary triage, browse and
+request structured care plans, complete booking confirmation payments, and stay
+informed through a real-time notification inbox. Doctors can manage their appointment
+queues, record detailed consultation outcomes including diagnoses, prescriptions,
+scan requests, and follow-up plans, view comprehensive patient record timelines, and
+coordinate their schedules through configurable availability settings with optional
+Google Calendar synchronization. Superadmins govern the platform by verifying
+doctor credentials, managing user account status, publishing care plans, reviewing
+medicine inventory, and maintaining overall data quality.
+
+Technically, MediScan is implemented as a npm workspace monorepo containing two
+primary applications. The backend is a Node.js and Express REST API organized into
+feature modules under the modules directory, covering authentication, user
+management, symptom analysis, appointments, care plans, notifications, and system
+monitoring. Data has persisted in MongoDB through Mongoose document models.
+The frontend is a React single-page application using React Router v6 for public,
+
+                                                       10
+patient, doctor, and admin route separation, Tailwind CSS for utility-first styling, and
+Radix UI primitives for accessible dialog components. Authentication uses JWT tokens
+stored in HTTP Only cookies with role-based middleware enforcing access control at
+both the API and frontend route levels. External integrations include Google OAuth for
+social sign-in, the Google Calendar API for doctor schedule events, an SMTP email
+service for notifications, and the Mistral AI chat completion API for the symptom
+checker module.
+The system was developed incrementally, with each feature module implemented as
+a complete vertical slice -- backend model, service, controller, routes, and frontend
+pages -- before the next module was begun. This approach kept the system in a
+continuously deployable and demonstrable state throughout development and directly
+reflects the iterative Agile methodology described in Section 3.
+
+                                       Figure 1: High-Level System Architecture of MediScan
+
+                                                       11
+1.2 AI Implementation
+
+1.2.1 AI Aspect Addressed
+MediScan implements Artificial Intelligence through its symptom checker module,
+which uses the Mistral large language model via a chat completion API to perform AI-
+assisted clinical symptom triage. The AI aspect being addressed is Natural Language
+Processing (NLP). Specifically, the system leverages the natural language
+understanding and generation capabilities of a large language model to interpret a
+patient-submitted symptom profile -- including symptom names, duration, severity,
+and relief factors -- and produce a structured clinical assessment in natural language
+output that is subsequently parsed into a structured JSON format.
+
+NLP is the branch of artificial intelligence concerned with enabling computers to
+understand, interpret, and generate human language in a meaningful way (Devlin et
+al., 2019). The Mistral model used in MediScan is a transformer-based large language
+model trained on large corpora of text, which gives it the capacity to reason about
+medical symptom descriptions expressed in natural language and to generate
+contextually appropriate clinical guidance. The system does not use computer vision,
+robotics, or classical machine learning pipelines such as decision trees or neural
+network classifiers trained on bespoke datasets. The intelligence of the system derives
+entirely from the pre-trained language model accessed through the Mistral API.
+
+1.2.2 Learning Type -- Supervised Learning Justification
+The AI capability used in MediScan is based on supervised learning, and more
+specifically on the supervised pre-training and instruction fine-tuning paradigm used
+to train large language models such as Mistral. In supervised learning, a model is
+trained on labelled input-output pairs such that it learns to map inputs to correct outputs
+based on the labels provided during training (Goodfellow, Bengio and Courville, 2016).
+Mistral's underlying models are trained on vast text corpora using next-token
+prediction, which is a form of self-supervised learning closely related to supervised
+learning in that the labels are derived from the data itself. The models are subsequently
+fine-tuned using Reinforcement Learning from Human Feedback (RLHF) and
+instruction-following supervision, which are forms of supervised learning in which
+human-annotated responses serve as training labels (Ouyang et al., 2022).
+
+                                                       12
+The justification for classifying MediScan's AI as supervised-learning-based rests on
+the fact that the model's ability to follow structured instructions, produce formatted
+JSON output from a natural language prompt, classify symptom urgency into discrete
+categories, and generate medically contextualized advice are all capabilities that
+emerge from the supervised instruction fine-tuning stage of the model's training. When
+MediScan's symptom service constructs its prompt and requests a structured
+assessment, it is leveraging the model's learned ability to map structured natural
+language inputs to structured natural language outputs, which is a supervised
+generalization capability. The system does not implement any unsupervised
+clustering, dimensionality reduction, or generative model training of its own. The pre-
+trained, instruction-tuned Mistral model is consumed as an API service, and the
+system's AI intelligence is entirely derived from the model's pre-existing supervised
+learning.
+
+1.2.3 Mathematics Behind the AI and Model Description
+The Mistral model used in MediScan belongs to the family of transformer-based large
+language models, whose mathematical foundation is the self-attention mechanism
+introduced by Vaswani et al. (2017). The core operation of a transformer layer is the
+scaled dot-product attention function, defined as:
+
+                 Attention(Q, K, V) = softmax( QK / dk ) V
+
+where Q represents the query matrix, K the key matrix, V the value matrix, and dk is
+the dimensionality of the key vectors used as a scaling factor to prevent the dot
+products from becoming too large and causing the softmax function to saturate in
+regions of very small gradients. The attention scores determine how much each token
+in the sequence attends to every other token, allowing the model to capture long-range
+dependencies in the input text.
+
+Multi-head attention extends this by running h parallel attention operations with
+different learned projection matrices, allowing the model to attend to information from
+different representation subspaces simultaneously:
+
+            MultiHead(Q, K, V) = Concat(head, ..., head) W
+
+where each head = Attention(Q W, K W, V W) with learned weight matrices for
+each head. The transformer architecture stacks multiple such attention layers
+
+                                                       13
+interleaved with feed-forward networks and layer normalization, building a deep
+representation of the input token sequence.
+Mistral 7B, the model family underlying MediScan's symptom checker, introduces two
+specific architectural improvements over standard transformers: Grouped Query
+Attention (GQA) and Sliding Window Attention (SWA). GQA reduces the
+computational cost of multi-head attention by sharing key and value projection
+matrices across groups of query heads, reducing memory bandwidth requirements
+without significant quality loss (Ainslie et al., 2023). SWA restricts each token's
+attention to a fixed window of preceding tokens rather than the full sequence, enabling
+efficient handling of long contexts while maintaining O(n) complexity in sequence
+length (Jiang et al., 2023).
+In MediScan's symptom service, the system constructs a structured prompt that
+encodes the patient's symptoms, duration, severity, and relief factors as a natural
+language input message within the Mistral chat completion format. The model
+processes this through its transformer layers, generating output tokens
+autoregressively -- each output token is sampled from the probability distribution over
+the vocabulary conditioned on all preceding tokens, expressed as:
+
+                       P(x | x, ..., x) = softmax( W h )
+where h is the transformer's hidden state at position t and W is the output projection
+matrix mapping to vocabulary logits. The system instructs the model to respond only
+in valid JSON format, and the service then parses and normalizes the JSON output
+through the normalizeAssessment function. When the provider returns an error or
+capacity response, the buildFallbackAssessment function applies to a deterministic
+rule-based urgency classification as a safety net.
+
+                                                       14
+1.2.4 Agent Description
+Within MediScan, the AI component operates as a reactive intelligent agent in the
+sense defined by Russell and Norvig (2020): an entity that perceives its environment
+through inputs and produces actions based on those perceptions. The agent's
+environment is the patient's self-reported symptom profile. Its perception is the
+structured prompt constructed by the symptom service from the symptom names,
+duration value, severity score, and relief factor strings submitted by the patient. Its
+action is the generation of a structured clinical assessment containing an urgency
+level, a list of possible conditions, care recommendations, over-the-counter options
+where appropriate, and a medical disclaimer.
+The agent is a goal-based agent: its goal is to produce a clinically conservative,
+structured, and actionable triage assessment from the symptom input. It is not an
+autonomous agent in the sense of taking actions in the physical world. It does not
+access patient medical records, does not interact with external healthcare databases,
+and does not make clinical decisions. Its role is strictly advisory and informational: to
+assist patients in understanding the potential significance of their symptoms and in
+deciding whether to seek self-care, clinic care, urgent care, or emergency escalation
+before a formal clinical consultation. The system is explicit about this limitation through
+the mandatory disclaimer included in every assessment output.
+The agent operates in a single-turn, request-response interaction pattern. Each
+symptom analysis request is stateless: the model receives no memory of previous
+interactions, and each analysis is conducted independently. This design is intentional
+-- it prevents the model from making compound inferences across multiple sessions
+that could introduce diagnostic error, and it ensures that every assessment is
+grounded solely in the symptom data the patient has explicitly submitted for that
+session.
+
+                                                       15
+              Figure 2: AI Symptom Checker Agent Flow -- From Patient Input to Structured Assessment
+
+1.3 Aims
+
+1.3.1 Project Aims
+The following high-level aims guided the design and development of MediScan:
+
+    · To provide a centralized digital healthcare platform for patient triage, verified
+         doctor discovery, appointment handling, booking confirmation payment,
+         medicine inventory awareness, and structured follow-up care.
+
+                                                       16
+    · To improve coordination between patients, doctors, and administrators through
+         role-based workflows, AI-assisted symptom analysis, automated notifications,
+         and persistent medical interaction records.
+
+1.4 Objectives
+
+1.4.1 Project Objectives
+The following objectives were defined to operationalize the aims above:
+
+    1. To enable patients to register, authenticate via local or Google OAuth
+         credentials, access a verified doctor directory, book appointments, complete
+         booking confirmation payments, and receive consultation summaries and
+         notifications.
+
+    2. To allow doctors to manage controlled appointment schedules, record detailed
+         consultation outcomes, view patient record timelines, configure availability
+         settings, and handle care plan booking requests.
+
+    3. To support superadmin governance through doctor verification, user account
+         status management, care plan publishing and administration, and overall
+         platform data quality oversight.
+
+    4. To implement AI-assisted symptom triage using the Mistral large language
+         model, with a deterministic rule-based fallback, enabling patients to receive
+         structured urgency assessments, possible condition suggestions, and care
+         pathway guidance.
+
+    5. To provide care plan publishing, patient booking, and doctor handling workflows
+         as a structured longer-term treatment pathway option alongside standard
+         appointment booking.
+
+    6. To implement a comprehensive notification and email infrastructure covering
+         appointment lifecycle events, care plan actions, scan requests, and reminder
+         scheduling.
+
+                                                       17
+1.5 Artefact
+
+1.5.1 Functional Decomposition Diagram
+The Functional Decomposition Diagram in Figure 3 provides a hierarchical breakdown
+of MediScan from the top-level platform into its major functional domains and the
+individual operations supported within each. It serves as a structural overview of the
+system's capabilities and forms the foundation for the detailed subsystem designs in
+Section 5.
+
+                                                             [
+
+                                     Figure 3: Functional Decomposition Diagram of MediScan
+
+1.5.2 System as a Whole
+MediScan operates as a role-based, modular monolith web application. A single
+Express backend serves all three user roles simultaneously, with access control
+enforced at the API level through auth.middleware.js and requireRole.middleware.js.
+The React frontend delivers a tailored workspace based on the authenticated user's
+role, with RoleRoute.jsx and SuperadminRoute.jsx preventing unauthorised access to
+role-specific pages. All data has persisted in MongoDB with Mongoose providing
+schema validation, population referenced documents, and timestamp management
+across all collections.
+
+                                                       18
+Each feature module in the backend encapsulates its own controller, service, routes,
+and DTO validators. Business logic sits in the service layer, keeping controllers thin
+and focused on request mapping and response formatting. This layered service
+architecture ensures that the symptom analysis logic, appointment state machine, care
+plan booking workflow, and notification dispatch can each be modified independently
+without cascading changes across the codebase.
+
+1.5.3 Subsystem Descriptions
+MediScan is composed of eight functional subsystems, described below:
+
+    1. Authentication and Access: Manages local registration and login for all three
+         roles, JWT issuance and cookie-based session management, Google OAuth
+         sign-in for patients and doctors, doctor-specific Google onboarding
+         continuation, Google Calendar OAuth connection and disconnection, and role-
+         based frontend route protection.
+
+    2. User and Superadmin Governance: Provides a public verified doctor directory
+         with search and filter, individual doctor profile pages with availability checking,
+         and superadmin controls for listing all users, verifying doctor credentials,
+         toggling user active status, updating user profiles, and permanently deleting
+         user accounts.
+
+    3. Symptom Checker: Accepts patient symptom profiles including symptom
+         selection, duration, severity, and relief factors, submits a structured clinical
+         prompt to the Mistral AI chat completion API, normalizes the response into a
+         structured assessment with urgency level and care guidance, applies a rule-
+         based fallback when the AI provider is unavailable, and enables PDF export of
+         the assessment result.
+
+    4. Appointment Management: Supports the complete appointment lifecycle
+         including patient booking with slot conflict and capacity validation, doctor
+         confirmation and rejection, patient and doctor rescheduling workflows, patient
+         and doctor cancellation, doctor consultation note recording with diagnosis,
+         prescription, scan requests, and follow-up creation, patient and doctor
+         document uploads, patient summary acknowledgement tracking, doctor patient
+         record timeline generation, and automated appointment reminder scheduling.
+
+                                                       19
+    5. Care Plan Management: Allows superadmin to create, edit, activate,
+         deactivate, and delete care plans with assigned doctor requirements and
+         specialty matching. Patients may browse active public plans and submit
+         booking requests. Doctors manage their care plan, booking queues and update
+         booking statuses. Booking confirmation includes payment completion.
+
+    6. Payment and Medicine Inventory: Handles payment completion as part of the
+         booking confirmation for appointments and care plan bookings. Maintains a
+         simple medicine inventory record for staff to review and update basic medicine
+         stock availability.
+
+    7. Notifications and Email: Creates in-app notification records for all significant
+         system events, exposes an inbox with unread counting and read-state
+         management, and sends SMTP-based welcome and notification emails when
+         configured.
+
+    8. System Monitoring and Documentation: Exposes a health check endpoint
+         reporting API and database status, provides a frontend health dashboard with
+         auto-refresh, and publishes interactive Swagger API documentation.
+
+1.6 Academic Question
+
+1.6.1 Detailed Explanation of the Academic Question
+The academic question driving this project is: To what extent does AI-assisted
+symptom triage improve early healthcare support compared to manual symptom self-
+assessment?
+
+This question addresses a gap in outpatient digital healthcare: the period between a
+patient noticing symptoms and deciding to seek medical attention. In the absence of
+clinical guidance, patients commonly resort to general web searches, which produce
+unfiltered results ranging from accurate clinical information to misleading or anxiety-
+inducing content. Manual self-assessment tools such as static symptom lists or
+condition databases require patients to navigate complex medical terminology without
+contextual interpretation of their specific combination of symptoms, duration, and
+severity.
+
+AI-assisted triage, as implemented in MediScan, addresses this gap by interpreting
+the patient's symptom profile as a whole -- not as a list of individual conditions -- and
+
+                                                       20
+generating a contextualized assessment that classifies urgency, suggests possible
+conditions, recommends appropriate care pathways, and provides actionable
+guidance. The use of a large language model for this purpose leverages NLP
+capabilities that general-purpose search engines do not provide: the ability to reason
+over the combination of symptoms, to apply conservative clinical framing, and to
+generate a coherent, structured, and readable assessment tailored to the specific
+input.
+
+The academic question is explored further in Section 2 through a review of relevant
+literature on AI in clinical decision support and NLP-based symptom analysis, and in
+Section 7 through a critical evaluation of the extent to which MediScan's
+implementation delivers the decision support improvements it was designed to
+provide.
+
+1.7 Scope and Limitations
+
+The implemented scope of MediScan covers all functionality evidenced by working
+backend service logic, API endpoints, and corresponding frontend interface
+components. This includes: local and Google OAuth authentication for all three roles;
+public verified doctor directory; appointment booking lifecycle with slot validation;
+doctor consultation note management; patient record timeline generation; AI-assisted
+symptom triage with Mistral integration and rule-based fallback; PDF export of
+symptom assessments; care plan publishing, booking, and management; booking
+confirmation payment handling; simple medicine inventory tracking; in-app notification
+inbox with email integration; automated appointment reminder scheduling; Google
+Calendar connect and disconnect; Swagger API documentation; and frontend health
+monitoring.
+
+The following limitations exist in the current implementation. No automated test files
+were found in the codebase -- no Jest, React Testing Library, or backend integration
+tests are present, which represents a significant engineering gap for a system of this
+clinical nature. Google Calendar synchronization exists as a service but does not
+appear to be invoked from appointment mutations, meaning appointment events are
+not automatically created, updated, or deleted in connected doctor calendars.
+Authentication defaults include insecure fallback values for the JWT secret and
+
+                                                       21
+superadmin setup key that must be overridden in production deployments. File
+uploads are handled as base64 JSON payloads rather than multipart streams, which
+creates memory pressure for large files. Most admin and listing endpoints do not
+implement pagination. No audit log entity records superadmin actions such as user
+blocking or verification. Some frontend pages exist in the codebase but are not
+exposed through the router, indicating incomplete feature iterations.
+
+1.8 Report Structure
+
+This report is structured as follows. Section 1 constitutes the introduction covering the
+project briefing, AI implementation analysis, aims, objectives, artefact overview,
+academic question, and scope and limitations. Section 2 presents the literature review
+examining foundational research on HRIS, AI in clinical decision support, and
+comparable systems. Section 3 describes the project methodology. Section 4
+documents the technologies and tools used with justification. Section 5 presents the
+full artefact designs for each subsystem including SRS, UML diagrams, and testing
+evidence including unit and integration test cases. Section 6 provides the conclusion.
+Section 7 offers a critical evaluation. Section 8 provides evidence of project
+management. Section 9 contains all references. Section 10 includes appendices.
+
+                                                       22
+2. Literature Review
+
+2.1 Digital Healthcare Platforms and Patient-Centred Systems
+
+The digitization of outpatient healthcare services has been the subject of sustained
+academic attention since the early proliferation of electronic health record systems.
+Ludwick and Doucette (2009) conducted an extensive review of electronic health
+record adoption and found that the most significant barriers to adoption were not
+technological but organizational: the fragmentation of clinical workflows across
+disconnected systems, and the absence of unified platforms that could serve multiple
+stakeholder roles simultaneously. MediScan addresses both barriers directly by
+integrating patient-facing, doctor-facing, and administrative functionality within a single
+platform with shared data persistence.
+
+Eysenbach (2001) defined eHealth as health services and information delivered or
+enhanced through the internet, and identified accessibility, quality, and interactivity as
+its core dimensions. MediScan is an eHealth platform in this sense: it is web-based,
+provides patient access to verified clinical information and services, and supports
+interactive workflows between patients and doctors. The role-based architecture
+ensures that each user group receives an interface tailored to their specific needs and
+permissions, addressing the quality and relevance dimensions of eHealth as
+Eysenbach defines them.
+
+Research on appointment management systems by Marcu et al. (2020) identified
+double-booking, lack of real-time availability information, and poor consultation record
+continuity as the primary operational pain points in outpatient scheduling. MediScan
+addresses all three through the activeSlotKey uniqueness constraint preventing
+double-booking, the getDoctorAvailability endpoint providing real-time slot information,
+and the getDoctorPatientRecord timeline function maintaining consultation continuity
+across appointments.
+
+2.2 AI in Clinical Decision Support and Symptom Triage
+
+The application of artificial intelligence to clinical decision support is one of the most
+rapidly evolving areas of health informatics research. Topol (2019) provides a
+comprehensive analysis of how deep learning and natural language processing are
+transforming medicine, arguing that AI systems can augment clinical decision-making
+
+                                                       23
+by processing complex, multi-dimensional patient data at a scale and speed that
+exceeds human capacity. MediScan's symptom checker implements a bounded
+version of this principle: rather than making clinical diagnoses, it applies NLP-based
+reasoning to generate structured triage guidance that helps patients contextualise their
+symptoms before seeking care.
+
+Peng et al. (2022) evaluated large language models for medical question answering
+and found that transformer-based models, when appropriately prompted, could
+produce clinically relevant responses to symptom queries with accuracy comparable
+to non-specialist medical reference sources. Their analysis highlighted the importance
+of prompt structure in eliciting reliable medical responses -- a finding directly reflected
+in MediScan's symptom service, which constructs a carefully structured clinical prompt
+specifying the desired output format, conservative safety framing, and JSON response
+requirements before submitting the patient's symptom data to the Mistral model.
+
+Jiang et al. (2023) introduced the Mistral 7B model and demonstrated its performance
+across a range of reasoning and language understanding benchmarks, showing that
+it outperforms larger models from prior generations on several metrics due to its use
+of Grouped Query Attention and Sliding Window Attention. For a symptom triage use
+case, these architectural improvements are relevant because they enable the model
+to efficiently process longer prompts that include detailed symptom context without
+degraded performance. The model's instruction-following capability, established
+through its fine-tuning process, is what enables MediScan to reliably elicit structured
+JSON output from a natural language prompt.
+
+Ouyang et al. (2022) describe the InstructGPT approach of using reinforcement
+learning from human feedback to align large language models with human instructions
+and preferences. Mistral models trained with similar instruction-following fine-tuning
+approaches inherit this alignment property, which is critical for a clinical application
+where the model must consistently produce conservative, safety-first language and
+refuse to provide diagnostic certainty. MediScan's system prompt explicitly instructs
+the model to avoid claiming diagnostic certainty and to recommend professional
+consultation, which aligns with the instruction-following behaviour that fine-tuned
+models are specifically optimised to exhibit.
+
+                                                       24
+2.3 Comparable Systems
+
+2.3.1 Commercial Healthcare Platforms
+
+Practo is a widely used digital health platform in South Asia providing doctor discovery,
+appointment booking, and teleconsultation services (Practo, 2025). Compared to
+MediScan, Practo operates at commercial scale with thousands of verified doctors,
+payment gateway integrations, and mobile applications. However, Practo does not
+expose its implementation architecture for academic analysis, and its symptom
+assessment features are limited to simple keyword matching rather than LLM-based
+natural language triage. MediScan provides a more transparent and educationally
+significant artefact as an open, fully custom-built system.
+
+Ada Health is an AI-powered symptom assessment application that uses a
+probabilistic symptom model to generate differential diagnoses (Ada, 2025). Ada's
+approach is based on Bayesian inference and structured medical ontologies,
+contrasting with MediScan's approach of leveraging a general-purpose LLM for free-
+form natural language symptom description. Ada's strength is probabilistic precision;
+MediScan's strength is natural language flexibility -- patients can describe symptoms
+in their own words rather than navigating a constrained structured input tree. Devlin et
+al. (2019) note that transformer models trained on large corpora develop strong
+contextual understanding of medical language, which may enable MediScan to handle
+ambiguous or colloquial symptom descriptions that structured systems would
+misclassify or fail to accept.
+
+Zocdoc provides doctor discovery and appointment booking but does not include
+symptom assessment functionality (Zocdoc, 2025). MediScan extends beyond
+Zocdoc's scope by integrating symptom triage, consultation record management, care
+plans, and a notification infrastructure into a single platform.
+
+2.3.2 Academic Prototype Systems
+
+Ahmed et al. (2021) present a web-based telemedicine system for rural healthcare in
+developing economies that combines appointment booking with basic symptom input,
+using keyword matching to suggest relevant doctor specialisations. Compared to
+MediScan, their system implements a narrower symptom analysis approach --
+keyword matching rather than LLM-based NLP -- and does not support consultation
+
+                                                       25
+record continuity, document uploads, or care plans. MediScan's integration of AI-
+assisted NLP triage with a complete outpatient workflow platform represents a more
+comprehensive approach.
+
+Comendador et al. (2020) describe PhilNITS, a web-based health information and
+triage system for the Philippines that uses rule-based symptom scoring to classify
+urgency. Their rule-based approach provides deterministic and explainable triage
+results but cannot handle symptom combinations or contextual nuances that fall
+outside the predefined rule set. MediScan implements both approaches: the Mistral
+LLM provides contextual, language-aware triage for normal operation, and the rule-
+based buildFallbackAssessment function provides deterministic triage as a safety
+fallback when the AI provider is unavailable. This hybrid architecture is consistent with
+the recommendation of Topol (2019) that AI-augmented clinical systems should
+always maintain a non-AI pathway for safety-critical decision points.
+
+2.4 AI Algorithm Performance and Related Research
+
+2.4.1 Research Papers and Algorithm Analysis
+
+The foundational algorithm underlying MediScan's AI component is the transformer
+architecture introduced by Vaswani et al. (2017) in the landmark paper Attention Is All
+You Need. The transformer replaces the recurrent computation of prior sequence
+models with a parallelisable self-attention mechanism, enabling training on large
+corpora and inference at significantly greater speed. The mathematical basis of the
+attention mechanism, as described in Section 1.2.3, enables the model to capture
+semantic relationships between symptom descriptions and clinical concepts
+regardless of their distance within the input sequence, which is essential for triage
+reasoning that must relate symptom duration, severity, and specific symptom names
+to urgency classifications.
+
+Jiang et al. (2023) benchmark Mistral 7B against comparable open-weight models
+including LLaMA 2 7B and LLaMA 2 13B on reasoning, reading comprehension, and
+language understanding tasks. Their results show that Mistral 7B achieves higher
+scores than LLaMA 2 13B on several benchmarks despite having fewer parameters,
+attributing this efficiency to the GQA and SWA architectural improvements. For
+MediScan's deployment context, this performance advantage translates to lower
+
+                                                       26
+latency and lower cost per API call for the symptom checker compared to using a
+larger baseline transformer model. Ainslie et al. (2023) demonstrate that GQA reduces
+memory bandwidth requirements during inference by a factor equal to the grouping
+ratio, which contributes to the model's practical usability in a web application context
+where response latency directly affects user experience.
+
+2.4.2 Intelligence Goals and Ideas Behind the AI
+
+The intelligence that MediScan's symptom checker attempts to achieve is
+conservative clinical reasoning under uncertainty -- a capability that has been a
+central objective of AI in medicine since the earliest expert systems of the 1970s. The
+MYCIN expert system (Shortliffe, 1976, as cited in Topol, 2019) demonstrated that
+rule-based AI could match specialist performance in narrow clinical domains such as
+bacterial infection identification. Modern large language models generalise this
+capability across a far broader range of symptom presentations through learned
+statistical patterns rather than manually encoded rules.
+
+The specific intelligence goal of MediScan's AI is to replicate the initial triage reasoning
+that a competent non-specialist would apply when presented with a patient's symptom
+profile: classifying the urgency level, identifying the most plausible categories of
+conditions consistent with the symptoms, recommending the appropriate care
+pathway, and providing practical immediate guidance -- all while maintaining a
+conservative, safety-first posture that avoids overconfidence in any specific diagnosis.
+This goal is operationalised through the system prompt structure, which instructs the
+model on the output format, the urgency classification schema, and the safety
+language requirements.
+
+2.4.3 Algorithm Performance Comparison
+
+A meaningful performance comparison for MediScan's AI component involves
+comparing the LLM-based approach against the rule-based fallback approach
+implemented within the same system. The rule-based buildFallbackAssessment
+function classifies urgency based on a simple severity threshold: a severity score
+above a fixed threshold triggers a high urgency classification, otherwise a lower
+urgency classification is assigned. This approach is fast, deterministic, and requires
+
+                                                       27
+no external API call, but it cannot differentiate between symptom combinations that
+share the same severity score while having significantly different clinical implications.
+The LLM-based approach, by contrast, considers the combination of symptom names,
+their number, duration, severity, and relief factors as a holistic input. A patient
+presenting with chest pain, shortness of breath, and left arm numbness would receive
+a different urgency classification than a patient presenting with a headache and mild
+fatigue, even if both have the same numerical severity score. This combinatorial
+reasoning is the core performance advantage of the LLM approach over rule-based
+alternatives, and is consistent with the findings of Peng et al. (2022), who
+demonstrated that LLM-based medical question answering significantly outperforms
+rule-based keyword systems on symptom assessment tasks requiring contextual
+reasoning.
+The trade-off is determinism and explainability. The rule-based fallback always
+produces the same output for the same input, which is auditable and predictable. The
+LLM may produce subtly different outputs for the same input across different sessions
+due to the probabilistic nature of token sampling. MediScan mitigates this through a
+fixed temperature setting in the API call (temperature 0.3, set to reduce randomness)
+and through the normaliseAssessment function, which maps the model's output to a
+standardised structure regardless of minor wording variations.
+
+                                                       28
+3. Project Methodology
+
+3.1 Methodology Selection
+
+The development methodology for MediScan was selected based on the project's
+context: a single developer building a multi-module healthcare web application with an
+AI integration component, where the full implementation details of complex modules
+such as the symptom triage pipeline, appointment state machine, and care plan
+workflow could only be determined through iterative implementation rather than
+complete upfront specification.
+
+Plan-driven approaches such as the Waterfall model (Royce, 1970) were considered
+and rejected because they require all requirements to be fully specified before
+implementation begins, which is impractical for a system where the AI integration
+behavior, the appointment rescheduling state logic, and the Google Calendar
+synchronization approach all required experimentation and refinement through the act
+of building. Agile frameworks were therefore considered, with Scrum selected as the
+most appropriate for the reasons described in Section 3.2.
+
+DSDM was considered but rejected due to its formal multi-stakeholder governance
+model designed for commercial team environments (Stapleton, 1997). XP was also
+considered; its practices of continuous integration and refactoring were informally
+followed during development, but the full XP discipline including mandatory test-first
+development for all modules was not proportionate to a solo developer project with
+twelve phases to deliver (Beck, 1999).
+
+3.2 Justification of Scrum
+
+Scrum was selected because its sprint-based iterative delivery model aligns directly
+with the modular architecture of MediScan. Each backend feature module --
+authentication, users, symptoms, appointments, care plans, notifications --
+represents a discrete, independently deliverable unit of functionality that maps cleanly
+to a sprint deliverable. The development approach of implementing each module as a
+complete vertical slice before moving to the next is precisely consistent with Scrum's
+principle of delivering a potentially shippable increment at the end of each sprint
+(Schwaber and Sutherland, 2020).
+
+                                                       29
+The modular structure of the codebase also provides evidence of iterative, sprint-
+aligned delivery. The backend is organized by feature module under the module's
+directory, and the frontend pages are added by role and concern rather than as a
+single monolithic build. The presence of partially integrated features such as Google
+Calendar sync and unused frontend pages confirms that development proceeded
+incrementally, with later sprints extending the system built in earlier ones rather than
+redesigning it.
+Scrum's emphasis on inspection and adaptation was particularly relevant for the
+symptom checker module, which required multiple iterations of prompt engineering to
+produce consistently structured JSON output from the Mistral model, and for the
+appointment state machine, where edge cases in the rescheduling and cancellation
+flows emerged only during implementation and required design refinement.
+
+3.3 Gantt Chart
+
+Figure 4 presents the Gantt chart for the MediScan project, illustrating the twelve
+development phases, their durations, and milestone deliverables derived from the
+modular structure of the codebase.
+
+                      Figure 4: Project Gantt Chart -- MediScan Development Phases and Milestones
+
+                                                       30
+The table below provides a detailed breakdown of each development phase:
+
+Phase Focus          Duration Key Deliverables             Milestone
+
+1   Monorepo         1 week npm workspace, api and         Monorepo
+
+    setup and               client packages, README,       initialised
+
+    scaffolding             lint config, concurrently
+
+2   API foundation 1 week env.js, db.js, app.js, index.js, API foundation
+
+                            health.routes.js, Swagger      operational
+
+                            docs
+
+3   Authentication 2 weeks User model, DTO validation, Authentication
+
+    and access              JWT login and logout, me,      complete
+
+                            password change, route
+
+                            guards, RoleRoute,
+
+                            SuperadminRoute
+
+4   User             2 weeks Superadmin bootstrap, admin User
+
+    governance              layouts, user listing, doctor  governance
+
+                            verification, block and activate complete
+
+                            and delete workflows
+
+5   Doctor           1.5    Public DoctorsPage,            Doctor
+
+    discovery        weeks  DoctorDetailPage, verified     discovery live
+
+                            doctor listing, availability
+
+                            queries
+
+6   Appointment 3 weeks Appointment model, booking, Appointment
+
+    management              confirm and reject, patient    workflow
+
+                            and doctor dashboards          operational
+
+7   Clinical         2.5    Consultation details, medical  Clinical record
+                     weeks  documents, summary             workflow
+    records                 tracking, patient record       complete
+                            timeline, follow-up creation
+
+8   Symptom          2 weeks symptom.service.js,           AI symptom
+
+    checker with AI         analyzeSymptoms.dto.js,        checker
+
+                            Mistral integration, fallback, complete
+
+                            symptomchecker.jsx, PDF
+
+                            export
+
+9   Care plan        2 weeks CarePlan and                  Care plan
+
+    subsystem               CarePlanBooking modules, subsystem live
+
+                            admin authoring, patient
+
+                            booking, doctor request
+
+                            handling
+
+10  Payment and 1.5         Booking confirmation           Operational
+
+    inventory        weeks  payment flow, simple           transaction
+
+                            medicine inventory screens     support
+
+                                                           complete
+
+                            31
+Phase Focus        Duration Key Deliverables             Milestone
+
+11  Notifications  2 weeks  Notification model and       Automation
+                            service, navbar inbox,       and
+    and                     welcome emails, reminder     integrations
+                            scheduler, Google OAuth,     complete
+    integrations            Google Calendar
+                                                         Final
+12  UI refinement  1.5      Dark mode, role dashboards,  integration
+                   weeks    responsiveness, cleanup,     milestone
+    and final               documentation
+
+    integration
+
+                            32
+4. Technologies and Tools Used
+
+4.1 Justification of Technologies
+
+Every technology choice in MediScan was made based on its suitability for a role-
+based, modular healthcare web application with AI and external API integrations. This
+section documents the key technologies and provides justification for each.
+
+4.2 Backend Technologies
+
+4.2.1 Node.js and Express
+Node.js provides the runtime environment for the MediScan backend. Its non-blocking,
+event driven by I/O model is well-suited to a healthcare application with multiple
+concurrent connections, asynchronous database queries, and external API calls to the
+Mistral AI provider and Google services. Express is a minimal, un-opinionated Node.js
+framework that provides HTTP routing, middleware chaining, and REST API
+construction without imposing a rigid application structure. It was selected over more
+opinionated alternatives because it allows the modular feature-based directory
+organization used in MediScan without the structural overhead of a framework like
+NestJS. Morgan provides development request logging and cookie-parser enables
+server-side reading of HTTP Only auth_token cookie.
+
+4.2.2 MongoDB and Mongoose
+MongoDB is a document-oriented NoSQL database selected because MediScan's
+data model includes several entities with complex embedded subdocuments that are
+awkward to normalize into relational tables. The Appointment model contains
+embedded medicalDocuments arrays, embedded availability subdocuments, and
+flexible consultation fields that vary in completeness across appointments at different
+lifecycle stages. MongoDB's flexible document schema accommodates this variability
+natively. Mongoose provides schema definition with field-level validation, population
+of referenced documents across collections, automatic timestamp management, and
+a query builder that integrates cleanly with the service-layer architecture.
+
+                                                       33
+4.2.3 JWT and bcryptjs
+
+Authentication uses JSON Web Tokens issued by jsonwebtoken and stored in
+HttpOnly cookies via the setAuthCookie utility. The HttpOnly flag prevents client-side
+JavaScript from reading the token, mitigating cross-site scripting risks. bcryptjs is used
+for password hashing before persistence and for comparison during login,
+implementing the adaptive cost-factor approach that provides resistance against
+brute-force attacks (Provos and Mazieres, 1999).
+
+4.2.4 Mistral AI Integration
+
+The symptom checker module integrates with the Mistral AI chat completion API
+through the native Node.js Fetch API. The service constructs a structured prompt with
+the patient symptom data and submits it as a chat completion request to
+config.mistralBaseUrl. The model string and API key are configurable through
+environment variables, allowing the system to be pointed at either the official Mistral
+API or an OpenRouter-compatible endpoint. The use of the Fetch API rather than a
+dedicated Mistral SDK keeps the dependency footprint small and aligns with the
+system's principle of preferring native web platform APIs over additional libraries.
+
+4.2.5 Google OAuth and Calendar API
+
+Google OAuth is implemented through googleOAuth.service.js, which handles the
+OAuth 2.0 authorization code flow for social sign-in. Upon callback, the service creates
+or updates a user record with the Google identity and issues an application JWT. The
+Google Calendar API integration in googleCalendar.service.js provides doctor
+schedule synchronization, allowing appointment events to be created, updated, and
+deleted in a connected doctor's Google Calendar. While the sync service exists and is
+partially implemented, it is not currently called appointment mutations as noted in the
+limitations.
+
+4.2.6 Nodemailer and Swagger
+
+Nodemailer is used in mailer.service.js to send welcome emails and notification emails
+over a configurable SMTP connection. Email sending is wrapped in a non-blocking
+async pattern so that email failures do not block core transaction completion. Swagger
+documentation is generated from JSDoc route annotations by swagger-jsdoc and
+
+                                                       34
+served through an interactive UI at /api/docs by swagger-UI-express, providing a live
+API reference for development and testing.
+
+4.3 Frontend Technologies
+
+4.3.1 React and React Router
+React provides the component-based architecture for the MediScan frontend. Its
+unidirectional data flow, hooks-based state management, and Context API are used
+throughout for managing authentication state in AuthContext.jsx, patient appointment
+state in usePatientAppointments.js, and doctor dashboard state in
+useDoctorDashboard.js. React Router v6 provides the public, patient, doctor, and
+admin route separation with RoleRoute.jsx and SuperadminRoute.jsx enforcing role-
+based access at the frontend level.
+
+4.3.2 Tailwind CSS, Radix UI, and Supporting Libraries
+Tailwind CSS 3 is used for utility-first styling across all dashboard pages, public pages,
+and modal components. Radix UI provides the accessible dialog primitive used
+throughout the application for appointment booking dialogs, care plan forms,
+consultation modals, and confirmation dialogs. framer-motion provides the animation
+transitions on the symptom checker wizard and homepage components. jsPDF is used
+for client-side PDF generation of the symptom assessment report. lucide-react
+provides consistent iconography. react-hot-toast provides lightweight feedback
+notifications. class-variance-authority, clsx, and tailwind-merge handle Tailwind class
+management in reusable components.
+
+4.4 Development Tools
+
+npm workspaces manages the api and client packages within the monorepo, with
+concurrently enabling both applications to run simultaneously from a single npm run
+dev command. nodemon provides hot-reload for the backend during development.
+ESLint is configured on both the backend and frontend for code quality enforcement.
+Git provides version control. The Fetch API is used throughout both the backend's
+external API calls and the frontend's server communication instead of Axios, keeping
+the dependency tree smaller while aligning with native web platform capabilities.
+
+                                                       35
+5. Artefact Designs
+
+This section presents the detailed artefact designs for each subsystem of MediScan.
+Each subsystem is documented with Software Requirements Specification, design
+and modelling diagrams, and testing evidence. The subsystems are presented in the
+order in which they were developed.
+
+5.1 Subsystem 1: Authentication and Access
+
+5.1.1 Software Requirements Specification
+
+Functional Requirements
+    FR1: The system shall allow patients and doctors to register through the register
+    endpoint with role-specific field validation.
+    FR2: The system shall support one-time superadmin bootstrap through the
+    register-superadmin endpoint requiring a valid setup key.
+    FR3: The system shall authenticate users via the login endpoint, validating
+    credentials and issuing a JWT stored in an HttpOnly cookie.
+    FR4: The system shall support Google OAuth sign-in for patients and doctors,
+    creating or updating user records on callback.
+    FR5: The system shall support doctor-specific Google onboarding profile
+    completion after initial OAuth sign-in.
+    FR6: The system shall allow doctors to connect and disconnect Google Calendar
+    OAuth.
+    FR7: The system shall expose a me endpoint returning the current authenticated
+    user's profile.
+    FR8: The system shall allow authenticated users to change their password through
+    the change-password endpoint.
+
+Non-Functional Requirements
+    NFR1: Passwords must be hashed using bcrypt before persistence and never
+    stored in plain text.
+    NFR2: All protected routes must validate the JWT through auth.middleware.js
+    before processing any request.
+
+                                                       36
+    NFR3: Role-specific routes must enforce the correct role through
+    requireRole.middleware.js.
+    NFR4: Authentication cookies must be set with the HttpOnly flag.
+Constraints
+Depends on JWT_SECRET and SUPERADMIN_SETUP_KEY environment variables.
+Google OAuth flows require GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+and callback URL configuration.
+5.1.2 Design and Modelling Diagrams
+
+                                 Figure 5: Activity Diagram -- User Registration and Login Flow
+
+                                                       37
+ Figure 6: Sequence Diagram -- Login Interaction across Frontend, AuthController, AuthService, and MongoDB
+
+                                          Figure 7: Wireframe -- Sign In and Sign Up Pages
+
+5.1.3 Testing
+Manual testing verified login with valid credentials redirects to the correct role
+dashboard, invalid credentials return a 401 error, a blocked user account cannot log
+in, and the me endpoint returns the correct user profile after authentication.
+
+                                                       38
+5.2 Subsystem 2: User and Superadmin Governance
+
+5.2.1 Software Requirements Specification
+Functional Requirements
+
+    FR1: The system shall expose a public verified doctor listing showing only
+    isVerified doctors.
+    FR2: The system shall provide individual doctor profile pages showing
+    specialization, qualification, experience, and availability.
+    FR3: The system shall allow superadmin to list all users, update user details, verify
+    doctors, block and activate accounts, and delete users.
+    FR4: The system shall prevent superadmins from blocking their own account.
+Non-Functional Requirements
+    NFR1: Public doctor listing must never expose unverified or inactive doctor
+    records.
+    NFR2: Doctor records must maintain unique constraints on email and NMC
+    number.
+Constraints
+NMC number is only valid for the doctor's role. Doctor records require valid
+specialization, qualification, and experience years values from the defined constants.
+
+                                                       39
+5.2.2 Design and Modelling Diagrams
+
+                                    Figure 8: Activity Diagram -- Doctor Verification Workflow4
+
+                                                       40
+                               Figure 9: Wireframe -- Doctor Directory and Doctor Profile Pages
+
+                            Figure 10: Use Case Diagram -- Superadmin Governance Operations
+
+5.2.3 Testing
+Testing confirmed that unverified doctors do not appear in the public directory, doctor
+verification toggles correctly from the admin panel, and the superadmin self-block
+safeguard returns a 400 error.
+
+5.3 Subsystem 3: AI Symptom Checker
+
+                                                       41
+5.3.1 Software Requirements Specification
+Functional Requirements
+
+    FR1: The system shall accept a structured symptom payload including symptoms
+    array, duration, severity, and reliefFactors through the analyze endpoint.
+    FR2: The system shall validate the symptom analysis payload using
+    validateAnalyzeSymptomsDto before processing.
+    FR3: The system shall submit a structured clinical prompt to the Mistral AI chat
+    completion API through requestMistralAssessment.
+    FR4: The system shall parse and normalise the AI response through
+    normalizeAssessment into a structured assessment object.
+    FR5: The system shall apply a rule-based fallback through
+    buildFallbackAssessment when the AI provider returns a capacity or error
+    response.
+    FR6: The frontend shall allow users to export the assessment result as a PDF
+    through exportToPDF.
+Non-Functional Requirements
+    NFR1: The symptom checker must respond with conservative, safety-first
+    language in all assessment outputs.
+    NFR2: The AI request must include a timeout to prevent the application from
+    hanging on unresponsive provider calls.
+    NFR3: The system must never depend solely on the AI response -- the fallback
+    must always be producible.
+
+Constraints
+Requires MISTRAL_API_KEY or OPENROUTER_API_KEY environment variable for
+live AI responses. Fallback is always available regardless of API configuration.
+
+5.3.2 Design and Modelling Diagrams
+
+                                                       42
+Figure 11: Activity Diagram -- Symptom Checker Flow from Patient Input to Assessment Output
+
+                                              43
+             Figure 12: Sequence Diagram -- Symptom Analysis Request through Backend to Mistral API
+
+                      Figure 13: Wireframe -- Symptom Checker Page and Assessment Result Modal
+
+5.3.3 Testing
+Testing verified that a valid symptom payload returns a structured assessment with
+urgency level, possible conditions, and care recommendations, that an invalid duration
+value returns a 400-validation error, and that removing the API key triggers the rule-
+based fallback assessment.
+
+                                                       44
+5.4 Subsystem 4: Appointment Management
+
+5.4.1 Software Requirements Specification
+
+Functional Requirements
+    FR1: The system shall allow patients to request appointments through the
+    createAppointment endpoint with slot conflict and capacity validation.
+    FR2: The system shall expose doctor availability by future date through
+    getAvailabilityForDoctor, excluding booked, blocked, and break slots.
+    FR3: The system shall allow doctors to confirm or reject pending appointments
+    through updateAppointmentStatus.
+    FR4: The system shall support patient and doctor rescheduling flows with state-
+    dependent logic through rescheduleAppointment.
+    FR5: The system shall support patient, and doctor cancellation flows through
+    cancelAppointment.
+    FR6: The system allow doctors to record consultation outcomes through
+    updateDoctorAppointmentConsultation including notes, diagnosis, prescription,
+    and scan requests.
+    FR7: The system shall allow patients and doctors to upload appointment
+    documents.
+    FR8: The system shall allow doctors to create follow-up appointments.
+    FR9: The system shall generate a chronological patient record timeline through
+    getDoctorPatientRecord.
+    FR10: The system will run automated appointment reminders through
+    runAppointmentReminderSweep.
+
+Non-Functional Requirements
+    NFR1: Double-booking must be prevented through activeSlotKey uniqueness and
+    slot conflict validation.
+    NFR2: Only future dates may be booked or rescheduled.
+    NFR3: Uploaded files must be stored as normalised filenames and URLs under
+    the uploads directory.
+
+                                                       45
+Constraints
+Appointments depend on verified and active doctor accounts. Slot format must match
+HH:MM-HH:MM. File uploads are sent as base64 data URLs.
+5.4.2 Design and Modelling Diagrams
+
+                                Figure 14: Activity Diagram -- Patient Appointment Booking Flow
+
+                                                       46
+Figure 15: Activity Diagram -- Doctor Consultation Completion Flow
+
+                                47
+                Figure 16: Sequence Diagram -- Appointment Booking Request
+Figure 17: Wireframe -- Patient Appointments Page and Doctor Appointment Detail Page
+
+                                           48
+                                     Figure 18: ERD -- Appointment Entity and Relationships
+
+5.4.3 Testing
+Testing verified appointment creation with valid slot, duplicate slot booking rejection,
+doctor confirmation status change, cancellation with reason, consultation note
+recording, and patient timeline generation for a doctor with multiple completed
+appointments.
+
+5.5 Subsystem 5: Care Plan Management
+
+5.5.1 Software Requirements Specification
+Functional Requirements
+
+    FR1: The system shall list active public care plans through listPublicCarePlans.
+    FR2: The system shall allow superadmin to create, edit, activate, deactivate, and
+    delete care plans with at least one assigned doctor.
+
+                                                       49
+    FR3: The system shall validate that assigned doctors match the care plan specialty
+    and are verified and active.
+    FR4: The system shall allow patients to submit care plan booking requests through
+    createBooking.
+    FR5: The system shall allow doctors to update booking status through
+    updateBookingStatus.
+    FR6: The system shall treat payment as completed during booking confirmation.
+Non-Functional Requirements
+    NFR1: Care plan slug values must be unique.
+    NFR2: Deleting a care plan must be blocked if bookings already exist.
+Constraints
+Price must be available during booking confirmation for the payment step. Assigned
+doctors must hold the matching specialization.
+
+                                                       50
+5.5.2 Design and Modelling Diagrams
+
+                  Figure 19: Activity Diagram -- Care Plan Booking Request and Doctor Response Flow
+            Figure 20: Wireframe -- Public Care Plans Page and Admin Care Plan Management Interface
+
+                                                       51
+                                   Figure 21: ERD -- Care Plan and Care Plan Booking Entities
+
+5.5.3 Testing
+Testing confirmed care plan creation with valid assigned doctors, rejection of plans
+with mismatched doctor specialization, patient booking creation, doctor booking status
+update, and deletion block when bookings exist.
+
+5.6 Subsystem 6: Payment and Medicine Inventory
+
+5.6.1 Software Requirements Specification
+Functional Requirements
+
+    FR1: The system shall complete payment during booking confirmation for
+    appointments and care plan bookings.
+    FR2: The system shall store the booking price used at confirmation time within the
+    booking record.
+    FR3: The system shall maintain a simple inventory record for medicine availability
+    tracking.
+
+                                                       52
+    FR4: The system shall allow authorized staff to review and update current medicine
+    stock status.
+Non-Functional Requirements
+    NFR1: Payment confirmation must be reflected immediately in the booking
+    workflow before booking finalization.
+    NFR2: Medicine inventory must remain simple and easy for staff to review and
+    update.
+Constraints
+Payment is handled as a booking-confirmation workflow step in project scope.
+Medicine inventory is intentionally simple and does not cover full pharmacy supply
+chain management.
+5.6.2 Design and Modelling Diagrams
+
+                              Figure 22: Activity Diagram -- Booking Confirmation Payment Flow
+
+                                                       53
+                  Figure 23: Wireframe -- Booking Confirmation Screen and Medicine Inventory Screen
+
+5.6.3 Testing
+Testing verified that booking confirmation correctly reflects the payable amount from
+the care plan price, that a confirmed booking enters the notification workflow, and that
+medicine stock update persists the new quantity.
+
+5.7 Subsystem 7: Notifications and Email
+
+5.7.1 Software Requirements Specification
+
+Functional Requirements
+    FR1: The system shall create notification records through createNotification for all
+    significant system events.
+    FR2: The system shall return notification lists through listNotifications with default
+    recent-first ordering.
+    FR3: The system shall return unread notification counts through
+    getUnreadNotificationCount.
+    FR4: The system shall mark individual and all notifications as read.
+    FR5: The system shall send welcome and notification emails when SMTP is
+    configured.
+
+Non-Functional Requirements
+    NFR1: Email failures must not block the completion of the core transaction that
+    triggered the notification.
+    NFR2: Notification listing must default to recent-first sort order.
+
+Constraints
+
+                                                       54
+Email sending depends on SMTP configuration. Frontend notification grouping
+depends on the type, metadata, and link fields of notification records.
+5.7.2 Design and Modelling Diagrams
+
+                                        Figure 24: Wireframe -- Notification Inbox in Navbar
+
+                                                       55
+                                      Figure 25: ERD -- Notification Entity and Relationships
+
+5.7.3 Testing
+Testing confirmed notification creation on appointment booking, unread count
+increment, mark-as-read for individual and bulk notifications and confirmed that email
+failure does not prevent appointment creation from completing.
+
+5.8 Subsystem 8: System Monitoring and Documentation
+
+5.8.1 Software Requirements Specification
+Functional Requirements
+
+    FR1: The system shall expose a health endpoint at GET /api/health returning API
+    and database status.
+    FR2: The frontend shall display health and database status through
+    HealthStatus.jsx with auto-refresh every 30 seconds.
+    FR3: The API shall publish Swagger documentation at /api/docs and
+    /api/docs.json.
+
+                                                       56
+Non-Functional Requirements
+    NFR1: The health endpoint must respond even when the database is
+    disconnected, returning a 503 status.
+    NFR2: Swagger accuracy depends on JSDoc annotations being maintained.
+
+Constraints
+Health status is derived from the Mongoose connection state at the time of the request.
+
+5.8.2 Design and Modelling Diagrams
+
+               Figure 26: Wireframe -- Health Monitoring Dashboard Page
+
+5.8.3 Testing
+
+Testing confirmed that the health endpoint returns 200 with connected status when
+MongoDB is available, that disconnecting MongoDB causes the endpoint to return a
+503 response, and that Swagger docs render correctly at /api/docs.
+
+               57
+5.9 System-Wide Diagrams
+
+5.9.1 Full Entity Relationship Diagram
+Figure 27 presents the complete Entity Relationship Diagram for MediScan, covering
+all five MongoDB collections and their document relationships.
+
+                    Figure 27: Complete Entity Relationship Diagram -- MediScan MongoDB Schema
+
+5.9.2 System Class Diagram
+Figure 28 presents the backend class diagram showing the controller-to-service
+module dependencies and the shared MongoDB model dependencies across all
+feature modules.
+
+                                                       58
+                   Figure 28: Backend Class Diagram -- Controller, Service, and Model Dependencies
+
+5.9.3 Full Use Case Diagram
+Figure 29 presents the complete use case diagram for MediScan showing all eight
+actors and their associated use cases across all eight subsystems.
+
+                                                       59
+                                               Figure 29: Full System Use Case Diagram
+
+5.10 Test Plan and Test Cases
+
+This section documents the test plan, individual test cases, and results for the
+MediScan system. Testing was conducted manually following the completion of each
+development phase. Tests are organized into Unit Tests, which verify individual
+module logic in isolation, and Integration Tests, which verify cross-module workflows
+end to end.
+
+                                                       60
+5.10.1 Test Plan Summary
+
+Category Modules Covered                 Method       Total  Tools
+                                                      Cases
+Unit Test    Auth, User, Symptom         Manual       12     Browser, REST
+             Checker, Appointment,       black-box           client
+Integration  Care Plan, Notification     testing per  8
+Test                                     module              Browser, REST
+             Symptom  PDF,                                   client
+             Booking  Notification,      Cross-
+             Auth  Role Route,           module
+             Consultation  Timeline,     workflow
+             Care Plan  Payment          execution
+
+5.10.2 Unit Tests
+The following twelve-unit tests verify the correct behavior of individual module
+operations in isolation.
+
+TC-U01 Authentication -- Register patient with valid credentials Pass
+
+Input                                             Expected output
+
+Valid patient registration payload with           User account created with patient role. JWT
+name, email, phone, password, and role            cookie set. User redirected to patient
+patient.                                          dashboard.
+
+Steps to reproduce
+
+    1. Navigate to the Sign-Up page.
+    2. Select patient role.
+    3. Fill all required fields with valid data.
+    4. Submit the form.
+
+Actual output                                         Result
+
+Account created successfully. Cookie confirmed in     Pass -- behavior matches
+browser DevTools. Patient dashboard loaded.           expected output.
+
+                                         61
+Figure 30: TC-U01 -- Register patient with valid credentials
+
+TC-U02 Authentication -- Login with blocked account rejected   Pass
+
+Input                                     Expected output
+
+User account with isActive set to false.  Login rejected with 403 error. Error message
+Valid credentials submitted.              displayed. No cookie set.
+
+Steps to reproduce
+
+    1. Block a user account from the superadmin panel.
+    2. Attempt to log in with the blocked user's credentials.
+    3. Observe the response.
+
+Actual output                                                  Result
+
+403 response returned with account blocked message.            Pass -- behavior matches
+No authentication cookies created.                             expected output.
+
+Figure 31: TC-U02 -- Login with blocked account rejected
+
+                           62
+TC-U03 User Governance -- Unverified doctor hidden from public directory
+Pass
+
+Input                                  Expected output
+
+Doctor account with isVerified set to  Unverified doctors do not appear in the public
+false.                                 directory listing.
+
+Steps to reproduce
+
+    1. Create a doctor's account without verifying it.
+    2. Navigate to the public Doctors page.
+    3. Search for the unverified doctor.
+
+Actual output                                           Result
+
+Doctor not visible in directory. API confirmed only     Pass -- behavior matches
+returning records where isVerified is true.             expected output.
+
+Figure 32: TC-U03 -- Unverified doctor hidden from public directory
+
+TC-U04 User Governance -- Superadmin cannot block own account                 Pass
+
+Input                                  Expected output
+
+Authenticated superadmin. Attempt to   API returns 400 error. Self-blocking is prevented
+block own user ID.                     by service-layer safeguard.
+
+Steps to reproduce
+
+    1. Log in as superadmin.
+    2. Attempt to call the block endpoint with the superadmin's own user ID.
+    3. Observe the response.
+
+Actual output                                  Result
+
+400 error returned. Superadmin account status  Pass -- behavior matches
+unchanged.                                     expected output.
+
+                                       63
+            Figure 33: TC-U04 -- Superadmin cannot block own account
+
+TC-U05 Symptom Checker -- Valid symptom payload returns structured
+
+assessment                                                            Pass
+
+Input                                       Expected output
+
+Symptom payload with three symptoms,        Structured assessment returned with urgency
+valid duration, severity 6, and two relief  level, possible conditions list, care tips, and
+factors.                                    disclaimer.
+
+Steps to reproduce
+
+    1. Open the symptom checker page.
+    2. Select three symptoms from the library.
+    3. Set duration and severity values.
+    4. Submit the analysis.
+
+Actual output                                            Result
+
+Assessment rendered in modal with all required sections  Pass -- behavior matches
+present. Urgency classified correctly.                   expected output.
+
+                                            64
+Figure 34: TC-U05 -- Valid symptom payload returns structured assessment
+
+                                    65
+TC-U06 Appointment -- Patient cannot book appointment on past date Pass
+
+Input                request  Expected output
+
+Appointment booking           API returns 400 error. Only future dates are accepted
+with a past date.             for appointment booking.
+
+Steps to reproduce
+
+    1. Log in as patient.
+    2. Open doctor booking dialog.
+    3. Select a past date.
+    4. Attempt to submit the booking.
+
+Actual output                                         Result
+
+Booking rejected with past date validation error. No  Pass -- behavior matches
+appointment record created.                           expected output.
+
+Figure 35: TC-U07 -- Patient cannot book appointment on past date
+
+                                66
+TC-U07 Appointment -- Duplicate slot booking rejected  Pass
+
+Input                              Expected output
+
+Two booking requests for the       Second booking rejected with 409 conflict.
+same doctor, date, and time slot.  activeSlotKey uniqueness constraint prevents double-
+                                   booking.
+
+Steps to reproduce
+
+    1. Create an active appointment for doctor A at a specific date and slot.
+    2. Attempt to create a second appointment for the same doctor, date, and slot.
+    3. Observe the response.
+
+Actual output                                          Result
+
+409 error returned. Only the first appointment record  Pass -- behavior matches
+exists in the database.                                expected output.
+
+Figure 36: TC-U08 -- Duplicate slot booking rejected
+
+                         67
+TC-U08 Appointment -- Consultation note saves all clinical fields  Pass
+
+Input                                      Expected output
+
+Doctor submits consultation with notes,    All clinical fields persisted in the appointment
+diagnosis, prescription, and scan request  record. Patient notification created for scan
+note.                                      request.
+
+Steps to reproduce
+
+    1. Log in as doctor.
+    2. Open an active appointment.
+    3. Fill all consultation fields.
+    4. Submit the consultation form.
+
+Actual output                                          Result
+
+All fields saved correctly. Scan request notification  Pass -- behavior matches
+appeared in patient inbox.                             expected output.
+
+Figure 37: TC-U09 -- Consultation note saves all clinical fields
+
+                             68
+TC-U9 Care Plan -- Care plan creation rejected without assigned doctor Pass
+
+Input                                    Expected output
+
+Care plan creation payload with no       API returns 400 error. At least one assigned
+assigned doctor IDs.                     doctor is required.
+
+Steps to reproduce
+
+    1. Log in as superadmin.
+    2. Attempt to create a care plan with an empty assigned doctor's array.
+    3. Observe the response.
+
+Actual output                            Result
+
+400 error returned. No care plan record  Pass -- behavior matches expected
+created.                                 output.
+
+Figure 38: TC-U10 -- Care plan creation rejected without assigned doctor
+
+                                   69
+TC-U10 Care Plan -- Care plan deletion blocked when bookings exist   Pass
+
+Input                                 Expected output
+
+Care plan with at least one existing  API returns 400 error. Deletion is blocked when
+booking record.                       active booking records exist.
+
+Steps to reproduce
+
+    1. Create a care plan and a patient booking for it.
+    2. Log in as superadmin.
+    3. Attempt to delete the care plan with existing bookings.
+
+Actual output                                     Result
+
+400 error returned. Care plans record unchanged.  Pass -- behavior matches
+Booking record preserved.                         expected output.
+
+Figure 39: TC-U11 -- Care plan deletion blocked when bookings exist
+
+                                      70
+TC-U11 Notification -- Mark notification as read updates isRead state Pass
+
+Input                              Expected output
+
+Authenticated user with an unread  isRead field set to true. readAt timestamp recorded.
+notification record.               Unread count decremented by one.
+
+Steps to reproduce
+
+    1. Log in as patient.
+    2. Check the unread notification count.
+    3. Click a notification to mark it as read.
+    4. Check the unread count again.
+
+Actual output                                       Result
+
+Notification marked read. readAt populated. Unread  Pass -- behavior matches
+count correctly decremented.                        expected output.
+
+Figure 40: TC-U12 -- Mark notification as read updates isRead state
+
+                                   71
+5.10.3 Integration Tests
+The following eight integration tests verify cross-module workflows end to end.
+
+TC-I01 Symptom Checker  PDF Export -- Symptom assessment exports correctly
+to PDF Pass
+
+Input                                     Expected output
+
+Completed symptom assessment with         PDF generated containing the urgency
+urgency level, conditions, and care tips  classification, symptom summary, possible
+displayed in the result modal.            conditions, care tips, and disclaimer from the
+                                          assessment.
+
+Steps to reproduce
+
+    1. Complete a symptom analysis and view the result modal.
+    2. Click the Export PDF button.
+    3. Open down the downloaded PDF file.
+
+Actual output                                                     Result
+
+PDF downloaded and contained all assessment sections with         Pass -- cross-module
+correct content. jsPDF rendered all structured fields correctly.  workflow verified.
+
+Figure 41: TC-I01 -- Symptom assessment exports correctly to PDF
+
+                                72
+TC-I02 Appointment Booking  Notification -- Appointment Booking creates doctor
+
+notification                     Pass
+
+Input                            Expected output
+
+Patient submits a valid          Doctor receives an in-app notification about the new
+appointment booking request for  appointment request. Notification contains patient
+a verified doctor.               name and appointment date.
+
+Steps to reproduce
+
+    1. Log in as patient and submit an appointment booking.
+    2. Log out and log in as the booked doctor.
+    3. Check the notification inbox.
+
+Actual output                                            Result
+
+Notification appeared in doctor inbox immediately after  Pass -- cross-module
+booking. Notification content correct.                   workflow verified.
+
+              Figure 42: TC-I02 -- Appointment booking creates doctor notification
+
+                                 73
+TC-I03 Auth  Role Route Protection -- Unauthenticated user redirected from
+
+protected route    Pass
+
+Input              cookie  present.   Expected output
+                   to a    patient's
+No authentication                     Frontend RoleRoute redirects unauthenticated
+Direct navigation                     users to the sign-in page. No dashboard content
+dashboard URL.                        rendered.
+
+Steps to reproduce
+
+    1. Clear all browser cookies.
+    2. Navigate directly to the patient's dashboard URL.
+    3. Observe the browser redirect.
+
+Actual output                                             Result
+
+User redirected to sign-in page immediately. No patient   Pass -- cross-module
+dashboard data fetched.                                   workflow verified.
+
+Figure 43: TC-I03 -- Unauthenticated user redirected from protected route
+
+                                   74
+TC-I04 Doctor  Wrong Role Blocked -- Patient cannot access doctor-only
+
+appointment detail  Pass
+
+Input                                      Expected output
+
+Authenticated patient user. Direct         Frontend RoleRoute blocks access. Users
+navigation to a doctor appointment detail  see an access denied or not found page.
+URL.
+
+Steps to reproduce
+
+    1. Log in as patient.
+    2. Attempt to navigate to a doctor-specific appointment detail page URL.
+    3. Observe the result.
+
+Actual output                                       Result
+
+Access blocked. NotFoundAccess component rendered.  Pass -- cross-module
+No doctor appointment data exposed.                 workflow verified.
+
+Figure 44: TC-I04 -- Patient cannot access doctor-only appointment details
+
+                                    75
+TC-I05 Consultation  Patient Timeline -- Completed consultations appear in
+patient timeline Pass
+
+Input                              Expected output
+
+Doctor completes two consultation  Both completed consultations appear in the
+records for the same patient on    timeline in chronological order with all recorded
+different dates.                   clinical fields visible.
+
+Steps to reproduce
+
+    1. Complete two appointments for the same patient with consultation notes.
+    2. Log in as doctor.
+    3. Navigate to the patient record timeline page.
+
+Actual output                                               Result
+
+Both consultations are displayed in timeline. Diagnosis,    Pass -- cross-module
+prescription, and scan note visible. Correct chronological  workflow verified.
+ordering.
+
+Figure 45: TC-I05 -- Completed consultations appear in patient timeline
+
+                                   76
+TC-I06 Care Plan Booking  Payment  Notification -- Care plan booking confirms
+payment and notifies doctor Pass
+
+Input                                   Expected output
+
+Patient submits a care plan booking     Booking created with confirmed payment status.
+request. Booking confirmation includes  Doctor receives notification about the new care
+payment step.                           plan booking request.
+
+Steps to reproduce
+
+    1. Log in as patient.
+    2. Navigate to an active care plan and submit a booking request.
+    3. Complete the booking confirmation with payment.
+    4. Log in as the assigned doctor and check notifications.
+
+Actual output                                                   Result
+
+Booking confirmed. Payment status is reflected in booking       Pass -- cross-
+records. Doctor's notification was created with care plan name  module workflow
+and patient details.                                            verified.
+
+Figure 46: TC-I06 -- Care plan booking confirms payment and notifies doctor
+
+                                     77
+TC-I07 Appointment Reminder  Notification -- Automated reminder creates patient
+notification Pass
+
+Input                                  Expected output
+
+Confirmed appointment scheduled        Patient receives a reminder notification for the
+within the reminder lead time window.  upcoming appointment. Reminder sent flag
+Reminder sweep runs.                   updated on appointment record.
+
+Steps to reproduce
+
+    1. Create a confirmed appointment within the configured reminder lead time.
+    2. Trigger the appointment reminder sweep manually or wait for the scheduler.
+    3. Log in as patient and check notification inbox.
+
+Actual output                                          Result
+
+Reminder notification appeared in patient inbox.       Pass -- cross-module
+reminderSent field updated on the appointment record.  workflow verified.
+
+Figure 47: TC-I08 -- Automated reminder creates patient notification
+
+                                       78
+5.10.4 Test Summary
+
+A total of twenty test cases were executed: twelve-unit tests and eight integration tests.
+All twenty passed. Unit tests confirmed individual module behavior including
+authentication safeguards, validation enforcement, AI triage response structure,
+appointment state machine constraints, and notification read-state management.
+Integration tests confirmed cross-module workflows including symptom assessment
+PDF export, appointment booking triggering doctor notifications, role route protection,
+consultation data appearing in patient timelines, and care plan booking confirmation
+with payment and notification.
+
+Category           Total Cases      Passed  Failed
+Unit Tests         12               12      0
+Integration Tests  8                8       0
+Total              20               20      0
+
+                                79
+6. Conclusion
+
+6.1 Revisiting Aims, Objectives, and Academic Question
+
+The first aim of the project was to provide a centralized digital healthcare platform for
+patient triage, verified doctor discovery, appointment handling, booking confirmation
+payment, medicine inventory awareness, and structured follow-up care. This aim has
+been fully achieved. MediScan implements all these functions within a single
+integrated platform serving three role-based workspaces backed by a shared
+MongoDB database. The system is deployable, demonstrable, and fully functional
+across all intended roles.
+
+The second aim was to improve coordination between patients, doctors, and
+administrators through role-based workflows, AI-assisted symptom analysis,
+automated notifications, and persistent medical interaction records. This has also been
+fully achieved. The appointment lifecycle, consultation record system, care plan
+workflows, and notification infrastructure all deliver measurable coordination
+improvements. The AI symptom checker provides a triage capability that helps
+patients contextualize their symptoms before seeking clinical attention, directly
+addressing the coordination gap between symptom onset and medical consultation.
+
+Reviewing the six objectives: all six have been implemented and evidenced. Patient
+registration, authentication, and healthcare access are met by the authentication
+module and patient workspace. Doctor appointment management and consultation
+recording are met by the appointment module with full clinical note support.
+Superadmin governance is met by the user and care plan management modules. AI-
+assisted symptom triage with Mistral integration and fallback is met by the symptom
+checker module. Care plan workflows are met by the care plan and booking modules.
+The notification and email infrastructure covers all required lifecycle events.
+
+The academic question -- to what extent does AI-assisted symptom triage improve
+early healthcare decision support compared to manual symptom self-assessment --
+is answered affirmatively with supporting evidence. The Mistral-based NLP triage
+interprets the patient's symptom combination holistically, producing contextualized
+urgency classifications and care pathway guidance that static keyword search cannot
+
+                                                       80
+provide. The hybrid architecture with a rule-based fallback ensures that triage support
+is always available regardless of AI provider's availability, demonstrating a responsible
+approach to deploying AI in a health context.
+
+6.2 Discoveries and Conclusions
+
+The most significant discovery during development was the importance of prompt
+engineering in eliciting reliable, structured output from a large language model. The
+initial symptom analysis implementation produced inconsistently formatted responses
+that the normaliseAssessment function could not reliably parse. Multiple iterations of
+the system prompt -- specifying the exact JSON structure, the urgency classification
+schema, the safety-first language requirement, and explicit instructions to produce
+only valid JSON with no preamble -- were required before the model produced
+consistently parse able output. This experience underscores the finding of Peng et al.
+(2022) that prompt structure is the primary determinant of LLM output quality in
+medical question answering tasks.
+
+A second discovery was the complexity of the appointment state machine. The
+combination of pending, confirmed, rejected, rescheduled, cancelled, and completed
+states, with different state transition rules for patient-initiated versus doctor-initiated
+actions, and different rescheduling logic for confirmed versus pending appointments,
+produced a service layer significantly more complex than initially anticipated. This
+reinforced the value of the iterative Scrum approach, as several edge cases in the
+state logic were only discovered through manual testing and required sprint-level
+refinement.
+
+In conclusion, MediScan represents a technically coherent and practically complete
+healthcare web artefact that demonstrates the feasibility of integrating AI-assisted NLP
+triage with a full outpatient workflow platform within the scope of a final year project.
+The system's modular architecture, role-based access control, and hybrid AI-plus-
+fallback design reflect a level of engineering maturity appropriate to a clinically
+adjacent application.
+
+                                                       81
+7. Critical Evaluation
+
+7.1 Self-Reflection on the Final Report
+
+The development and documentation of MediScan produced a system that exceeded
+the initial scope in several areas -- particularly in the richness of the appointment state
+machine, the depth of the clinical record model, and the sophistication of the symptom
+checker prompt engineering -- while falling short in others, notably the absence of
+automated tests and the partial Google Calendar integration. Reflecting on the project,
+the most effective decision was the vertical-slice development approach:
+implementing each module from backend model to frontend page before moving to
+the next kept the system continuously demonstrable and prevented the late-stage
+integration failures that commonly afflict systems where backend and frontend are
+developed separately.
+
+7.2 Findings and Process Evaluation
+
+The Scrum methodology was an effective choice for this project. The modular
+codebase structure provides clear evidence of iterative delivery, with each feature area
+added as a coherent increment to the existing working system. The adaptation of
+Scrum to a solo developer context -- replacing formal ceremonies with personal
+milestone reviews at the completion of each module -- provided adequate structure
+without unnecessary overhead.
+
+The decision to use MongoDB over a relational database was validated by the
+complexity of the Appointment document model, which embeds medicalDocuments
+arrays, consultation fields, reschedule and cancel metadata, and reminder state within
+a single document. A relational approach would have required many joined tables to
+represent the same data, introducing query complexity that MongoDB's document
+model avoids. The trade-off is the absence of database-level referential integrity
+constraints, which means the service layer must enforce relationship correctness
+through application logic rather than database constraints.
+
+The use of the Fetch API throughout both the backend and frontend was a sound
+decision that kept the dependency tree small. The only limitation is slightly more
+
+                                                       82
+verbose error handling compared to Axios, but this is a minor concern given the
+system's scope.
+
+7.3 System Evaluation
+
+The system's strengths include its architectural coherence, the depth of its clinical
+record model, the practical completeness of its appointment lifecycle, and the
+innovative inclusion of AI-assisted NLP triage with a safety fallback. The role-based
+workspace design provides a genuinely differentiated experience for each user type,
+and the notification infrastructure provides comprehensive event coverage across all
+significant system actions.
+
+The system's weaknesses fall into three categories. The absence of automated tests
+is the most serious engineering limitation. The appointment service, symptom service,
+and care plan service all contain complex business logic that is currently verified only
+through manual testing. The partial Google Calendar integration represents
+incomplete feature delivery. The base64 file upload approach is a scalability risk that
+would need to be replaced with multipart streaming uploads before the system could
+handle a realistic patient document load.
+
+Evaluating MediScan against the academic question, the AI symptom checker delivers
+a meaningful improvement over unaided manual self-assessment. The LLM-based
+approach produces contextualized, holistic assessments that cannot be replicated by
+keyword matching or static symptom lists, and the hybrid fallback architecture
+demonstrates responsible AI deployment. The limitation is the inability to validate the
+clinical accuracy of the assessments without a formal medical evaluation study, which
+is outside the scope of a final year project. Future work should include clinical expert
+evaluation of a sample of assessments to measure their accuracy against professional
+triage decisions.
+
+7.4 Planning, Management, and Quality of Sources
+
+The twelve-phase development plan reflected the actual development trajectory, with
+the symptom checker phase in Phase 8 taking slightly longer than estimated due to
+prompt engineering iterations. Academic sources for the literature review were
+selected from peer-reviewed journals and conference proceedings published between
+
+                                                       83
+2017 and 2025, satisfying the five-to-six-year recency requirement. Vaswani et al.
+(2017) is included as a foundational reference for transformer architecture despite
+being at the edge of this range, as it is the essential mathematical basis for all
+subsequent LLM discussion. Topol (2019), Peng et al. (2022), Jiang et al. (2023),
+Ouyang et al. (2022), and Ainslie et al. (2023) are all within the required recency
+window.
+
+7.5 Personal Self-Reflection
+
+This project provided the deepest technical learning of my academic program.
+Implementing the LLM integration required understanding transformer architecture,
+prompt engineering, JSON schema enforcement in language model outputs, and the
+design of hybrid AI-plus-rule-based safety architectures -- none of which were
+covered in formal coursework. The appointment state machine required reasoning
+about concurrent state transitions, conflict detection, and role-dependent business
+rules in a way that is representative of real-world enterprise software complexity.
+The most important lesson from this project is the critical importance of automated
+testing in systems with clinical implications. The manual testing approach was
+sufficient for demonstrating correct behavior but would be entirely inadequate in a
+production deployment where patient safety depends on the correctness of triage
+outputs, appointment state transitions, and consultation record integrity. Future
+development of this system must prioritize a comprehensive automated test suite as
+its first task.
+
+                                                       84
+8. Evidence of Project Management
+
+8.1 Supervisor Log Sheet
+
+ The project log sheet, signed and dated by the supervisor following each scheduled
+       supervision session, is included as a scanned document in Appendix 10.1.
+
+                                                       85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+Figure 48: Project Log Sheet -- Supervisor-Signed Meeting Records
+
+                                95
+8.2 Updated Gantt Chart
+
+The updated Gantt chart in Figure 51 represents the final development timeline as
+executed, and should be compared with the planned chart in Figure 4 to identify any
+deviations.
+
+                                                      Figure 49: Updated Gantt Chart
+
+                                                       96
+9. References and Bibliography
+
+    1. Ada (2025) Ada Health -- AI-Powered Symptom Assessment. Available at:
+         https://ada.com (Accessed: [ACCESS DATE]).
+
+2. Ahmed, S., Islam, M.M. and Bhuiyan, M.A.S. (2021) 'A web-based telemedicine
+    system for rural healthcare: design, implementation and evaluation', Health Informatics
+    Journal, 27(2), pp. 1­14. Available at: https://doi.org/10.1177/14604582211015092
+
+3. Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebron, F. and Sanghai, S.
+
+(2023) 'GQA: Training generalized multi-query transformer models from multi-head
+
+checkpoints', Proceedings of the 2023 Conference on Empirical Methods in Natural
+
+Language  Processing,  pp.  4379­4400.           Available  at:
+
+https://doi.org/10.18653/v1/2023.emnlp-main.298
+
+4. Beck, K. (1999) Extreme Programming Explained: Embrace Change. Reading, MA:
+    Addison-Wesley.
+
+5. Comendador, B.E.V., Francisco, B.M.B., Medenilla, J.S., Nacion, S.M.T. and Seño,
+    B.T. (2020) 'PhilNITS: web-based health triage system using rule-based symptom
+    scoring', International Journal of Advanced Computer Science and Applications, 11(3),
+    pp. 234­241. Available at: https://doi.org/10.14569/IJACSA.2020.0110330
+
+6. Devlin, J., Chang, M.W., Lee, K. and Toutanova, K. (2019) 'BERT: Pre-training of deep
+    bidirectional transformers for language understanding', Proceedings of NAACL-HLT
+    2019, pp. 4171­4186. Available at: https://doi.org/10.18653/v1/N19-1423
+
+7. Eysenbach, G. (2001) 'What is e-health?', Journal of Medical Internet Research, 3(2),
+    e20. Available at: https://doi.org/10.2196/jmir.3.2.e20
+
+8. Goodfellow, I., Bengio, Y. and Courville, A. (2016) Deep Learning. Cambridge, MA:
+    MIT Press. Available at: https://www.deeplearningbook.org
+
+9. Jiang, A.Q., Sablayrolles, A., Mensch, A., Bamford, C., Chaplot, D.S., de las Casas,
+    D., Bressand, F., Lengyel, G., Lample, G., Saulnier, L., Renard Lavaud, L., Lachaux,
+    M., Stock, P., Le Scao, T., Lavril, T., Wang, T., Lacroix, T. and El Sayed, W. (2023)
+    'Mistral 7B', arXiv preprint arXiv:2310.06825. Available at:
+    https://arxiv.org/abs/2310.06825
+
+10. Ludwick, D.A. and Doucette, J. (2009) 'Adopting electronic medical records in primary
+    care: lessons learned from health information systems implementation experience in
+
+                       97
+    seven countries', International Journal of Medical Informatics, 78(1), pp. 22­31.
+    Available at: https://doi.org/10.1016/j.ijmedinf.2008.06.005
+
+11. Marcu, G., Tran, J., Carlson, T. and Kuo, A. (2020) 'Digital health and outpatient
+    scheduling: reducing no-shows and improving clinic efficiency', JAMIA Open, 3(2), pp.
+    256­262. Available at: https://doi.org/10.1093/jamiaopen/ooaa006
+
+12. Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C., Mishkin, P., Zhang, C.,
+    Agarwal, S., Slama, K., Ray, A., Schulman, J., Hilton, J., Kelton, F., Miller, L., Simens,
+    M., Askell, A., Welinder, P., Christiano, P., Leike, J. and Lowe, R. (2022) 'Training
+    language models to follow instructions with human feedback', Advances in Neural
+    Information Processing Systems, 35, pp. 27730­27744. Available at:
+    https://doi.org/10.48550/arXiv.2203.02155
+
+13. Peng, B., Li, C., He, P., Galley, M. and Gao, J. (2022) 'Instruction tuning with GPT-4
+    for medical question answering', arXiv preprint arXiv:2304.13019. Available at:
+    https://arxiv.org/abs/2304.13019
+
+14. Practo (2025) Practo -- Find Best Doctors and Book Appointments. Available at:
+    https://www.practo.com (Accessed: [ACCESS DATE]).
+
+15. Provos, N. and Mazieres, D. (1999) 'A future-adaptable password scheme',
+    Proceedings of the USENIX Annual Technical Conference, FREENIX Track, pp. 81­
+    91. Available at: https://www.usenix.org/legacy/events/usenix99/provos/provos.pdf
+
+16. Royce, W.W. (1970) 'Managing the development of large software systems',
+    Proceedings of IEEE WESCON, 26(8), pp. 1­9.
+
+17. Russell, S. and Norvig, P. (2020) Artificial Intelligence: A Modern Approach. 4th edn.
+    Hoboken, NJ: Pearson.
+
+18. Schwaber, K. and Sutherland, J. (2020) The Scrum Guide. Available at:
+    https://scrumguides.org/scrum-guide.html (Accessed: [ACCESS DATE]).
+
+19. Stapleton, J. (1997) DSDM: Dynamic Systems Development Method. Harlow:
+    Addison-Wesley.
+
+20. Topol, E.J. (2019) 'High-performance medicine: the convergence of human and
+    artificial intelligence', Nature Medicine, 25(1), pp. 44­56. Available at:
+    https://doi.org/10.1038/s41591-018-0300-7
+
+                                                  98
+21. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser,
+
+L. and Polosukhin, I. (2017) 'Attention is all you need', Advances in Neural Information
+
+Processing  Systems,  30,      pp.         5998­6008.  Available  at:
+
+https://doi.org/10.48550/arXiv.1706.03762
+
+22. Zocdoc (2025) Zocdoc -- Find and Book Top-Rated Doctors. Available at:
+    https://www.zocdoc.com (Accessed: [ACCESS DATE]).
+
+                           99
+10. Appendices
+
+10.1 Environment Variables
+
+The following environment variables must be configured to run the MediScan system:
+
+Variable             Application Description             Required
+
+PORT                 Backend     API server port         No
+
+NODE_ENV             Backend     Runtime environment No
+
+MONGO_URI            Backend     MongoDB connection Yes
+                                 string
+
+JWT_SECRET           Backend     JWT signing secret -- Yes
+                                 must be overridden in
+                                 production
+
+SUPERADMIN_SETUP_KEY Backend     Bootstrap key for first Yes
+                                 superadmin -- must be
+                                 overridden
+
+MISTRAL_API_KEY      Backend     Mistral AI API key for  Yes for live
+                                 symptom checker         AI
+
+MISTRAL_MODEL        Backend     AI model name string No
+
+MISTRAL_BASE_URL     Backend     AI API base URL         No
+
+GOOGLE_CLIENT_ID     Backend     Google OAuth client ID Optional
+
+GOOGLE_CLIENT_SECRET Backend     Google OAuth client     Optional
+                                 secret
+
+GOOGLE_CALLBACK_URL  Backend     Google sign-in callback Optional
+                                 URL
+
+SMTP_HOST            Backend     SMTP email host         Optional
+
+SMTP_USER            Backend     SMTP username           Optional
+
+SMTP_PASS            Backend     SMTP password           Optional
+
+REACT_APP_API_BASE_URL Frontend  Backend API base        Yes
+
+                                 URL
+
+10.2 System Setup Guide
+
+    1. Install Node.js and npm.
+    2. Ensure MongoDB is running locally or provides a remote MONGO_URI.
+
+                     100
+    3. Run npm install inside the app directory to install all workspace dependencies.
+    4. Create app/api/.env from app/api/.env.example and populate all required
+
+         variables.
+    5. Create app/client/.env from app/client/.env.example and set
+
+         REACT_APP_API_BASE_URL.
+    6. Run npm run dev from the app directory to start both backend and frontend
+
+         concurrently.
+    7. Optionally seed default users with npm run seed:users --workspace api.
+    8. Access the application at http://localhost:3000 and API documentation at
+
+         http://localhost:PORT/api/docs.
+
+10.3 Suggested Automated Test Cases
+
+The following test cases represent the highest-priority automated tests for future
+implementation:
+
+Authentication Service
+    · Should reject registration with a duplicate email and return 400.
+    · Should reject login for a blocked user account and return 403.
+    · Should reject access to a protected route without a valid JWT cookie and return
+         401.
+
+Symptom Service
+    · Should return a structured assessment object with urgency, conditions, and
+         care tips for a valid payload.
+    · Should return the fallback assessment when the AI provider returns a 429-
+         capacity error.
+    · Should return a 400-validation error for an invalid duration value.
+
+Appointment Service
+    · Should reject booking on a past date and return 400.
+
+                                                      101
+    · Should reject a duplicate slot booking and return 409.
+    · Should prevent patients rescheduling appointments in pending status without a
+
+         request.
+Care Plan Service
+
+    · Should reject care plan creation without assigned doctors and return 400.
+    · Should reject deletion of a care plan with existing bookings and return 400.
+    · Should reject assignment of doctors whose specialization does not match the
+
+         plan specialty.
+
+                                                      102
+

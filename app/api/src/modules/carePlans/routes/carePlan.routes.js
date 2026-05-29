@@ -10,6 +10,8 @@ const {
     patchCarePlanStatus,
     removeCarePlan,
     bookCarePlan,
+    initiateKhaltiCarePlanBookingPayment,
+    verifyKhaltiCarePlanBookingPayment,
     getMyPatientBookings,
     getMyDoctorBookings,
     getAdminBookings,
@@ -31,6 +33,8 @@ router.get('/bookings/patient/me', authMiddleware, requireRole('patient'), getMy
 router.get('/bookings/doctor/me', authMiddleware, requireRole('doctor'), getMyDoctorBookings);
 router.patch('/bookings/doctor/:id/status', authMiddleware, requireRole('doctor'), changeMyDoctorBookingStatus);
 router.post('/:id/book', authMiddleware, requireRole('patient'), bookCarePlan);
+router.post('/:id/payments/khalti/initiate', authMiddleware, requireRole('patient'), initiateKhaltiCarePlanBookingPayment);
+router.post('/payments/khalti/:sessionId/verify', authMiddleware, requireRole('patient'), verifyKhaltiCarePlanBookingPayment);
 router.get('/:id', getCarePlanById);
 
 module.exports = router;

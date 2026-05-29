@@ -1,8 +1,10 @@
 const CarePlan = require('../../../database/models/carePlan.model');
 const { CarePlanBooking } = require('../../../database/models/carePlanBooking.model');
+const CarePlanPaymentSession = require('../../../database/models/carePlanPaymentSession.model');
 const User = require('../../../database/models/user.model');
 const { DOCTOR_SPECIALIZATIONS } = require('../../../constants/user.constants');
 const { createNotification } = require('../../notifications/services/notification.service');
+const config = require('../../../config/env');
 
 const DOCTOR_SELECT = 'name email phone specialization qualification experienceYears currentlyWorkingAt isVerified isActive role';
 const BOOKING_POPULATE = [
@@ -64,6 +66,17 @@ const createHttpError = (message, statusCode = 400) => {
 };
 
 const normalizeText = (value, fallback = '') => String(value || fallback).trim();
+const KHALTI_PAYMENT_PROVIDER = 'khalti';
+const normalizeOptionalText = (value) => String(value || '').trim();
+const ensureKhaltiIsEnabled = () => {
+    if (!config.khalti.enabled) {
+        throw createHttpError('Khalti payment is not configured on the server.', 503);
+    }
+};
+const toPaisaAmount = (value) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? Math.round(numericValue * 100) : 0;
+};
 
 const normalizeIncludes = (includes) => {
     const source = Array.isArray(includes) ? includes : [];
@@ -356,6 +369,242 @@ const createBooking = async ({ carePlanId, patientId, doctorId, preferredDate, p
     return sanitizeBooking(populatedBooking);
 };
 
+const createKhaltiPaymentSessionForBooking = async ({ carePlanId, patientId, payload = {} }) => {
+    ensureKhaltiIsEnabled();
+    validatePreferredDate(payload?.preferredDate);
+
+    const normalizedDoctorId = normalizeText(payload?.doctorId);
+    const normalizedTime = normalizeText(payload?.preferredTime);
+    const normalizedNotes = normalizeText(payload?.notes);
+
+    if (!normalizedDoctorId) {
+        throw createHttpError('Please choose a doctor for this care plan.', 400);
+    }
+
+    if (!normalizedTime) {
+        throw createHttpError('Preferred time is required.', 400);
+    }
+
+    const [carePlan, patient] = await Promise.all([
+        CarePlan.findOne({ _id: carePlanId, isActive: true }).populate('assignedDoctors', DOCTOR_SELECT),
+        User.findById(patientId).select('name email phone role isActive'),
+    ]);
+
+    if (!carePlan) {
+        throw createHttpError('Care plan not found or unavailable.', 404);
+    }
+
+    if (!patient) {
+        throw createHttpError('Patient account not found.', 404);
+    }
+
+    if (patient.role !== 'patient') {
+        throw createHttpError('Only patient accounts can request a care plan.', 403);
+    }
+
+    if (patient.isActive === false) {
+        throw createHttpError('Your account has been blocked. Please contact the superadmin.', 403);
+    }
+
+    const selectedDoctor = carePlan.assignedDoctors.find((doctor) => String(doctor._id) === normalizedDoctorId);
+    if (!selectedDoctor) {
+        throw createHttpError('Selected doctor is not assigned to this care plan.', 400);
+    }
+
+    const amount = Number(carePlan.price);
+    if (!Number.isFinite(amount) || amount <= 0) {
+        throw createHttpError('This care plan does not require Khalti payment. Submit the request directly.', 400);
+    }
+
+    const transactionUuid = `${carePlan._id}-${patient._id}-${Date.now()}`;
+    const returnUrl = `${config.clientUrl}/patient/care-plans/payment/khalti/success?session=${transactionUuid}`;
+    const websiteUrl = config.clientUrl;
+    const initiateResponse = await fetch(config.khalti.initiateUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Key ${config.khalti.secretKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            return_url: returnUrl,
+            website_url: websiteUrl,
+            amount: toPaisaAmount(amount),
+            purchase_order_id: transactionUuid,
+            purchase_order_name: `Care Plan - ${carePlan.name}`,
+            customer_info: {
+                name: patient.name || 'Patient',
+                email: patient.email || undefined,
+                phone: patient.phone || undefined,
+            },
+            amount_breakdown: [
+                {
+                    label: 'Care plan',
+                    amount: toPaisaAmount(amount),
+                },
+            ],
+            product_details: [
+                {
+                    identity: String(carePlan._id),
+                    name: carePlan.name,
+                    total_price: toPaisaAmount(amount),
+                    quantity: 1,
+                    unit_price: toPaisaAmount(amount),
+                },
+            ],
+            merchant_username: 'mediscan',
+            merchant_extra: JSON.stringify({
+                carePlanId: String(carePlan._id),
+                doctorId: String(selectedDoctor._id),
+                preferredDate: payload.preferredDate,
+                preferredTime: normalizedTime,
+            }),
+        }),
+    });
+
+    const initiatePayload = await initiateResponse.json().catch(() => null);
+    if (!initiateResponse.ok || !initiatePayload?.pidx || !initiatePayload?.payment_url) {
+        const message = initiatePayload?.detail || initiatePayload?.message || 'Unable to start Khalti payment.';
+        throw createHttpError(message, 502);
+    }
+
+    const paymentSession = await CarePlanPaymentSession.create({
+        provider: KHALTI_PAYMENT_PROVIDER,
+        status: 'initiated',
+        patient: patient._id,
+        doctor: selectedDoctor._id,
+        carePlan: carePlan._id,
+        amount,
+        currency: 'NPR',
+        transactionUuid,
+        providerSessionId: normalizeOptionalText(initiatePayload.pidx),
+        productCode: 'careplan-booking',
+        bookingPayload: {
+            carePlanId: carePlan._id,
+            patientId: patient._id,
+            doctorId: selectedDoctor._id,
+            preferredDate: payload.preferredDate,
+            preferredTime: normalizedTime,
+            notes: normalizedNotes,
+        },
+        expiresAt: new Date(Date.now() + (30 * 60 * 1000)),
+    });
+
+    return {
+        provider: KHALTI_PAYMENT_PROVIDER,
+        sessionId: paymentSession._id.toString(),
+        transactionUuid,
+        pidx: initiatePayload.pidx,
+        redirectUrl: initiatePayload.payment_url,
+        expiresAt: paymentSession.expiresAt,
+        amount,
+        currency: 'NPR',
+    };
+};
+
+const verifyKhaltiPaymentSessionForBooking = async ({ sessionId, patientId, pidx }) => {
+    ensureKhaltiIsEnabled();
+
+    const paymentSession = await CarePlanPaymentSession.findOne({
+        transactionUuid: normalizeOptionalText(sessionId),
+        patient: patientId,
+        provider: KHALTI_PAYMENT_PROVIDER,
+    });
+
+    if (!paymentSession) {
+        throw createHttpError('Payment session not found.', 404);
+    }
+
+    if (paymentSession.booking) {
+        const existingBooking = await CarePlanBooking.findById(paymentSession.booking).populate(BOOKING_POPULATE);
+        if (existingBooking) {
+            return {
+                booking: sanitizeBooking(existingBooking),
+                payment: {
+                    provider: KHALTI_PAYMENT_PROVIDER,
+                    status: paymentSession.status,
+                    amount: paymentSession.amount,
+                    currency: paymentSession.currency || 'NPR',
+                    transactionUuid: paymentSession.transactionUuid,
+                    referenceId: paymentSession.referenceId || '',
+                    providerSessionId: paymentSession.providerSessionId || '',
+                },
+            };
+        }
+    }
+
+    if (paymentSession.expiresAt && paymentSession.expiresAt.getTime() < Date.now()) {
+        paymentSession.status = 'expired';
+        paymentSession.failedAt = paymentSession.failedAt || new Date();
+        await paymentSession.save();
+        throw createHttpError('This payment session has expired. Please start again.', 410);
+    }
+
+    if (!normalizeOptionalText(pidx) || normalizeOptionalText(pidx) !== normalizeOptionalText(paymentSession.providerSessionId)) {
+        throw createHttpError('The Khalti payment reference does not match this session.', 400);
+    }
+
+    const lookupResponse = await fetch(config.khalti.lookupUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Key ${config.khalti.secretKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pidx: normalizeOptionalText(pidx) }),
+    });
+
+    const lookupPayload = await lookupResponse.json().catch(() => null);
+    if (!lookupResponse.ok || !lookupPayload) {
+        const message = lookupPayload?.detail || lookupPayload?.message || 'Unable to confirm the Khalti payment.';
+        throw createHttpError(message, 502);
+    }
+
+    const lookupStatus = normalizeOptionalText(lookupPayload.status).toLowerCase();
+    if (lookupStatus !== 'completed') {
+        paymentSession.status = lookupStatus || 'failed';
+        paymentSession.failedAt = paymentSession.failedAt || new Date();
+        paymentSession.verificationPayload = lookupPayload;
+        await paymentSession.save();
+        throw createHttpError('Khalti did not confirm this payment as completed.', 400);
+    }
+
+    if (
+        normalizeOptionalText(lookupPayload.pidx) !== normalizeOptionalText(paymentSession.providerSessionId)
+        || Number(lookupPayload.total_amount) !== toPaisaAmount(paymentSession.amount)
+    ) {
+        throw createHttpError('The Khalti lookup response does not match the original payment request.', 400);
+    }
+
+    const booking = await createBooking({
+        carePlanId: paymentSession.bookingPayload.carePlanId,
+        patientId: paymentSession.bookingPayload.patientId,
+        doctorId: paymentSession.bookingPayload.doctorId,
+        preferredDate: paymentSession.bookingPayload.preferredDate,
+        preferredTime: paymentSession.bookingPayload.preferredTime,
+        notes: paymentSession.bookingPayload.notes,
+    });
+
+    paymentSession.status = 'paid';
+    paymentSession.referenceId = normalizeOptionalText(lookupPayload.transaction_id || lookupPayload.transactionId);
+    paymentSession.providerSessionId = normalizeOptionalText(lookupPayload.pidx || paymentSession.providerSessionId);
+    paymentSession.paidAt = new Date();
+    paymentSession.booking = booking?._id || null;
+    paymentSession.verificationPayload = lookupPayload;
+    await paymentSession.save();
+
+    return {
+        booking,
+        payment: {
+            provider: KHALTI_PAYMENT_PROVIDER,
+            status: 'paid',
+            amount: paymentSession.amount,
+            currency: paymentSession.currency || 'NPR',
+            transactionUuid: paymentSession.transactionUuid,
+            referenceId: paymentSession.referenceId || '',
+            providerSessionId: paymentSession.providerSessionId || '',
+        },
+    };
+};
+
 const listPatientBookings = async (patientId) => {
     const bookings = await CarePlanBooking.find({ patient: patientId })
         .populate(BOOKING_POPULATE)
@@ -437,4 +686,6 @@ module.exports = {
     listAdminBookings,
     listDoctorCarePlans,
     updateBookingStatus,
+    createKhaltiPaymentSessionForBooking,
+    verifyKhaltiPaymentSessionForBooking,
 };
